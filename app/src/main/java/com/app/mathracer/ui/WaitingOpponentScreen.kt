@@ -49,67 +49,63 @@ fun WaitingOpponentScreen(
             .background(Color.Black)
     ) {
         Image(
-            painter = painterResource(id = R.drawable.background_pixel),
+            painter = painterResource(id = R.drawable.background),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
         )
 
-        Column(
+        Box(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
                 .padding(top = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            contentAlignment = Alignment.TopCenter
         ) {
             Image(
-                painter = painterResource(id = R.drawable.isologotipo_math_racer),
+                painter = painterResource(id = R.drawable.logo),
                 contentDescription = "Logo",
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .width(220.dp)
                     .height(100.dp)
             )
+        }
 
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 24.dp),
-                contentAlignment = Alignment.Center
-            )  {
-
-                Card(
-                    shape = RoundedCornerShape(16.dp),
-                    border = BorderStroke(2.dp, Color.White),
-                    colors = CardDefaults.cardColors(containerColor = Color(0x80000000)),
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(2.dp, Color.White),
+                colors = CardDefaults.cardColors(containerColor = Color(0x80000000)),
+            ) {
+                Column(
                     modifier = Modifier
-                        .padding(horizontal = 24.dp)
+                        .padding(24.dp)
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .padding(24.dp)
-                            .fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_earth),
-                            contentDescription = "Globo terráqueo",
-                            modifier = Modifier.size(64.dp)
-                        )
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_earth),
+                        contentDescription = "Globo terráqueo",
+                        modifier = Modifier.size(64.dp)
+                    )
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                        Text(
-                            text = "Esperando al contrincante",
-                            color = Color.Cyan,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                    Text(
+                        text = "Esperando al contrincante",
+                        color = Color.Cyan,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
 
-                        Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                        // Animación de relojes de arena
-                        HourGlassRow()
-                    }
+                    HourGlassRow()
                 }
             }
         }
