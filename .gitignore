@@ -35,25 +35,9 @@ proguard/
 # Android Studio captures folder
 captures/
 
-# IntelliJ
+# IntelliJ / Android Studio
 *.iml
-.idea/workspace.xml
-.idea/tasks.xml
-.idea/gradle.xml
-.idea/assetWizardSettings.xml
-.idea/dictionaries
-.idea/libraries
-.idea/jarRepositories.xml
-.idea/caches
-.idea/modules.xml
-.idea/navEditor.xml
-.idea/vcs.xml
-.idea/deploymentTargetDropDown.xml
-.idea/appInsightsSettings.xml
-.idea/compiler.xml
-.idea/misc.xml
-.idea/inspectionProfiles/
-.idea/sonarlint/
+.idea/
 
 # External native build folder generated in Android Studio 2.2 and later
 .externalNativeBuild
