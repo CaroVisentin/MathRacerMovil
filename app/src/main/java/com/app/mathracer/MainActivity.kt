@@ -11,7 +11,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.app.mathracer.ui.WaitingOpponentScreen
 import com.app.mathracer.ui.theme.MathRacerTheme
 
 class MainActivity : ComponentActivity() {
