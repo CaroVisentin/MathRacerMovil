@@ -37,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
@@ -112,17 +113,22 @@ class MainActivity : ComponentActivity() {
                           Image(
                               painter = painterResource(id = R.drawable.background),
                               contentDescription = null,
-                              contentScale = ContentScale.FillBounds,
-                              modifier = Modifier.fillMaxHeight()
-                          )
+                              
+              
+                  
+                          contentScale = ContentScale.Crop,
+                          modifier = Modifier.fillMaxSize()
+                      )
 
-                          Column {
-                              Scaffold(
-                                  containerColor = Color.Transparent,
-                                  contentColor = MaterialTheme.colorScheme.onBackground,
-                                  modifier = Modifier.fillMaxSize(),
-                                  topBar = {
-                                      Row (
+                      Column {
+                          Scaffold(
+                              containerColor = Color.Transparent,
+                              contentColor = MaterialTheme.colorScheme.onBackground,
+                              modifier = Modifier.fillMaxWidth()
+                              ,
+                              topBar = {
+                                  Row (
+
 
                                             verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
                                           modifier = Modifier.padding(
