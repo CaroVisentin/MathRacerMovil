@@ -113,9 +113,9 @@ class MainActivity : ComponentActivity() {
                           Image(
                               painter = painterResource(id = R.drawable.background),
                               contentDescription = null,
-                              
-              
-                  
+
+
+
                           contentScale = ContentScale.Crop,
                           modifier = Modifier.fillMaxSize()
                       )
@@ -142,31 +142,45 @@ class MainActivity : ComponentActivity() {
                                                 modifier = Modifier
                                                     .width(150.dp)
 
-                                          )
-                                          Spacer(
-                                                modifier = Modifier.weight(1f)
-                                          )
-                                          Image(
+                                      )
+                                      Spacer(
+                                            modifier = Modifier.weight(1f)
+                                      )
+                                     Column (
+                                            horizontalAlignment = Alignment.End,
+
+                                     ) {
+                                         Image(
+                                             painter = painterResource(id = R.drawable.battery),
+                                             contentDescription = null,
+                                             modifier = Modifier
+                                                 .width(60.dp)
+
+                                         )
+                                        Row {
+                                            Image(
                                                 painter = painterResource(id = R.drawable.coin),
                                                 contentDescription = null,
                                                 modifier = Modifier
                                                     .width(25.dp)
 
-                                          )
-                                          Box(
-                                              modifier = Modifier.width(8.dp)
-                                          )
+                                            )
+                                            Box(
+                                                modifier = Modifier.width(8.dp)
+                                            )
                                             Text("123.000", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                                          Box(
-                                              modifier = Modifier.width(24.dp)
-                                          )
-                                          Image(
-                                              painter = painterResource(R.drawable.avatar),
-                                              contentDescription = "avatar",
-                                              contentScale = ContentScale.Crop,
-                                              modifier = Modifier
-                                                  .size(60.dp)
-                                                  .clip(CircleShape)
+                                        }
+                                     }
+                                      Box(
+                                          modifier = Modifier.width(24.dp)
+                                      )
+                                      Image(
+                                          painter = painterResource(R.drawable.avatar),
+                                          contentDescription = "avatar",
+                                          contentScale = ContentScale.Crop,
+                                          modifier = Modifier
+                                              .size(60.dp)
+                                              .clip(CircleShape)
 
                                           )
                                       }
