@@ -78,7 +78,6 @@ class MainActivity : ComponentActivity() {
                               ,
                               topBar = {
                                   Row (
-<<<<<<< Updated upstream
 
                                         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
                                       modifier = Modifier.padding(
@@ -91,19 +90,6 @@ class MainActivity : ComponentActivity() {
                                             contentDescription = null,
                                             modifier = Modifier
                                                 .width(150.dp)
-=======
-                                           verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-                                          modifier = Modifier.padding(
-                                              horizontal = 16.dp,
-                                              vertical =  60.dp
-                                          )
-                                      ) {
-                                          Image(
-                                              painter = painterResource(id = R.drawable.logo),
-                                                contentDescription = null,
-                                                modifier = Modifier
-                                                    .width(150.dp)
->>>>>>> Stashed changes
 
                                       )
                                       Spacer(
@@ -111,6 +97,7 @@ class MainActivity : ComponentActivity() {
                                       )
                                      Column (
                                             horizontalAlignment = Alignment.End,
+
                                      ) {
                                          Image(
                                              painter = painterResource(id = R.drawable.battery),
@@ -125,14 +112,9 @@ class MainActivity : ComponentActivity() {
                                                 contentDescription = null,
                                                 modifier = Modifier
                                                     .width(25.dp)
-<<<<<<< Updated upstream
 
                                             )
                                             Box(
-=======
-                                          )
-                                       Box(
->>>>>>> Stashed changes
                                                 modifier = Modifier.width(8.dp)
                                             )
                                             Text("123.000", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
@@ -148,13 +130,8 @@ class MainActivity : ComponentActivity() {
                                           modifier = Modifier
                                               .size(60.dp)
                                               .clip(CircleShape)
-<<<<<<< Updated upstream
 
                                       )
-=======
-                                          )
-                                        }
->>>>>>> Stashed changes
                                   }
                               }
                               ) { innerPadding ->
