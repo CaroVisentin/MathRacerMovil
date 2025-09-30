@@ -95,17 +95,31 @@ class MainActivity : ComponentActivity() {
                                       Spacer(
                                             modifier = Modifier.weight(1f)
                                       )
-                                      Image(
-                                            painter = painterResource(id = R.drawable.coin),
-                                            contentDescription = null,
-                                            modifier = Modifier
-                                                .width(25.dp)
+                                     Column (
+                                            horizontalAlignment = Alignment.End,
 
-                                      )
-                                      Box(
-                                          modifier = Modifier.width(8.dp)
-                                      )
-                                        Text("123.000", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                                     ) {
+                                         Image(
+                                             painter = painterResource(id = R.drawable.battery),
+                                             contentDescription = null,
+                                             modifier = Modifier
+                                                 .width(60.dp)
+
+                                         )
+                                        Row {
+                                            Image(
+                                                painter = painterResource(id = R.drawable.coin),
+                                                contentDescription = null,
+                                                modifier = Modifier
+                                                    .width(25.dp)
+
+                                            )
+                                            Box(
+                                                modifier = Modifier.width(8.dp)
+                                            )
+                                            Text("123.000", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                     }
                                       Box(
                                           modifier = Modifier.width(24.dp)
                                       )
