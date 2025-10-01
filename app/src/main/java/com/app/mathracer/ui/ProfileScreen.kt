@@ -3,8 +3,8 @@ package com.app.mathracer.ui
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -49,10 +49,13 @@ fun ProfileScreen(){
     horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Barra superior
-        TopBarProfile()
+        TopBarProfile(
+            selectedTab = selectedTab,
+            onTabSelected = { selectedTab = it }
+        )
 
         Spacer(modifier = Modifier.height(24.dp))
-        
+
         // Muestra composable según la pestaña seleccionada
         when (selectedTab) {
             "Perfil" -> Profile(
@@ -69,31 +72,43 @@ fun ProfileScreen(){
     }
 
 }
-
 @Composable
-fun TopBarProfile(){
-    Row (horizontalArrangement = Arrangement.spacedBy(24.dp))
-    {
+fun TopBarProfile(
+    selectedTab: String,
+    onTabSelected: (String) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
         Text(
             text = "Perfil",
-            color = Color.Magenta,
+            color = if (selectedTab == "Perfil") Color.Magenta else Color.Cyan,
             fontSize = 18.sp,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.clickable { onTabSelected("Perfil") }
         )
+
         Text(
             text = "Amigos",
-            color = Color.Cyan,
+            color = if (selectedTab == "Amigos") Color.Magenta else Color.Cyan,
             fontSize = 18.sp,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.clickable { onTabSelected("Amigos") }
         )
+
         Text(
             text = "Ajustes",
-            color = Color.Cyan,
+            color = if (selectedTab == "Ajustes") Color.Magenta else Color.Cyan,
             fontSize = 18.sp,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.clickable { onTabSelected("Ajustes") }
         )
     }
 }
+
 
 @Composable
 fun Profile(
