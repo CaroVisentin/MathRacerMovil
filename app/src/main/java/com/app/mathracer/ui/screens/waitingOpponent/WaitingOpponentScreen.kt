@@ -1,4 +1,4 @@
-package com.app.mathracer.ui
+package com.app.mathracer.ui.screens.waitingOpponent
 
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -26,6 +26,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,11 +39,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.mathracer.R
 
-@Preview
 @Composable
 fun WaitingOpponentScreen(
+    onNavigateToGame: () -> Unit = {},
+    onNavigateBack: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    // Simula la búsqueda de oponente
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(3000) // Simula 3 segundos de búsqueda
+        onNavigateToGame()
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -140,4 +148,10 @@ fun HourGlassRow() {
             )
         }
     }
+}
+
+@Preview
+@Composable
+fun WaitingOpponentScreenPreview() {
+    WaitingOpponentScreen()
 }
