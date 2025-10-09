@@ -1,4 +1,4 @@
-package com.app.mathracer.ui
+package com.app.mathracer.ui.screens.game
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -10,10 +10,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -482,4 +485,63 @@ private fun ResultRow(
             contentScale = ContentScale.Fit
         )
     }
+}
+
+@Composable
+fun GameScreen(
+    onNavigateBack: () -> Unit = {},
+    onGameFinished: () -> Unit = {}
+) {
+    var showResults by remember { mutableStateOf(false) }
+    
+    // Datos de ejemplo para los resultados
+    val resultsData = listOf(
+        PlayerResult(1, "Tú", 2500),
+        PlayerResult(2, "Rival", 1750)
+    )
+
+    // Modal de resultados
+    if (showResults) {
+        ResultsModal(
+            open = true,
+            results = resultsData,
+            carImageRes = R.drawable.car,
+            medalGoldRes = R.drawable.medal_gold,
+            medalSilverRes = R.drawable.medal_silver,
+            onBack = {
+                showResults = false
+                onNavigateBack()
+            },
+            onReplay = { 
+                showResults = false
+                // Aquí podrías reiniciar el juego o navegar a una nueva partida
+            },
+            onDismiss = {
+                showResults = false
+                onNavigateBack()
+            }
+        )
+    }
+
+    GamePlayScreen(
+        timeLabel = "10 seg",
+        coins = 123_000,
+        rivalTrackRes = R.drawable.track_day,
+        youTrackRes = R.drawable.track_night,
+        rivalCarRes = R.drawable.car,
+        youCarRes = R.drawable.car,
+        powerUps = listOf(
+            PowerUp(R.drawable.ic_shield, 99, Color(0xFFFF6B6B)),
+            PowerUp(R.drawable.ic_shuffle, 99, Color.White),
+            PowerUp(R.drawable.ic_bolt, 99, Color(0xFF76E4FF))
+        ),
+        expression = "Y = 13 - X",
+        options = listOf("3", "6", "8", "10"),
+        onBack = onNavigateBack,
+        onPowerUpClick = { /* usar powerup[it] */ },
+        onOptionClick = { index, value ->
+            // Al seleccionar una opción, mostrar el modal de resultados
+            showResults = true
+        }
+    )
 }
