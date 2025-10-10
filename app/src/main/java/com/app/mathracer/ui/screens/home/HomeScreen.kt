@@ -47,6 +47,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.mathracer.R
+import com.app.mathracer.ui.screens.home.viewmodel.HomeViewModel
+import com.app.mathracer.ui.screens.home.viewmodel.HomeUiState
 
 @Composable
 fun HomeScreen(
@@ -61,19 +63,11 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     
-    // Observar cuando esté listo para navegar
-    LaunchedEffect(uiState.connectionReady) {
-        if (uiState.connectionReady) {
-            viewModel.resetConnectionState()
+    // Observar cuando se debe navegar
+    LaunchedEffect(uiState.navigateToWaiting) {
+        if (uiState.navigateToWaiting) {
+            viewModel.clearNavigation()
             onMultiplayerClick()
-        }
-    }
-    
-    // Mostrar errores
-    LaunchedEffect(uiState.error) {
-        uiState.error?.let { error ->
-            snackbarHostState.showSnackbar(error)
-            viewModel.clearError()
         }
     }
     
@@ -166,21 +160,18 @@ fun HomeScreen(
                         ) {
                             TextButton(
                                 onClick = { 
-                                    if (!uiState.isConnecting) {
-                                        // Usar el puerto correcto del backend (5153) y la URL completa del hub
-                                        viewModel.startMultiplayerGame("http://10.0.2.2:5153/gameHub")
-                                    }
+                                    // Solo navegar, no manejar conexiones aquí
+                                    viewModel.navigateToMultiplayer()
                                 },
-                                enabled = !uiState.isConnecting,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .border(width = 2.dp, color = Color.White)
                             ) {
                                 Text(
-                                    text = if (uiState.isConnecting) "Conectando..." else "Multijugador",
+                                    text = "Multijugador",
                                     fontSize = 30.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (uiState.isConnecting) Color.Gray else Color.White,
+                                    color = Color.White,
                                 )
                             }
                             

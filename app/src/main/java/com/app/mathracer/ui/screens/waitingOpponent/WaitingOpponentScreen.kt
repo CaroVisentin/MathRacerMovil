@@ -41,6 +41,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.mathracer.R
 import com.app.mathracer.ui.screens.waitingOpponent.viewmodel.WaitingOpponentViewModel
+import com.app.mathracer.ui.screens.waitingOpponent.viewmodel.WaitingOpponentUiState
+import com.app.mathracer.ui.screens.waitingOpponent.viewmodel.NavigationEvent
 
 @Composable
 fun WaitingOpponentScreen(
@@ -50,11 +52,23 @@ fun WaitingOpponentScreen(
     viewModel: WaitingOpponentViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val navigationEvent by viewModel.navigationEvent.collectAsState()
     
-    // Navegar al juego cuando esté listo
-    LaunchedEffect(uiState.gameStarted, uiState.gameId) {
-        if (uiState.gameStarted && uiState.gameId != null && uiState.playerName != null) {
-            onNavigateToGame(uiState.gameId!!, uiState.playerName!!)
+    // Auto-inicializar conexión cuando se abre la pantalla
+    LaunchedEffect(Unit) {
+        val playerName = "Player_${System.currentTimeMillis()}"
+        viewModel.startConnection(playerName)
+    }
+    
+    // Manejar navegación al juego
+    LaunchedEffect(navigationEvent) {
+        navigationEvent?.let { event ->
+            when (event) {
+                is com.app.mathracer.ui.screens.waitingOpponent.viewmodel.NavigationEvent.NavigateToGame -> {
+                    onNavigateToGame(event.gameId, uiState.playerName)
+                    viewModel.clearNavigationEvent()
+                }
+            }
         }
     }
 
@@ -115,18 +129,18 @@ fun WaitingOpponentScreen(
                         text = when {
                             uiState.isConnecting -> "Conectando al servidor..."
                             uiState.isSearchingMatch -> "Buscando oponente..."
-                            uiState.opponentFound -> "¡Oponente encontrado!"
-                            else -> "Preparando partida..."
+                            uiState.gameFound -> "¡Oponente encontrado!"
+                            else -> uiState.message
                         },
                         color = Color.Cyan,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
                     
-                    if (uiState.opponentName != null) {
+                    if (uiState.opponentName.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = uiState.opponentName!!,
+                            text = uiState.opponentName,
                             color = Color.White,
                             fontSize = 14.sp
                         )
@@ -143,7 +157,7 @@ fun WaitingOpponentScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    if (!uiState.gameStarted) {
+                    if (!uiState.gameFound) {
                         HourGlassRow()
                     }
                 }

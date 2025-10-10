@@ -2,9 +2,11 @@ package com.app.mathracer.ui.screens.waitingOpponent.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.app.mathracer.data.repository.GameRepository
-import com.app.mathracer.data.services.GameEvent
-import com.microsoft.signalr.HubConnectionState
+import com.app.mathracer.domain.models.Game
+import com.app.mathracer.domain.models.GameStatus
+import com.app.mathracer.domain.usecases.FindMatchUseCase
+import com.app.mathracer.domain.usecases.InitializeGameConnectionUseCase
+import com.app.mathracer.domain.usecases.ObserveGameUpdatesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,63 +16,82 @@ import javax.inject.Inject
 
 @HiltViewModel
 class WaitingOpponentViewModel @Inject constructor(
-    private val gameRepository: GameRepository
+    private val initializeGameConnectionUseCase: InitializeGameConnectionUseCase,
+    private val findMatchUseCase: FindMatchUseCase,
+    private val observeGameUpdatesUseCase: ObserveGameUpdatesUseCase
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(WaitingOpponentUiState())
     val uiState: StateFlow<WaitingOpponentUiState> = _uiState.asStateFlow()
     
-    init {
-        // Observar eventos del juego
-        observeGameEvents()
-        observeConnectionState()
-        
-        // Inicializar conexión
-        initializeConnection()
-    }
+    private val _navigationEvent = MutableStateFlow<NavigationEvent?>(null)
+    val navigationEvent: StateFlow<NavigationEvent?> = _navigationEvent.asStateFlow()
     
-    private fun initializeConnection() {
+    fun startConnection(playerName: String) {
+        if (_uiState.value.isConnecting) return
+        
+        android.util.Log.d("WaitingOpponentViewModel", "Starting connection for player: $playerName")
+        
+        _uiState.value = _uiState.value.copy(
+            isConnecting = true,
+            playerName = playerName,
+            error = null,
+            message = "Conectando al servidor..."
+        )
+        
+        // Siempre observar eventos desde el inicio
+        observeGameEvents()
+        
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isConnecting = true)
-            
-            // Verificar si ya está conectado
-            if (gameRepository.connectionState.value == HubConnectionState.CONNECTED) {
-                _uiState.value = _uiState.value.copy(
-                    isConnecting = false,
-                    isConnected = true
-                )
-                
-                // Agregar un pequeño delay para asegurar que los event handlers estén configurados
-                kotlinx.coroutines.delay(500) // 500ms para asegurar que todo esté listo
-                
-                // Buscar partida directamente si ya está conectado
-                findMatch()
-            } else {
-                _uiState.value = _uiState.value.copy(
-                    error = "No hay conexión disponible. Inicia desde la pantalla principal."
-                )
-            }
+            // Flujo completo: Conexión → Búsqueda de partida
+            android.util.Log.d("WaitingOpponentViewModel", "Initializing connection...")
+            initializeGameConnectionUseCase().fold(
+                onSuccess = {
+                    android.util.Log.d("WaitingOpponentViewModel", "Connection successful, finding match...")
+                    _uiState.value = _uiState.value.copy(
+                        isConnecting = false,
+                        isConnected = true,
+                        message = "Conectado! Buscando oponente..."
+                    )
+                    
+                    // Auto buscar partida después de conectar
+                    findMatch()
+                },
+                onFailure = { exception ->
+                    android.util.Log.e("WaitingOpponentViewModel", "Connection failed: ${exception.message}")
+                    _uiState.value = _uiState.value.copy(
+                        isConnecting = false,
+                        error = "Error de conexión: ${exception.message}"
+                    )
+                }
+            )
         }
     }
     
     private fun findMatch() {
+        val playerName = _uiState.value.playerName
+        if (playerName.isBlank()) {
+            android.util.Log.e("WaitingOpponentViewModel", "Player name is blank")
+            return
+        }
+        
+        android.util.Log.d("WaitingOpponentViewModel", "Finding match for player: $playerName")
+        
         viewModelScope.launch {
-            val playerName = "Jugador_${System.currentTimeMillis() % 1000}" // Nombre único
+            _uiState.value = _uiState.value.copy(isSearchingMatch = true)
             
-            _uiState.value = _uiState.value.copy(
-                isSearchingMatch = true,
-                playerName = playerName
-            )
-            
-            val result = gameRepository.findMatch(playerName)
-            result.fold(
+            findMatchUseCase(playerName).fold(
                 onSuccess = {
-                    // El estado se actualizará a través de los eventos de SignalR
+                    android.util.Log.d("WaitingOpponentViewModel", "FindMatch request sent successfully")
+                    _uiState.value = _uiState.value.copy(
+                        message = "Buscando oponente..."
+                    )
                 },
-                onFailure = { error ->
+                onFailure = { exception ->
+                    android.util.Log.e("WaitingOpponentViewModel", "FindMatch failed: ${exception.message}")
                     _uiState.value = _uiState.value.copy(
                         isSearchingMatch = false,
-                        error = "Error al buscar partida: ${error.message}"
+                        error = "Error al buscar partida: ${exception.message}"
                     )
                 }
             )
@@ -78,134 +99,81 @@ class WaitingOpponentViewModel @Inject constructor(
     }
     
     private fun observeGameEvents() {
+        android.util.Log.d("WaitingOpponentViewModel", "Starting to observe game events...")
         viewModelScope.launch {
-            gameRepository.gameEvents.collect { event ->
-                when (event) {
-                    is GameEvent.GameUpdate -> {
-                        val gameUpdate = event.gameUpdate
-                        
-                        when (gameUpdate.status) {
-                            "WaitingForPlayers" -> {
-                                _uiState.value = _uiState.value.copy(
-                                    isSearchingMatch = true,
-                                    gameId = gameUpdate.gameId.toString(),
-                                    opponentFound = false
-                                )
-                            }
-                            
-                            "InProgress" -> {
-                                // Similar al HTML: si hay al menos 2 jugadores, mostrar oponente
-                                if (gameUpdate.players.size >= 2) {
-                                    val myPlayerName = _uiState.value.playerName ?: "Jugador"
-                                    val otherPlayer = gameUpdate.players.firstOrNull { it.name != myPlayerName } 
-                                        ?: gameUpdate.players.getOrNull(1)
-                                        ?: gameUpdate.players.firstOrNull()
-                                    
-                                    _uiState.value = _uiState.value.copy(
-                                        isSearchingMatch = false,
-                                        opponentFound = true,
-                                        opponentName = otherPlayer?.name?.let { "vs $it" } ?: "vs Oponente",
-                                        gameId = gameUpdate.gameId.toString(),
-                                        gameStarted = true // La partida ya empezó
-                                    )
-                                } else {
-                                    _uiState.value = _uiState.value.copy(
-                                        isSearchingMatch = true,
-                                        gameId = gameUpdate.gameId.toString()
-                                    )
-                                }
-                            }
-                            
-                            "Finished" -> {
-                                // El juego terminó, pero esto se manejará en GameScreen
-                                _uiState.value = _uiState.value.copy(
-                                    gameId = gameUpdate.gameId.toString()
-                                )
-                            }
-                        }
-                    }
-                    
-                    is GameEvent.WaitingForPlayers -> {
-                        _uiState.value = _uiState.value.copy(
-                            isSearchingMatch = true,
-                            gameId = event.gameId,
-                            opponentFound = false
-                        )
-                    }
-                    
-                    is GameEvent.MatchFound -> {
-                        _uiState.value = _uiState.value.copy(
-                            isSearchingMatch = false,
-                            opponentFound = true,
-                            opponentName = "vs ${event.player2}",
-                            gameId = event.gameId
-                        )
-                    }
-                    
-                    is GameEvent.GameStarted -> {
-                        _uiState.value = _uiState.value.copy(
-                            gameStarted = true,
-                            gameId = event.gameId
-                        )
-                    }
-                    
-                    is GameEvent.Error -> {
-                        _uiState.value = _uiState.value.copy(
-                            isSearchingMatch = false,
-                            error = event.message
-                        )
-                    }
-                    
-                    else -> { /* Otros eventos se manejarán en GameViewModel */ }
+            observeGameUpdatesUseCase().collect { game ->
+                if (game != null) {
+                    android.util.Log.d("WaitingOpponentViewModel", "Game event received - ID: ${game.id}, Status: ${game.status}")
+                    processGameUpdate(game)
+                } else {
+                    android.util.Log.d("WaitingOpponentViewModel", "Null game event received")
                 }
             }
         }
     }
     
-    private fun observeConnectionState() {
-        viewModelScope.launch {
-            gameRepository.connectionState.collect { state ->
-                _uiState.value = _uiState.value.copy(
-                    isConnected = state == HubConnectionState.CONNECTED,
-                    isConnecting = state == HubConnectionState.CONNECTING
-                )
+    private fun processGameUpdate(game: Game) {
+        android.util.Log.d("WaitingOpponentViewModel", "Processing game update - ID: ${game.id}, Status: ${game.status}")
+        when (game.status) {
+            GameStatus.WAITING_FOR_PLAYERS -> {
+                // Verificar si soy parte de este juego
+                val currentPlayerName = _uiState.value.playerName
+                val isMyGame = game.playerOne.name == currentPlayerName || 
+                               game.playerTwo?.name == currentPlayerName
                 
-                if (state == HubConnectionState.DISCONNECTED && !_uiState.value.isConnecting) {
+                if (isMyGame) {
                     _uiState.value = _uiState.value.copy(
-                        error = "Conexión perdida con el servidor"
+                        isSearchingMatch = true,
+                        message = "Esperando oponente...",
+                        gameId = game.id
                     )
                 }
             }
+            
+            GameStatus.IN_PROGRESS -> {
+                // Verificar si soy parte de este juego
+                val currentPlayerName = _uiState.value.playerName
+                val isMyGame = game.playerOne.name == currentPlayerName || 
+                               game.playerTwo?.name == currentPlayerName
+                
+                android.util.Log.d("WaitingOpponentViewModel", "IN_PROGRESS - isMyGame: $isMyGame, hasQuestion: ${game.currentQuestion != null}")
+                
+                if (isMyGame && game.currentQuestion != null) {
+                    val opponentName = if (game.playerOne.name == currentPlayerName) {
+                        game.playerTwo?.name ?: "Oponente"
+                    } else {
+                        game.playerOne.name
+                    }
+                    
+                    android.util.Log.d("WaitingOpponentViewModel", "Updating UI for game start - opponent: $opponentName")
+                    
+                    _uiState.value = _uiState.value.copy(
+                        isSearchingMatch = false,
+                        gameFound = true,
+                        message = "¡Oponente encontrado! Iniciando juego...",
+                        opponentName = opponentName
+                    )
+                    
+                    // Navegar inmediatamente al juego
+                    android.util.Log.d("WaitingOpponentViewModel", "🚀 NAVIGATING TO GAME - ID: ${game.id}")
+                    _navigationEvent.value = NavigationEvent.NavigateToGame(game.id)
+                } else {
+                    android.util.Log.d("WaitingOpponentViewModel", "NOT navigating - isMyGame: $isMyGame, currentPlayer: $currentPlayerName, playerOne: ${game.playerOne.name}, playerTwo: ${game.playerTwo?.name}")
+                }
+            }
+            
+            GameStatus.FINISHED -> {
+                // El juego terminó antes de que pudiéramos unirmos
+                _uiState.value = _uiState.value.copy(
+                    isSearchingMatch = false,
+                    error = "El juego terminó inesperadamente"
+                )
+            }
         }
     }
-    
-    fun cancelSearch() {
-        viewModelScope.launch {
-            // Implementar cancelación de búsqueda si tu backend lo soporta
-            gameRepository.disconnect()
-        }
-    }
-    
-    fun clearError() {
-        _uiState.value = _uiState.value.copy(error = null)
-    }
-    
-    override fun onCleared() {
-        super.onCleared()
-        viewModelScope.launch {
-            gameRepository.disconnect()
-        }
-    }
-}
 
-data class WaitingOpponentUiState(
-    val isConnecting: Boolean = false,
-    val isConnected: Boolean = false,
-    val isSearchingMatch: Boolean = false,
-    val opponentFound: Boolean = false,
-    val opponentName: String? = null,
-    val gameStarted: Boolean = false,
-    val gameId: String? = null,
-    val playerName: String? = null,
-    val error: String? = null
-)
+    fun clearNavigationEvent() {
+        _navigationEvent.value = null
+    }
+
+}

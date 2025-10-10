@@ -5,6 +5,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.mathracer.ui.screens.game.viewmodel.GameViewModel
+import com.app.mathracer.ui.screens.game.viewmodel.GameUiState
 import com.app.mathracer.ui.screens.game.components.GameResultModal
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -586,10 +587,10 @@ fun GameScreen(
     }
 
     // Limpiar feedback de respuesta después de 2 segundos
-    LaunchedEffect(uiState.showAnswerFeedback) {
-        if (uiState.showAnswerFeedback) {
+    LaunchedEffect(uiState.showFeedback) {
+        if (uiState.showFeedback) {
             kotlinx.coroutines.delay(2000) // 2 segundos
-            viewModel.clearAnswerFeedback()
+            viewModel.clearFeedback()
         }
     }
 
@@ -606,13 +607,13 @@ fun GameScreen(
             PowerUp(R.drawable.ic_bolt, 99, Color(0xFF76E4FF))
         ),
         expression = uiState.currentQuestion.ifEmpty { "Esperando pregunta..." },
-        options = uiState.currentOptions.ifEmpty { listOf("...", "...", "...", "...") },
+        options = uiState.options.ifEmpty { listOf("...", "...", "...", "...") },
         rivalProgress = uiState.opponentProgress,
         yourProgress = uiState.playerProgress,
-        isWaitingForAnswer = uiState.isWaitingForAnswer,
-        lastAnswerGiven = uiState.lastAnswerGiven,
-        lastAnswerWasCorrect = uiState.lastAnswerWasCorrect,
-        showAnswerFeedback = uiState.showAnswerFeedback,
+        isWaitingForAnswer = uiState.selectedOption != null && !uiState.showFeedback,
+        lastAnswerGiven = uiState.selectedOption,
+        lastAnswerWasCorrect = uiState.isLastAnswerCorrect,
+        showAnswerFeedback = uiState.showFeedback,
         onBack = onNavigateBack,
         onPowerUpClick = { /* usar powerup[it] */ },
         onOptionClick = { index, value ->
@@ -623,17 +624,17 @@ fun GameScreen(
     )
 
     // Modal de resultado del juego
-    if (uiState.gameFinished) {
+    if (uiState.gameEnded) {
         GameResultModal(
-            isWinner = uiState.isWinner,
-            gameSummary = uiState.gameSummary,
-            onDismiss = { viewModel.dismissGameResult() },
+            isWinner = uiState.winner?.contains("Ganaste") == true,
+            gameSummary = uiState.winner ?: "Juego terminado",
+            onDismiss = { 
+                // No necesitamos método específico, el estado ya está manejado
+            },
             onPlayAgain = {
-                viewModel.dismissGameResult()
                 onPlayAgain()
             },
             onBackToHome = {
-                viewModel.dismissGameResult()
                 onNavigateBack()
             }
         )

@@ -10,7 +10,6 @@ import androidx.navigation.NavType
 import com.app.mathracer.ui.screens.home.HomeScreen
 import com.app.mathracer.ui.screens.game.GameScreen
 import com.app.mathracer.ui.screens.waitingOpponent.WaitingOpponentScreen
-import com.app.mathracer.ui.screens.signalrtest.SignalRTestScreen
 
 @Composable
 fun MathRacerNavGraph(
@@ -61,7 +60,6 @@ fun MathRacerNavGraph(
             WaitingOpponentScreen(
                 onNavigateToGame = { gameId, playerName ->
                     navController.navigate(Routes.gameWithIdAndPlayer(gameId, playerName)) {
-                        // Reemplaza la pantalla de waiting para que no se pueda volver con back
                         popUpTo(Routes.WAITING_OPPONENT) {
                             inclusive = true
                         }
@@ -87,7 +85,6 @@ fun MathRacerNavGraph(
                 navController = navController,
                 currentRoute = currentRoute,
                 onBackPressed = {
-                    // Desde el juego, volver al home limpiando el stack
                     navController.navigate(Routes.HOME) {
                         popUpTo(Routes.HOME) {
                             inclusive = true
@@ -100,7 +97,6 @@ fun MathRacerNavGraph(
                 gameId = gameId,
                 playerName = playerName,
                 onNavigateBack = {
-                    // Navega de vuelta al home, limpiando el back stack
                     navController.navigate(Routes.HOME) {
                         popUpTo(Routes.HOME) {
                             inclusive = true
@@ -108,7 +104,6 @@ fun MathRacerNavGraph(
                     }
                 },
                 onPlayAgain = {
-                    // Volver a la pantalla de espera para buscar nueva partida
                     navController.navigate(Routes.WAITING_OPPONENT) {
                         popUpTo(Routes.HOME)
                     }
@@ -123,9 +118,7 @@ fun MathRacerNavGraph(
                 onBackPressed = { navController.navigateUp() }
             )
             
-            SignalRTestScreen(
-                onNavigateBack = { navController.navigateUp() }
-            )
+
         }
     }
 }

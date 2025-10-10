@@ -14,9 +14,7 @@ fun HandleBackNavigation(
     BackHandler(enabled = true) {
         when {
             onBackPressed != null -> onBackPressed()
-            currentRoute == Routes.HOME -> {
-                // Si estamos en Home, no hacemos nada (o podríamos cerrar la app)
-            }
+            currentRoute == Routes.HOME -> {}
             else -> {
                 navController.navigateUp()
             }
