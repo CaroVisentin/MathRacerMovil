@@ -27,6 +27,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,6 +41,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.mathracer.R
 
 @Composable
@@ -48,8 +55,28 @@ fun HomeScreen(
     onFreePracticeClick: () -> Unit = {},
     onShopClick: () -> Unit = {},
     onGarageClick: () -> Unit = {},
-    onStatsClick: () -> Unit = {}
+    onStatsClick: () -> Unit = {},
+    viewModel: com.app.mathracer.ui.screens.home.viewmodel.HomeViewModel = hiltViewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    
+    // Observar cuando esté listo para navegar
+    LaunchedEffect(uiState.connectionReady) {
+        if (uiState.connectionReady) {
+            viewModel.resetConnectionState()
+            onMultiplayerClick()
+        }
+    }
+    
+    // Mostrar errores
+    LaunchedEffect(uiState.error) {
+        uiState.error?.let { error ->
+            snackbarHostState.showSnackbar(error)
+            viewModel.clearError()
+        }
+    }
+    
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -138,16 +165,22 @@ fun HomeScreen(
                                 .padding(top = 32.dp, start = 64.dp, end = 64.dp)
                         ) {
                             TextButton(
-                                onClick = onMultiplayerClick,
+                                onClick = { 
+                                    if (!uiState.isConnecting) {
+                                        // Usar el puerto correcto del backend (5153) y la URL completa del hub
+                                        viewModel.startMultiplayerGame("http://10.0.2.2:5153/gameHub")
+                                    }
+                                },
+                                enabled = !uiState.isConnecting,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .border(width = 2.dp, color = Color.White)
                             ) {
                                 Text(
-                                    text = "Multijugador",
+                                    text = if (uiState.isConnecting) "Conectando..." else "Multijugador",
                                     fontSize = 30.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.White,
+                                    color = if (uiState.isConnecting) Color.Gray else Color.White,
                                 )
                             }
                             
@@ -243,6 +276,16 @@ fun HomeScreen(
                         }
                     }
                 }
+            }
+            
+            // SnackbarHost para mostrar errores
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                SnackbarHost(hostState = snackbarHostState)
             }
         }
     }

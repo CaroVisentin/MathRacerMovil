@@ -1,5 +1,11 @@
 package com.app.mathracer.ui.screens.game
 
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.app.mathracer.ui.screens.game.viewmodel.GameViewModel
+import com.app.mathracer.ui.screens.game.components.GameResultModal
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -9,6 +15,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
@@ -55,6 +62,12 @@ fun GamePlayScreen(
     powerUps: List<PowerUp>,
     expression: String = "Y = 13 - X",
     options: List<String>,
+    rivalProgress: Int = 0,
+    yourProgress: Int = 0,
+    isWaitingForAnswer: Boolean = false,
+    lastAnswerGiven: String? = null,
+    lastAnswerWasCorrect: Boolean? = null,
+    showAnswerFeedback: Boolean = false,
     onBack: () -> Unit,
     onPowerUpClick: (index: Int) -> Unit,
     onOptionClick: (index: Int, value: String) -> Unit,
@@ -154,11 +167,25 @@ fun GamePlayScreen(
                     OptionButton(
                         text = options.getOrNull(0) ?: "",
                         modifier = Modifier.weight(1f),
+                        state = getOptionButtonState(
+                            option = options.getOrNull(0) ?: "",
+                            lastAnswerGiven = lastAnswerGiven,
+                            lastAnswerWasCorrect = lastAnswerWasCorrect,
+                            showAnswerFeedback = showAnswerFeedback,
+                            isWaitingForAnswer = isWaitingForAnswer
+                        ),
                         onClick = { onOptionClick(0, options.getOrNull(0) ?: "") }
                     )
                     OptionButton(
                         text = options.getOrNull(1) ?: "",
                         modifier = Modifier.weight(1f),
+                        state = getOptionButtonState(
+                            option = options.getOrNull(1) ?: "",
+                            lastAnswerGiven = lastAnswerGiven,
+                            lastAnswerWasCorrect = lastAnswerWasCorrect,
+                            showAnswerFeedback = showAnswerFeedback,
+                            isWaitingForAnswer = isWaitingForAnswer
+                        ),
                         onClick = { onOptionClick(1, options.getOrNull(1) ?: "") }
                     )
                 }
@@ -169,11 +196,25 @@ fun GamePlayScreen(
                     OptionButton(
                         text = options.getOrNull(2) ?: "",
                         modifier = Modifier.weight(1f),
+                        state = getOptionButtonState(
+                            option = options.getOrNull(2) ?: "",
+                            lastAnswerGiven = lastAnswerGiven,
+                            lastAnswerWasCorrect = lastAnswerWasCorrect,
+                            showAnswerFeedback = showAnswerFeedback,
+                            isWaitingForAnswer = isWaitingForAnswer
+                        ),
                         onClick = { onOptionClick(2, options.getOrNull(2) ?: "") }
                     )
                     OptionButton(
                         text = options.getOrNull(3) ?: "",
                         modifier = Modifier.weight(1f),
+                        state = getOptionButtonState(
+                            option = options.getOrNull(3) ?: "",
+                            lastAnswerGiven = lastAnswerGiven,
+                            lastAnswerWasCorrect = lastAnswerWasCorrect,
+                            showAnswerFeedback = showAnswerFeedback,
+                            isWaitingForAnswer = isWaitingForAnswer
+                        ),
                         onClick = { onOptionClick(3, options.getOrNull(3) ?: "") }
                     )
                 }
@@ -344,28 +385,70 @@ private fun PowerUpChip(
     }
 }
 
+enum class OptionButtonState {
+    NORMAL, SELECTED, CORRECT, INCORRECT
+}
+
+private fun getOptionButtonState(
+    option: String,
+    lastAnswerGiven: String?,
+    lastAnswerWasCorrect: Boolean?,
+    showAnswerFeedback: Boolean,
+    isWaitingForAnswer: Boolean
+): OptionButtonState {
+    return when {
+        // Mostrar feedback de respuesta correcta/incorrecta
+        showAnswerFeedback && option == lastAnswerGiven && lastAnswerWasCorrect == true -> OptionButtonState.CORRECT
+        showAnswerFeedback && option == lastAnswerGiven && lastAnswerWasCorrect == false -> OptionButtonState.INCORRECT
+        // Mostrar que se está esperando respuesta
+        isWaitingForAnswer && option == lastAnswerGiven -> OptionButtonState.SELECTED
+        // Estado normal
+        else -> OptionButtonState.NORMAL
+    }
+}
+
 @Composable
 private fun OptionButton(
     text: String,
     modifier: Modifier = Modifier,
+    state: OptionButtonState = OptionButtonState.NORMAL,
     onClick: () -> Unit
 ) {
+    val (backgroundColor, borderColor, emoji) = when (state) {
+        OptionButtonState.NORMAL -> Triple(OptionTeal, Color.White, "")
+        OptionButtonState.SELECTED -> Triple(Color(0xFF1976D2), Color(0xFF64B5F6), "⏳")
+        OptionButtonState.CORRECT -> Triple(Color(0xFF4CAF50), Color(0xFF81C784), "✅")
+        OptionButtonState.INCORRECT -> Triple(Color(0xFFF44336), Color(0xFFEF5350), "❌")
+    }
+    
     Button(
         onClick = onClick,
-        modifier = modifier
-            .height(56.dp),
+        modifier = modifier.height(56.dp),
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = OptionTeal,
+            containerColor = backgroundColor,
             contentColor = Color.White
         ),
-        border = BorderStroke(2.dp, Color.White)
+        border = BorderStroke(2.dp, borderColor),
+        enabled = state == OptionButtonState.NORMAL
     ) {
-        Text(
-            text = text,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.ExtraBold
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = text,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.ExtraBold
+            )
+            if (emoji.isNotEmpty()) {
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = emoji,
+                    fontSize = 18.sp
+                )
+            }
+        }
     }
 }
 
@@ -489,38 +572,25 @@ private fun ResultRow(
 
 @Composable
 fun GameScreen(
+    gameId: String,
+    playerName: String = "Jugador",
     onNavigateBack: () -> Unit = {},
-    onGameFinished: () -> Unit = {}
+    onPlayAgain: () -> Unit = {},
+    viewModel: GameViewModel = hiltViewModel()
 ) {
-    var showResults by remember { mutableStateOf(false) }
-    
-    // Datos de ejemplo para los resultados
-    val resultsData = listOf(
-        PlayerResult(1, "Tú", 2500),
-        PlayerResult(2, "Rival", 1750)
-    )
+    val uiState by viewModel.uiState.collectAsState()
 
-    // Modal de resultados
-    if (showResults) {
-        ResultsModal(
-            open = true,
-            results = resultsData,
-            carImageRes = R.drawable.car,
-            medalGoldRes = R.drawable.medal_gold,
-            medalSilverRes = R.drawable.medal_silver,
-            onBack = {
-                showResults = false
-                onNavigateBack()
-            },
-            onReplay = { 
-                showResults = false
-                // Aquí podrías reiniciar el juego o navegar a una nueva partida
-            },
-            onDismiss = {
-                showResults = false
-                onNavigateBack()
-            }
-        )
+    // Inicializar el juego
+    LaunchedEffect(gameId, playerName) {
+        viewModel.initializeGame(gameId, playerName)
+    }
+
+    // Limpiar feedback de respuesta después de 2 segundos
+    LaunchedEffect(uiState.showAnswerFeedback) {
+        if (uiState.showAnswerFeedback) {
+            kotlinx.coroutines.delay(2000) // 2 segundos
+            viewModel.clearAnswerFeedback()
+        }
     }
 
     GamePlayScreen(
@@ -535,13 +605,37 @@ fun GameScreen(
             PowerUp(R.drawable.ic_shuffle, 99, Color.White),
             PowerUp(R.drawable.ic_bolt, 99, Color(0xFF76E4FF))
         ),
-        expression = "Y = 13 - X",
-        options = listOf("3", "6", "8", "10"),
+        expression = uiState.currentQuestion.ifEmpty { "Esperando pregunta..." },
+        options = uiState.currentOptions.ifEmpty { listOf("...", "...", "...", "...") },
+        rivalProgress = uiState.opponentProgress,
+        yourProgress = uiState.playerProgress,
+        isWaitingForAnswer = uiState.isWaitingForAnswer,
+        lastAnswerGiven = uiState.lastAnswerGiven,
+        lastAnswerWasCorrect = uiState.lastAnswerWasCorrect,
+        showAnswerFeedback = uiState.showAnswerFeedback,
         onBack = onNavigateBack,
         onPowerUpClick = { /* usar powerup[it] */ },
         onOptionClick = { index, value ->
-            // Al seleccionar una opción, mostrar el modal de resultados
-            showResults = true
+            if (uiState.currentQuestion.isNotEmpty()) {
+                viewModel.submitAnswer(value)
+            }
         }
     )
+
+    // Modal de resultado del juego
+    if (uiState.gameFinished) {
+        GameResultModal(
+            isWinner = uiState.isWinner,
+            gameSummary = uiState.gameSummary,
+            onDismiss = { viewModel.dismissGameResult() },
+            onPlayAgain = {
+                viewModel.dismissGameResult()
+                onPlayAgain()
+            },
+            onBackToHome = {
+                viewModel.dismissGameResult()
+                onNavigateBack()
+            }
+        )
+    }
 }
