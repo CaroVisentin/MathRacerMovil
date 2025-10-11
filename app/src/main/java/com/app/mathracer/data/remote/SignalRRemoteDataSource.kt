@@ -112,27 +112,18 @@ class SignalRRemoteDataSource @Inject constructor() {
         }
     }
     
-    suspend fun sendAnswer(gameId: String, playerId: String, answer: String): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun sendAnswer(gameId: String, playerId: String, answer: Int): Result<Unit> = withContext(Dispatchers.IO) {
         return@withContext try {
             android.util.Log.d("SignalR", "🎯 Preparing to send answer")
             android.util.Log.d("SignalR", "🎯 GameId: '$gameId' (${gameId::class.java.simpleName})")
             android.util.Log.d("SignalR", "🎯 PlayerId: '$playerId' (${playerId::class.java.simpleName})")  
             android.util.Log.d("SignalR", "🎯 Answer: '$answer' (${answer::class.java.simpleName})")
 
-            val gameIdInt = Integer.valueOf(gameId.toDouble().toInt())
-            val playerIdInt = Integer.valueOf(playerId.toDouble().toInt())
-            
-            android.util.Log.d("SignalR", "🎯 Converted GameId: '$gameId' -> $gameIdInt (${gameIdInt::class.java.simpleName})")
-            android.util.Log.d("SignalR", "🎯 Converted PlayerId: '$playerId' -> $playerIdInt (${playerIdInt::class.java.simpleName})")
-            android.util.Log.d("SignalR", "🎯 Answer remains: '$answer' (${answer::class.java.simpleName})")
-            
-            android.util.Log.d("SignalR", "🎯 Invoking SendAnswer(int, int, string) with correct types")
-            hubConnection?.invoke("SendAnswer", gameIdInt, playerIdInt, answer)
-            
-            android.util.Log.d("SignalR", "✅ Answer sent with both IDs as integers!")
+            android.util.Log.d("SignalR", "🎯 Invoking SendAnswer(int, int, int) with correct types")
+            hubConnection?.invoke("SendAnswer", gameId, playerId, answer)
             Result.success(Unit)
         } catch (e: Exception) {
-            android.util.Log.e("SignalR", "❌ Failed to send answer: ${e.message}", e)
+            android.util.Log.e("SignalR", "Failed to send answer", e)
             Result.failure(e)
         }
     }

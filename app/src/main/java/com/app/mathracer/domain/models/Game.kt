@@ -18,8 +18,8 @@ data class Player(
 data class Question(
     val id: String,
     val text: String,
-    val options: List<String>,
-    val correctAnswer: String
+    val options: List<Int>,
+    val correctAnswer: Int
 )
 
 enum class GameStatus {
@@ -30,6 +30,6 @@ enum class GameStatus {
 
 data class AnswerResult(
     val isCorrect: Boolean,
-    val correctAnswer: String,
+    val correctAnswer: Int,
     val playerId: String
 )

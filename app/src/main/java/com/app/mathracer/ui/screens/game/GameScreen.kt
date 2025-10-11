@@ -62,16 +62,16 @@ fun GamePlayScreen(
     youCarRes: Int,
     powerUps: List<PowerUp>,
     expression: String = "Y = 13 - X",
-    options: List<String>,
+    options: List<Int?> = listOf(0, 0, 0, 0),
     rivalProgress: Int = 0,
     yourProgress: Int = 0,
     isWaitingForAnswer: Boolean = false,
-    lastAnswerGiven: String? = null,
+    lastAnswerGiven: Int? = null,
     lastAnswerWasCorrect: Boolean? = null,
     showAnswerFeedback: Boolean = false,
     onBack: () -> Unit,
     onPowerUpClick: (index: Int) -> Unit,
-    onOptionClick: (index: Int, value: String) -> Unit,
+    onOptionClick: (index: Int, value: Int?) -> Unit,
 ) {
     Scaffold(
         containerColor = BgDark,
@@ -166,28 +166,28 @@ fun GamePlayScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     OptionButton(
-                        text = options.getOrNull(0) ?: "",
+                        text = (options.getOrNull(0) ?: "").toString(),
                         modifier = Modifier.weight(1f),
                         state = getOptionButtonState(
-                            option = options.getOrNull(0) ?: "",
+                            option = options.getOrNull(0),
                             lastAnswerGiven = lastAnswerGiven,
                             lastAnswerWasCorrect = lastAnswerWasCorrect,
                             showAnswerFeedback = showAnswerFeedback,
                             isWaitingForAnswer = isWaitingForAnswer
                         ),
-                        onClick = { onOptionClick(0, options.getOrNull(0) ?: "") }
+                        onClick = { onOptionClick(0, options.getOrNull(0)) }
                     )
                     OptionButton(
-                        text = options.getOrNull(1) ?: "",
+                        text = (options.getOrNull(1) ?: "").toString(),
                         modifier = Modifier.weight(1f),
                         state = getOptionButtonState(
-                            option = options.getOrNull(1) ?: "",
+                            option = options.getOrNull(1),
                             lastAnswerGiven = lastAnswerGiven,
                             lastAnswerWasCorrect = lastAnswerWasCorrect,
                             showAnswerFeedback = showAnswerFeedback,
                             isWaitingForAnswer = isWaitingForAnswer
                         ),
-                        onClick = { onOptionClick(1, options.getOrNull(1) ?: "") }
+                        onClick = { onOptionClick(1, options.getOrNull(1)) }
                     )
                 }
                 Row(
@@ -195,28 +195,28 @@ fun GamePlayScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     OptionButton(
-                        text = options.getOrNull(2) ?: "",
+                        text = (options.getOrNull(2) ?: "").toString(),
                         modifier = Modifier.weight(1f),
                         state = getOptionButtonState(
-                            option = options.getOrNull(2) ?: "",
+                            option = options.getOrNull(2),
                             lastAnswerGiven = lastAnswerGiven,
                             lastAnswerWasCorrect = lastAnswerWasCorrect,
                             showAnswerFeedback = showAnswerFeedback,
                             isWaitingForAnswer = isWaitingForAnswer
                         ),
-                        onClick = { onOptionClick(2, options.getOrNull(2) ?: "") }
+                        onClick = { onOptionClick(2, options.getOrNull(2)) }
                     )
                     OptionButton(
-                        text = options.getOrNull(3) ?: "",
+                        text = (options.getOrNull(3) ?: "").toString(),
                         modifier = Modifier.weight(1f),
                         state = getOptionButtonState(
-                            option = options.getOrNull(3) ?: "",
+                            option = options.getOrNull(3),
                             lastAnswerGiven = lastAnswerGiven,
                             lastAnswerWasCorrect = lastAnswerWasCorrect,
                             showAnswerFeedback = showAnswerFeedback,
                             isWaitingForAnswer = isWaitingForAnswer
                         ),
-                        onClick = { onOptionClick(3, options.getOrNull(3) ?: "") }
+                        onClick = { onOptionClick(3, options.getOrNull(3)) }
                     )
                 }
             }
@@ -391,8 +391,8 @@ enum class OptionButtonState {
 }
 
 private fun getOptionButtonState(
-    option: String,
-    lastAnswerGiven: String?,
+    option: Int?,
+    lastAnswerGiven: Int?,
     lastAnswerWasCorrect: Boolean?,
     showAnswerFeedback: Boolean,
     isWaitingForAnswer: Boolean
@@ -607,7 +607,7 @@ fun GameScreen(
             PowerUp(R.drawable.ic_bolt, 99, Color(0xFF76E4FF))
         ),
         expression = uiState.currentQuestion.ifEmpty { "Esperando pregunta..." },
-        options = uiState.options.ifEmpty { listOf("...", "...", "...", "...") },
+        options = uiState.options,
         rivalProgress = uiState.opponentProgress,
         yourProgress = uiState.playerProgress,
         isWaitingForAnswer = uiState.selectedOption != null && !uiState.showFeedback,

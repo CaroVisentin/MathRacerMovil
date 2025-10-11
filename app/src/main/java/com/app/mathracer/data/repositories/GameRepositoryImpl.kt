@@ -35,14 +35,14 @@ class GameRepositoryImpl(
         }
     }
 
-    override suspend fun sendAnswer(gameId: String, playerId: String, answer: String): Result<AnswerResult> {
+    override suspend fun sendAnswer(gameId: String, playerId: String, answer: Int): Result<AnswerResult> {
         return if (signalRRemoteDataSource.isConnected()) {
             val result = signalRRemoteDataSource.sendAnswer(gameId, playerId, answer)
             if (result.isSuccess) {
                 Result.success(
                     AnswerResult(
                         isCorrect = true,
-                        correctAnswer = "",
+                        correctAnswer = answer,
                         playerId = playerId
                     )
                 )

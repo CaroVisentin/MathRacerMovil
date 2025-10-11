@@ -9,7 +9,7 @@ class SubmitAnswerUseCase(
     suspend operator fun invoke(
         gameId: String, 
         playerId: String, 
-        answer: String
+        answer: Int
     ): Result<AnswerResult> {
         return gameRepository.sendAnswer(gameId, playerId, answer)
     }

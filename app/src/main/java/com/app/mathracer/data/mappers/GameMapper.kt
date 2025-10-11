@@ -34,7 +34,7 @@ object GameMapper {
                     id = questionEntity.id ?: "unknown",
                     text = questionEntity.equation ?: "",
                     options = questionEntity.options ?: emptyList(),
-                    correctAnswer = questionEntity.correctAnswer ?: ""
+                    correctAnswer = questionEntity.correctAnswer ?: 0
                 )
             },
             status = when (entity.status.lowercase()) {

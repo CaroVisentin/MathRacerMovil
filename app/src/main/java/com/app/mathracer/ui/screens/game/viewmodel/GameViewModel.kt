@@ -116,7 +116,7 @@ class GameViewModel @Inject constructor(
         }
     }
     
-    fun submitAnswer(selectedOption: String) {
+    fun submitAnswer(selectedOption: Int?) {
         val currentState = _uiState.value
         
         if (currentState.gameId.isBlank() || currentState.myPlayerId == null) return
@@ -128,12 +128,18 @@ class GameViewModel @Inject constructor(
                 showFeedback = false
             )
             
-            android.util.Log.d("GameViewModel", "🎯 Submitting answer - GameId: '${currentState.gameId}' (${currentState.gameId::class.java.simpleName}), PlayerId: '${currentState.myPlayerId}' (${currentState.myPlayerId!!::class.java.simpleName}), Answer: '$selectedOption' (${selectedOption::class.java.simpleName})")
-            
+            android.util.Log.d("GameViewModel", "🎯 Submitting answer - GameId: '${currentState.gameId}' (${currentState.gameId::class.java.simpleName}), PlayerId: '${currentState.myPlayerId}' (${currentState.myPlayerId!!::class.java.simpleName}), Answer: '$selectedOption' (${selectedOption!!::class.java.simpleName})")
+            val answerInt = selectedOption
+            if (answerInt == null) {
+                _uiState.value = _uiState.value.copy(
+                    error = "La opción seleccionada no es un número válido"
+                )
+                return@launch
+            }
             val result = submitAnswerUseCase(
                 gameId = currentState.gameId,
                 playerId = currentState.myPlayerId!!,
-                answer = selectedOption
+                answer = answerInt
             )
             
             result.fold(

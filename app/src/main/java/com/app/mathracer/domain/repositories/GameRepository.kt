@@ -19,8 +19,8 @@ interface GameRepository {
     /**
      * Send answer for a specific game and player
      */
-    suspend fun sendAnswer(gameId: String, playerId: String, answer: String): Result<AnswerResult>
-    
+    suspend fun sendAnswer(gameId: String, playerId: String, answer: Int): Result<AnswerResult>
+
     /**
      * Observe game state changes
      */

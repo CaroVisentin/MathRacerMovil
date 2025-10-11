@@ -60,8 +60,8 @@ data class QuestionEntity(
     val equation: String?,
     
     @SerializedName("options")
-    val options: List<String>?,
+    val options: List<Int>?,
     
     @SerializedName("correctAnswer")
-    val correctAnswer: String?
+    val correctAnswer: Int?
 )
