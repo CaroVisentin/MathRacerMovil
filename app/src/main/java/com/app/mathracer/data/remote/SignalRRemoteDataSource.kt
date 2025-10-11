@@ -23,8 +23,9 @@ class SignalRRemoteDataSource @Inject constructor() {
     
     suspend fun initialize(hubUrl: String): Result<Unit> = withContext(Dispatchers.IO) {
         return@withContext try {
-            android.util.Log.d("SignalR", "Creating hub connection to: $hubUrl/gamehub")
-            hubConnection = HubConnectionBuilder.create("$hubUrl/gamehub")
+            android.util.Log.d("SignalR", "Creating hub connection to: $hubUrl/gameHub")
+            
+            hubConnection = HubConnectionBuilder.create("$hubUrl/gameHub")
                 .withTransport(TransportEnum.WEBSOCKETS)
                 .shouldSkipNegotiate(false)
                 .build()
@@ -119,8 +120,26 @@ class SignalRRemoteDataSource @Inject constructor() {
             android.util.Log.d("SignalR", "🎯 PlayerId: '$playerId' (${playerId::class.java.simpleName})")  
             android.util.Log.d("SignalR", "🎯 Answer: '$answer' (${answer::class.java.simpleName})")
 
-            android.util.Log.d("SignalR", "🎯 Invoking SendAnswer(int, int, int) with correct types")
-            hubConnection?.invoke("SendAnswer", gameId, playerId, answer)
+            android.util.Log.d("SignalR", "🎯 Invoking SendAnswer with types (attempting numeric ids when possible)")
+            
+            val gameIdNumeric = gameId.toDoubleOrNull()
+            val playerIdNumeric = playerId.toDoubleOrNull()
+
+            if (gameIdNumeric != null && playerIdNumeric != null) {
+                 
+                try {
+                    val gameIdInt = gameIdNumeric.toInt()
+                    val playerIdInt = playerIdNumeric.toInt()
+                    android.util.Log.d("SignalR", "🎯 Invoking SendAnswer with ints: $gameIdInt, $playerIdInt, $answer")
+                    hubConnection?.invoke("SendAnswer", gameIdInt, playerIdInt, answer)
+                } catch (e: Exception) {
+                    android.util.Log.w("SignalR", "Could not convert ids to int, falling back to strings", e)
+                    hubConnection?.invoke("SendAnswer", gameId, playerId, answer)
+                }
+            } else {
+                
+                hubConnection?.invoke("SendAnswer", gameId, playerId, answer)
+            }
             Result.success(Unit)
         } catch (e: Exception) {
             android.util.Log.e("SignalR", "Failed to send answer", e)

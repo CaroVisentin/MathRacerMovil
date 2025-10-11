@@ -69,6 +69,7 @@ fun GamePlayScreen(
     lastAnswerGiven: Int? = null,
     lastAnswerWasCorrect: Boolean? = null,
     showAnswerFeedback: Boolean = false,
+    isPenalized: Boolean = false,
     onBack: () -> Unit,
     onPowerUpClick: (index: Int) -> Unit,
     onOptionClick: (index: Int, value: Int?) -> Unit,
@@ -93,7 +94,8 @@ fun GamePlayScreen(
                 titleColor = Color.White.copy(alpha = 0.65f),
                 trackRes = rivalTrackRes,
                 carRes = rivalCarRes,
-                underlineColor = Color(0xFF4BC3FF)
+                underlineColor = Color(0xFF4BC3FF),
+                progress = rivalProgress
             )
             Spacer(Modifier.height(10.dp))
 
@@ -103,7 +105,8 @@ fun GamePlayScreen(
                 titleColor = LabelBlue,
                 trackRes = youTrackRes,
                 carRes = youCarRes,
-                underlineColor = LabelBlue
+                underlineColor = LabelBlue,
+                progress = yourProgress
             )
 
             Spacer(Modifier.height(30.dp))
@@ -173,7 +176,8 @@ fun GamePlayScreen(
                             lastAnswerGiven = lastAnswerGiven,
                             lastAnswerWasCorrect = lastAnswerWasCorrect,
                             showAnswerFeedback = showAnswerFeedback,
-                            isWaitingForAnswer = isWaitingForAnswer
+                            isWaitingForAnswer = isWaitingForAnswer,
+                            isPenalized = isPenalized
                         ),
                         onClick = { onOptionClick(0, options.getOrNull(0)) }
                     )
@@ -185,7 +189,8 @@ fun GamePlayScreen(
                             lastAnswerGiven = lastAnswerGiven,
                             lastAnswerWasCorrect = lastAnswerWasCorrect,
                             showAnswerFeedback = showAnswerFeedback,
-                            isWaitingForAnswer = isWaitingForAnswer
+                            isWaitingForAnswer = isWaitingForAnswer,
+                            isPenalized = isPenalized
                         ),
                         onClick = { onOptionClick(1, options.getOrNull(1)) }
                     )
@@ -202,7 +207,8 @@ fun GamePlayScreen(
                             lastAnswerGiven = lastAnswerGiven,
                             lastAnswerWasCorrect = lastAnswerWasCorrect,
                             showAnswerFeedback = showAnswerFeedback,
-                            isWaitingForAnswer = isWaitingForAnswer
+                            isWaitingForAnswer = isWaitingForAnswer,
+                            isPenalized = isPenalized
                         ),
                         onClick = { onOptionClick(2, options.getOrNull(2)) }
                     )
@@ -214,7 +220,8 @@ fun GamePlayScreen(
                             lastAnswerGiven = lastAnswerGiven,
                             lastAnswerWasCorrect = lastAnswerWasCorrect,
                             showAnswerFeedback = showAnswerFeedback,
-                            isWaitingForAnswer = isWaitingForAnswer
+                            isWaitingForAnswer = isWaitingForAnswer,
+                            isPenalized = isPenalized
                         ),
                         onClick = { onOptionClick(3, options.getOrNull(3)) }
                     )
@@ -285,7 +292,8 @@ private fun TrackCard(
     titleColor: Color,
     trackRes: Int,
     carRes: Int,
-    underlineColor: Color
+    underlineColor: Color,
+    progress: Int = 0
 ) {
     Column(
         modifier = Modifier
@@ -316,7 +324,7 @@ private fun TrackCard(
                     .background(Color.Black.copy(alpha = 0.35f))
             ) {
                 Text(
-                    text = title,
+                    text = "$title ($progress/10)",
                     color = titleColor,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -324,25 +332,32 @@ private fun TrackCard(
                 )
             }
 
-            // Auto
+            
+            val carPosition = (progress / 10f).coerceIn(0f, 1f)
             Image(
                 painter = painterResource(carRes),
                 contentDescription = null,
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(12.dp)
+                    .padding(start = (12 + (carPosition * (120 - 60))).dp, bottom = 12.dp) // Posición del auto
                     .height(48.dp),
                 contentScale = ContentScale.Fit
             )
         }
 
-        // Subrayado de color
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(3.dp)
-                .background(underlineColor)
-        )
+                .height(6.dp)
+                .background(Color.Gray.copy(alpha = 0.3f))
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(fraction = (progress / 10f).coerceIn(0f, 1f))
+                    .height(6.dp)
+                    .background(underlineColor)
+            )
+        }
     }
 }
 
@@ -387,7 +402,7 @@ private fun PowerUpChip(
 }
 
 enum class OptionButtonState {
-    NORMAL, SELECTED, CORRECT, INCORRECT
+    NORMAL, SELECTED, CORRECT, INCORRECT, DISABLED
 }
 
 private fun getOptionButtonState(
@@ -395,15 +410,17 @@ private fun getOptionButtonState(
     lastAnswerGiven: Int?,
     lastAnswerWasCorrect: Boolean?,
     showAnswerFeedback: Boolean,
-    isWaitingForAnswer: Boolean
+    isWaitingForAnswer: Boolean,
+    isPenalized: Boolean = false
 ): OptionButtonState {
     return when {
-        // Mostrar feedback de respuesta correcta/incorrecta
+        isPenalized -> OptionButtonState.DISABLED
+        
         showAnswerFeedback && option == lastAnswerGiven && lastAnswerWasCorrect == true -> OptionButtonState.CORRECT
         showAnswerFeedback && option == lastAnswerGiven && lastAnswerWasCorrect == false -> OptionButtonState.INCORRECT
-        // Mostrar que se está esperando respuesta
+        
         isWaitingForAnswer && option == lastAnswerGiven -> OptionButtonState.SELECTED
-        // Estado normal
+         
         else -> OptionButtonState.NORMAL
     }
 }
@@ -420,6 +437,7 @@ private fun OptionButton(
         OptionButtonState.SELECTED -> Triple(Color(0xFF1976D2), Color(0xFF64B5F6), "⏳")
         OptionButtonState.CORRECT -> Triple(Color(0xFF4CAF50), Color(0xFF81C784), "✅")
         OptionButtonState.INCORRECT -> Triple(Color(0xFFF44336), Color(0xFFEF5350), "❌")
+        OptionButtonState.DISABLED -> Triple(Color(0xFF666666), Color(0xFF999999), "⏱️")
     }
     
     Button(
@@ -431,7 +449,7 @@ private fun OptionButton(
             contentColor = Color.White
         ),
         border = BorderStroke(2.dp, borderColor),
-        enabled = state == OptionButtonState.NORMAL
+        enabled = state == OptionButtonState.NORMAL || state == OptionButtonState.SELECTED
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -586,11 +604,22 @@ fun GameScreen(
         viewModel.initializeGame(gameId, playerName)
     }
 
-    // Limpiar feedback de respuesta después de 2 segundos
+    // Limpiar feedback automáticamente después de mostrar resultado
+    // Si la respuesta fue correcta, preparar la siguiente pregunta inmediatamente.
+    // Si fue incorrecta, el ViewModel realizará la preparación después de la penalización.
     LaunchedEffect(uiState.showFeedback) {
         if (uiState.showFeedback) {
-            kotlinx.coroutines.delay(2000) // 2 segundos
-            viewModel.clearFeedback()
+            if (uiState.isLastAnswerCorrect == true) {
+                // Respuesta correcta: mostrar un pequeño feedback y preparar la siguiente pregunta YA
+                kotlinx.coroutines.delay(200) // parpadeo rápido para el feedback
+                viewModel.clearFeedback()
+                viewModel.prepareForNextQuestion()
+            } else {
+                // Respuesta incorrecta: el ViewModel aplica penalización y se encargará de preparar la siguiente pregunta.
+                // Aquí solo mostramos el feedback durante 1s y lo limpiamos para que la penalización (si existe) se vea.
+                kotlinx.coroutines.delay(1000)
+                viewModel.clearFeedback()
+            }
         }
     }
 
@@ -606,7 +635,16 @@ fun GameScreen(
             PowerUp(R.drawable.ic_shuffle, 99, Color.White),
             PowerUp(R.drawable.ic_bolt, 99, Color(0xFF76E4FF))
         ),
-        expression = uiState.currentQuestion.ifEmpty { "Esperando pregunta..." },
+        expression = uiState.currentQuestion.ifEmpty { 
+            when {
+                uiState.isLoading -> "Conectando al juego..."
+                uiState.gameEnded -> "¡Juego terminado!"
+                    uiState.isPenalized -> "⏱️ PENALIZADO - Espera 1 segundo..."
+                uiState.selectedOption != null && !uiState.showFeedback -> "Procesando respuesta..."
+                uiState.showFeedback -> if (uiState.isLastAnswerCorrect == true) "✅ ¡Correcto!" else "❌ Incorrecto"
+                    else -> ""
+            }
+        },
         options = uiState.options,
         rivalProgress = uiState.opponentProgress,
         yourProgress = uiState.playerProgress,
@@ -614,10 +652,12 @@ fun GameScreen(
         lastAnswerGiven = uiState.selectedOption,
         lastAnswerWasCorrect = uiState.isLastAnswerCorrect,
         showAnswerFeedback = uiState.showFeedback,
+        isPenalized = uiState.isPenalized,
         onBack = onNavigateBack,
         onPowerUpClick = { /* usar powerup[it] */ },
         onOptionClick = { index, value ->
-            if (uiState.currentQuestion.isNotEmpty()) {
+            // Solo permitir responder si hay pregunta, no está penalizado, y no está mostrando feedback
+            if (uiState.currentQuestion.isNotEmpty() && !uiState.isPenalized && !uiState.showFeedback) {
                 viewModel.submitAnswer(value)
             }
         }

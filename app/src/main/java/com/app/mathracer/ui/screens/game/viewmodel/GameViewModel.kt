@@ -58,37 +58,76 @@ class GameViewModel @Inject constructor(
                     android.util.Log.d("GameViewModel", "🎮 Looking for player: '$myPlayerName'")
                     android.util.Log.d("GameViewModel", "🎮 Player 1: '${game.playerOne.name}', Player 2: '${game.playerTwo?.name}'")
                     
-                    // Encontrar mi jugador basado en el nombre
-                    val myPlayer = if (game.playerOne.name == myPlayerName) {
-                        game.playerOne
-                    } else {
-                        game.playerTwo
-                    }
                     
-                    // El oponente es el otro jugador
-                    val opponent = if (game.playerOne.name == myPlayerName) {
-                        game.playerTwo
-                    } else {
-                        game.playerOne
+                    val myPlayer = when {
+                        game.playerOne.name.equals(myPlayerName, ignoreCase = true) -> game.playerOne
+                        game.playerTwo?.name?.equals(myPlayerName, ignoreCase = true) == true -> game.playerTwo
+                         
+                        currentState.myPlayerId != null && game.playerOne.id == currentState.myPlayerId -> game.playerOne
+                        currentState.myPlayerId != null && game.playerTwo?.id == currentState.myPlayerId -> game.playerTwo
+                        else -> null
+                    }
+
+                    
+                    val opponent = when (myPlayer) {
+                        null -> if (game.playerOne.name.equals(myPlayerName, ignoreCase = true)) game.playerTwo else game.playerOne
+                        game.playerOne -> game.playerTwo
+                        else -> game.playerOne
                     }
                     
                     android.util.Log.d("GameViewModel", "🎮 Found myPlayer: ${myPlayer?.name} (score: ${myPlayer?.score})")
                     android.util.Log.d("GameViewModel", "🎮 Found opponent: ${opponent?.name} (score: ${opponent?.score})")
                     android.util.Log.d("GameViewModel", "🎮 Current question: '${game.currentQuestion?.text}'")
+                   
+                    val newQuestion = game.currentQuestion?.text ?: ""
+                    val hasNewQuestion = newQuestion.isNotEmpty() && newQuestion != currentState.currentQuestion
                     
-                    // Actualizar UI state
+                    if (hasNewQuestion) {
+                        android.util.Log.d("GameViewModel", "🆕 New question detected: '$newQuestion'")
+                    }
+                    
+                    // Por ahora lo puse asi nomas, dps se puede mejorar
+                    val myPlayerScore = myPlayer?.score ?: 0
+                    val opponentScore = opponent?.score ?: 0
+                    
+                   
+                    val myPlayerPosition = minOf(myPlayerScore, 10)
+                    val opponentPosition = minOf(opponentScore, 10)
+                    
+                    
+                    val gameFinished = myPlayerPosition >= 10 || opponentPosition >= 10
+                    val winner = when {
+                        myPlayerPosition >= 10 -> "¡Ganaste!"
+                        opponentPosition >= 10 -> "Perdiste"
+                        else -> null
+                    }
+                    
+                    android.util.Log.d("GameViewModel", "🏁 Positions - Me: $myPlayerPosition/10, Opponent: $opponentPosition/10, GameFinished: $gameFinished")
+                     
                     _uiState.value = currentState.copy(
                         isLoading = false,
-                        playerScore = myPlayer?.score ?: 0,
-                        opponentScore = opponent?.score ?: 0,
+                        playerScore = myPlayerScore,
+                        opponentScore = opponentScore,
                         currentQuestion = game.currentQuestion?.text ?: "",
                         options = game.currentQuestion?.options ?: emptyList(),
                         correctAnswer = game.currentQuestion?.correctAnswer,
-                        playerProgress = myPlayer?.score ?: 0,
-                        opponentProgress = opponent?.score ?: 0,
-                        myPlayerId = myPlayer?.id,
-                        opponentName = opponent?.name ?: "Oponente"
+                        playerProgress = myPlayerPosition,
+                        opponentProgress = opponentPosition,
+                        myPlayerId = myPlayer?.id ?: currentState.myPlayerId,
+                        opponentName = opponent?.name ?: "Oponente",
+                        gameEnded = gameFinished || currentState.gameEnded,
+                        winner = winner ?: currentState.winner,
+                        
+                        showFeedback = if (hasNewQuestion) false else currentState.showFeedback,
+                        selectedOption = if (hasNewQuestion) null else currentState.selectedOption,
+                        isLastAnswerCorrect = if (hasNewQuestion) null else currentState.isLastAnswerCorrect,
+                        
+                        isPenalized = currentState.isPenalized
                     )
+                    
+                    if (hasNewQuestion) {
+                        android.util.Log.d("GameViewModel", "✅ New question loaded and UI updated!")
+                    }
                     
                     android.util.Log.d("GameViewModel", "🎮 ✅ UI State updated successfully!")
                 }
@@ -122,20 +161,33 @@ class GameViewModel @Inject constructor(
         if (currentState.gameId.isBlank() || currentState.myPlayerId == null) return
         
         viewModelScope.launch {
-            // Marcar opción como seleccionada
+             
+            val isCorrect = selectedOption == currentState.correctAnswer
+            
+            android.util.Log.d("GameViewModel", "🎯 Checking answer: selected=$selectedOption, correct=${currentState.correctAnswer}, isCorrect=$isCorrect")
+            
+            
             _uiState.value = currentState.copy(
                 selectedOption = selectedOption,
-                showFeedback = false
+                showFeedback = true,
+                isLastAnswerCorrect = isCorrect
             )
             
-            android.util.Log.d("GameViewModel", "🎯 Submitting answer - GameId: '${currentState.gameId}' (${currentState.gameId::class.java.simpleName}), PlayerId: '${currentState.myPlayerId}' (${currentState.myPlayerId!!::class.java.simpleName}), Answer: '$selectedOption' (${selectedOption!!::class.java.simpleName})")
+           
+            android.util.Log.d("GameViewModel",
+                "🎯 Submitting answer - GameId: '${currentState.gameId}', PlayerId: '${currentState.myPlayerId}', Answer: '${selectedOption ?: "null"}'")
+            
             val answerInt = selectedOption
             if (answerInt == null) {
                 _uiState.value = _uiState.value.copy(
-                    error = "La opción seleccionada no es un número válido"
+                    error = "La opción seleccionada no es un número válido",
+                    showFeedback = false,
+                    selectedOption = null
                 )
                 return@launch
             }
+            
+             
             val result = submitAnswerUseCase(
                 gameId = currentState.gameId,
                 playerId = currentState.myPlayerId!!,
@@ -144,15 +196,40 @@ class GameViewModel @Inject constructor(
             
             result.fold(
                 onSuccess = { answerResult ->
-                    // Mostrar feedback visual
-                    _uiState.value = _uiState.value.copy(
-                        showFeedback = true,
-                        isLastAnswerCorrect = answerResult.isCorrect,
-                        correctAnswer = answerResult.correctAnswer
-                    )
+                    android.util.Log.d("GameViewModel", "📤 Answer sent successfully to server")
+                    
+                    if (isCorrect) {
+                        android.util.Log.d("GameViewModel", "✅ Correct answer! Applying optimistic local progress and waiting for server update...")
+                        
+                        val current = _uiState.value
+                        val newScore = current.playerScore + 1
+                        val newProgress = minOf(newScore, 10)
+                        val reachedEnd = newProgress >= 10
+
+                        _uiState.value = current.copy(
+                            playerScore = newScore,
+                            playerProgress = newProgress,
+                            gameEnded = reachedEnd || current.gameEnded,
+                            winner = if (reachedEnd) "¡Ganaste!" else current.winner
+                        )
+                    } else {
+                        android.util.Log.d("GameViewModel", "❌ Wrong answer. Applying penalty, waiting for server to send new question...")
+                        _uiState.value = _uiState.value.copy(
+                            isPenalized = true
+                        )
+                        kotlinx.coroutines.delay(1000)
+                        _uiState.value = _uiState.value.copy(
+                            isPenalized = false
+                        )
+                     
+                        prepareForNextQuestion()
+                    }
                 },
                 onFailure = { exception ->
+                    android.util.Log.e("GameViewModel", "❌ Failed to send answer: ${exception.message}")
                     _uiState.value = _uiState.value.copy(
+                        selectedOption = null,
+                        showFeedback = false,
                         error = "Error al enviar respuesta: ${exception.message}"
                     )
                 }
@@ -166,5 +243,18 @@ class GameViewModel @Inject constructor(
             selectedOption = null,
             isLastAnswerCorrect = null
         )
+    }
+    
+    fun prepareForNextQuestion() {
+        val currentState = _uiState.value
+        android.util.Log.d("GameViewModel", "🔄 Preparing for next question...")
+        if (_uiState.value.gameEnded) return
+        _uiState.value = _uiState.value.copy(
+            selectedOption = null,
+            showFeedback = false,
+            isLastAnswerCorrect = false
+        )
+        
+        android.util.Log.d("GameViewModel", "🔄 Cleared current question, waiting for server update...")
     }
 }

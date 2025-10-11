@@ -37,19 +37,27 @@ class GameRepositoryImpl(
 
     override suspend fun sendAnswer(gameId: String, playerId: String, answer: Int): Result<AnswerResult> {
         return if (signalRRemoteDataSource.isConnected()) {
-            val result = signalRRemoteDataSource.sendAnswer(gameId, playerId, answer)
-            if (result.isSuccess) {
-                Result.success(
-                    AnswerResult(
-                        isCorrect = true,
-                        correctAnswer = answer,
-                        playerId = playerId
+            try {
+                android.util.Log.d("GameRepository", "🔁 Sending answer to remote: gameId=$gameId, playerId=$playerId, answer=$answer")
+                val result = signalRRemoteDataSource.sendAnswer(gameId, playerId, answer)
+                android.util.Log.d("GameRepository", "🔁 Remote sendAnswer result: isSuccess=${result.isSuccess}")
+                if (result.isSuccess) {
+                    Result.success(
+                        AnswerResult(
+                            isCorrect = true,
+                            correctAnswer = answer,
+                            playerId = playerId
+                        )
                     )
-                )
-            } else {
-                Result.failure(result.exceptionOrNull() ?: Exception("Failed to send answer"))
+                } else {
+                    Result.failure(result.exceptionOrNull() ?: Exception("Failed to send answer"))
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("GameRepository", "❌ Exception sending answer", e)
+                Result.failure(e)
             }
         } else {
+            android.util.Log.e("GameRepository", "❌ Not connected to game server when sending answer")
             Result.failure(Exception("Not connected to game server"))
         }
     }

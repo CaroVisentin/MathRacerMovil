@@ -16,6 +16,7 @@ data class GameUiState(
     val correctAnswer: Int? = 0,
     val showFeedback: Boolean = false,
     val isLastAnswerCorrect: Boolean? = null,
+    val isPenalized: Boolean = false,
     val gameEnded: Boolean = false,
     val winner: String? = null,
     val error: String? = null
