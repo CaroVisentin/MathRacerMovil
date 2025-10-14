@@ -1,5 +1,6 @@
 package com.app.mathracer.ui.screens.game
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -31,6 +32,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -287,6 +289,7 @@ private fun TopBar(timeLabel: String, coins: Int, onBack: () -> Unit) {
     }
 }
 
+
 @Composable
 private fun TrackCard(
     title: String,
@@ -303,10 +306,8 @@ private fun TrackCard(
             .border(2.dp, BorderSoft, RoundedCornerShape(14.dp))
             .background(CardDark)
     ) {
-        // Imagen de pista con auto
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
+        BoxWithConstraints(
+            modifier = Modifier.fillMaxWidth()
         ) {
             Image(
                 painter = painterResource(trackRes),
@@ -318,11 +319,13 @@ private fun TrackCard(
                 contentScale = ContentScale.Crop
             )
 
+            // Etiqueta esquina sup-izq
             Box(
                 modifier = Modifier
                     .padding(start = 10.dp, top = 8.dp)
                     .clip(RoundedCornerShape(6.dp))
                     .background(Color.Black.copy(alpha = 0.35f))
+                    .align(Alignment.TopStart)
             ) {
                 Text(
                     text = "$title ($progress/10)",
@@ -333,15 +336,30 @@ private fun TrackCard(
                 )
             }
 
-            
-            val carPosition = (progress / 10f).coerceIn(0f, 1f)
+            val progress01 = (progress / 10f).coerceIn(0f, 1f)
+            val animated by animateFloatAsState(progress01, label = "carProgress")
+
+            val startMargin = 12.dp
+            val endMargin   = 12.dp
+            val carWidth    = 72.dp
+            val carHeight   = 48.dp
+
+            val density = LocalDensity.current
+            val offsetX = remember(maxWidth, animated) {
+                with(density) {
+                    val travelPx = (maxWidth - startMargin - endMargin - carWidth).toPx()
+                    (travelPx * animated).toDp()
+                }
+            }
+
             Image(
                 painter = painterResource(carRes),
                 contentDescription = null,
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(start = (12 + (carPosition * (120 - 60))).dp, bottom = 12.dp) // Posición del auto
-                    .height(48.dp),
+                    .offset(x = startMargin + offsetX, y = 0.dp)
+                    .padding(bottom = 12.dp)
+                    .size(width = carWidth, height = carHeight),
                 contentScale = ContentScale.Fit
             )
         }
@@ -361,6 +379,7 @@ private fun TrackCard(
         }
     }
 }
+
 
 @Composable
 private fun PowerUpChip(
