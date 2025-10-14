@@ -6,7 +6,8 @@ data class Game(
     val playerTwo: Player?,
     val currentQuestion: Question?,
     val status: GameStatus,
-    val winner: Player?
+    val winner: Player?,
+    val expectedResult: String? = null
 )
 
 data class Player(

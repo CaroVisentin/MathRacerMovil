@@ -51,7 +51,8 @@ object GameMapper {
                         score = winnerEntity.correctAnswers.toInt()
                     )
                 }
-            }
+            },
+            expectedResult = entity.expectedResult,
         )
     }
 }

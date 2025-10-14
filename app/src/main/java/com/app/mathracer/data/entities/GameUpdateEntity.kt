@@ -26,7 +26,10 @@ data class GameUpdateEntity(
     val questionCount: Double?,
     
     @SerializedName("conditionToWin")
-    val conditionToWin: Double?
+    val conditionToWin: Double?,
+
+    @SerializedName("expectedResult")
+    val expectedResult: String? = null
 )
 
 data class PlayerEntity(

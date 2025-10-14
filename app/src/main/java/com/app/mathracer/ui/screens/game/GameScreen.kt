@@ -70,6 +70,7 @@ fun GamePlayScreen(
     lastAnswerWasCorrect: Boolean? = null,
     showAnswerFeedback: Boolean = false,
     isPenalized: Boolean = false,
+    expectedResult: String = "",
     onBack: () -> Unit,
     onPowerUpClick: (index: Int) -> Unit,
     onOptionClick: (index: Int, value: Int?) -> Unit,
@@ -151,7 +152,7 @@ fun GamePlayScreen(
 
             Spacer(Modifier.height(10.dp))
             Text(
-                text = "Elegí la opción para que la Y sea MAYOR",
+                text = "Elegí la opción para que la Y sea ${expectedResult.ifEmpty { "" }}",
                 color = Color.White.copy(alpha = 0.8f),
                 fontSize = 14.sp,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -653,6 +654,7 @@ fun GameScreen(
         lastAnswerWasCorrect = uiState.isLastAnswerCorrect,
         showAnswerFeedback = uiState.showFeedback,
         isPenalized = uiState.isPenalized,
+        expectedResult = uiState.expectedResult,
         onBack = onNavigateBack,
         onPowerUpClick = { /* usar powerup[it] */ },
         onOptionClick = { index, value ->

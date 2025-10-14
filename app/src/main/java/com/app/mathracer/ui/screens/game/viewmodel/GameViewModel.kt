@@ -122,7 +122,8 @@ class GameViewModel @Inject constructor(
                         selectedOption = if (hasNewQuestion) null else currentState.selectedOption,
                         isLastAnswerCorrect = if (hasNewQuestion) null else currentState.isLastAnswerCorrect,
                         
-                        isPenalized = currentState.isPenalized
+                        isPenalized = currentState.isPenalized,
+                        expectedResult = game.expectedResult ?: "" // <-- NUEVO
                     )
                     
                     if (hasNewQuestion) {
@@ -141,7 +142,8 @@ class GameViewModel @Inject constructor(
                         gameEnded = true,
                         winner = if (isWinner) "¡Ganaste!" else "Perdiste",
                         playerScore = game.playerOne.score,
-                        opponentScore = game.playerTwo?.score ?: 0
+                        opponentScore = game.playerTwo?.score ?: 0,
+                        expectedResult = currentState.expectedResult ?: "" // <-- NUEVO
                     )
                 }
                 GameStatus.WAITING_FOR_PLAYERS -> {

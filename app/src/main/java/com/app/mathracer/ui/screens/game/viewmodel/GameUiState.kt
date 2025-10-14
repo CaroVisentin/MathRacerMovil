@@ -19,5 +19,6 @@ data class GameUiState(
     val isPenalized: Boolean = false,
     val gameEnded: Boolean = false,
     val winner: String? = null,
-    val error: String? = null
+    val error: String? = null,
+    val expectedResult: String = "" // <-- NUEVO: para mostrar "MAYOR" o "MENOR"
 )
