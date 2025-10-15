@@ -36,6 +36,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -113,8 +114,9 @@ fun GamePlayScreen(
             )
 
             Spacer(Modifier.height(30.dp))
-
+/*
             // ====== POWER UPS ======
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
@@ -130,7 +132,7 @@ fun GamePlayScreen(
                     Spacer(Modifier.width(12.dp))
                 }
             }
-
+*/
             Spacer(Modifier.height(30.dp))
 
             // ====== EXPRESIÓN ======
@@ -249,6 +251,7 @@ private fun TopBar(timeLabel: String, coins: Int, onBack: () -> Unit) {
             Icon(Icons.Filled.ArrowBack, contentDescription = "Atrás", tint = Color.White)
         }
         Spacer(Modifier.width(4.dp))
+        /*
         Text(
             text = timeLabel,
             color = Color.White,
@@ -260,6 +263,7 @@ private fun TopBar(timeLabel: String, coins: Int, onBack: () -> Unit) {
         // Indicadores / monedas (simplificado)
         Spacer(Modifier.width(6.dp))
         // Icono de combustible
+
         Icon(
             painter = painterResource(R.drawable.ic_fuel), // tu drawable
             contentDescription = "Combustible",
@@ -286,6 +290,7 @@ private fun TopBar(timeLabel: String, coins: Int, onBack: () -> Unit) {
                 .size(16.dp)
                 .background(Color(0xFF555555), RoundedCornerShape(4.dp))
         )
+        */
     }
 }
 
@@ -435,12 +440,9 @@ private fun getOptionButtonState(
 ): OptionButtonState {
     return when {
         isPenalized -> OptionButtonState.DISABLED
-        
         showAnswerFeedback && option == lastAnswerGiven && lastAnswerWasCorrect == true -> OptionButtonState.CORRECT
         showAnswerFeedback && option == lastAnswerGiven && lastAnswerWasCorrect == false -> OptionButtonState.INCORRECT
-        
         isWaitingForAnswer && option == lastAnswerGiven -> OptionButtonState.SELECTED
-         
         else -> OptionButtonState.NORMAL
     }
 }
@@ -455,11 +457,11 @@ private fun OptionButton(
     val (backgroundColor, borderColor, emoji) = when (state) {
         OptionButtonState.NORMAL -> Triple(OptionTeal, Color.White, "")
         OptionButtonState.SELECTED -> Triple(Color(0xFF1976D2), Color(0xFF64B5F6), "⏳")
-        OptionButtonState.CORRECT -> Triple(Color(0xFF4CAF50), Color(0xFF81C784), "✅")
-        OptionButtonState.INCORRECT -> Triple(Color(0xFFF44336), Color(0xFFEF5350), "❌")
+        OptionButtonState.CORRECT -> Triple(Color(0xFF4CAF50), Color(0xFF81C784), text)
+        OptionButtonState.INCORRECT -> Triple(Color(0xFFF44336), Color(0xFFEF5350), text)
         OptionButtonState.DISABLED -> Triple(Color(0xFF666666), Color(0xFF999999), "⏱️")
     }
-    
+
     Button(
         onClick = onClick,
         modifier = modifier.height(56.dp),
@@ -688,7 +690,9 @@ fun GameScreen(
     if (uiState.gameEnded) {
         GameResultModal(
             isWinner = uiState.winner?.contains("Ganaste") == true,
-            gameSummary = uiState.winner ?: "Juego terminado",
+           // gameSummary = uiState.winner ?: "Juego terminado",
+            userName = uiState.playerName,
+            userNameRival = uiState.opponentName,
             onDismiss = { 
                 // No necesitamos método específico, el estado ya está manejado
             },

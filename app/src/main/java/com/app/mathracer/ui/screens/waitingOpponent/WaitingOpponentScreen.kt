@@ -145,7 +145,7 @@ fun WaitingOpponentScreen(
                             fontSize = 14.sp
                         )
                     }
-                    
+                    /*
                     if (uiState.error != null) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
@@ -154,7 +154,7 @@ fun WaitingOpponentScreen(
                             fontSize = 12.sp
                         )
                     }
-
+                     */
                     Spacer(modifier = Modifier.height(24.dp))
 
                     if (!uiState.gameFound) {
