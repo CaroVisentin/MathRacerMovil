@@ -27,6 +27,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,7 +41,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.mathracer.R
+import com.app.mathracer.ui.screens.home.viewmodel.HomeViewModel
+import com.app.mathracer.ui.screens.home.viewmodel.HomeUiState
 
 @Composable
 fun HomeScreen(
@@ -48,8 +57,20 @@ fun HomeScreen(
     onFreePracticeClick: () -> Unit = {},
     onShopClick: () -> Unit = {},
     onGarageClick: () -> Unit = {},
-    onStatsClick: () -> Unit = {}
+    onStatsClick: () -> Unit = {},
+    viewModel: com.app.mathracer.ui.screens.home.viewmodel.HomeViewModel = hiltViewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    
+    // Observar cuando se debe navegar
+    LaunchedEffect(uiState.navigateToWaiting) {
+        if (uiState.navigateToWaiting) {
+            viewModel.clearNavigation()
+            onMultiplayerClick()
+        }
+    }
+    
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -138,7 +159,10 @@ fun HomeScreen(
                                 .padding(top = 32.dp, start = 64.dp, end = 64.dp)
                         ) {
                             TextButton(
-                                onClick = onMultiplayerClick,
+                                onClick = { 
+                                    // Solo navegar, no manejar conexiones aquí
+                                    viewModel.navigateToMultiplayer()
+                                },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .border(width = 2.dp, color = Color.White)
@@ -243,6 +267,16 @@ fun HomeScreen(
                         }
                     }
                 }
+            }
+            
+            // SnackbarHost para mostrar errores
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                SnackbarHost(hostState = snackbarHostState)
             }
         }
     }

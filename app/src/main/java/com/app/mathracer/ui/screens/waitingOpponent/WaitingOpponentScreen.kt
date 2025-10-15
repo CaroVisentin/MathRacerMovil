@@ -27,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,18 +38,38 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.mathracer.R
+import com.app.mathracer.ui.screens.waitingOpponent.viewmodel.WaitingOpponentViewModel
+import com.app.mathracer.ui.screens.waitingOpponent.viewmodel.WaitingOpponentUiState
+import com.app.mathracer.ui.screens.waitingOpponent.viewmodel.NavigationEvent
 
 @Composable
 fun WaitingOpponentScreen(
-    onNavigateToGame: () -> Unit = {},
+    onNavigateToGame: (gameId: String, playerName: String) -> Unit = { _, _ -> },
     onNavigateBack: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: WaitingOpponentViewModel = hiltViewModel()
 ) {
-    // Simula la búsqueda de oponente
+    val uiState by viewModel.uiState.collectAsState()
+    val navigationEvent by viewModel.navigationEvent.collectAsState()
+    
+    // Auto-inicializar conexión cuando se abre la pantalla
     LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(3000) // Simula 3 segundos de búsqueda
-        onNavigateToGame()
+        val playerName = "Player_${System.currentTimeMillis()}"
+        viewModel.startConnection(playerName)
+    }
+    
+    // Manejar navegación al juego
+    LaunchedEffect(navigationEvent) {
+        navigationEvent?.let { event ->
+            when (event) {
+                is com.app.mathracer.ui.screens.waitingOpponent.viewmodel.NavigationEvent.NavigateToGame -> {
+                    onNavigateToGame(event.gameId, uiState.playerName)
+                    viewModel.clearNavigationEvent()
+                }
+            }
+        }
     }
 
     Box(
@@ -105,15 +126,40 @@ fun WaitingOpponentScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        text = "Esperando al contrincante",
+                        text = when {
+                            uiState.isConnecting -> "Conectando al servidor..."
+                            uiState.isSearchingMatch -> "Buscando oponente..."
+                            uiState.gameFound -> "¡Oponente encontrado!"
+                            else -> uiState.message
+                        },
                         color = Color.Cyan,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
-
+                    
+                    if (uiState.opponentName.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = uiState.opponentName,
+                            color = Color.White,
+                            fontSize = 14.sp
+                        )
+                    }
+                    /*
+                    if (uiState.error != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = uiState.error!!,
+                            color = Color.Red,
+                            fontSize = 12.sp
+                        )
+                    }
+                     */
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    HourGlassRow()
+                    if (!uiState.gameFound) {
+                        HourGlassRow()
+                    }
                 }
             }
         }

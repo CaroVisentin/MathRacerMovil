@@ -74,4 +74,9 @@ dependencies {
     
     // Serialization
     implementation(libs.kotlinx.serialization.json)
+    
+    // SignalR
+    implementation(libs.signalr)
+    implementation(libs.okhttp)
+    implementation(libs.gson)
 }

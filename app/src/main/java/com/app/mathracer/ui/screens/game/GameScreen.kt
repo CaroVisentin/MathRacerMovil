@@ -1,5 +1,13 @@
 package com.app.mathracer.ui.screens.game
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.app.mathracer.ui.screens.game.viewmodel.GameViewModel
+import com.app.mathracer.ui.screens.game.viewmodel.GameUiState
+import com.app.mathracer.ui.screens.game.components.GameResultModal
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -9,6 +17,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
@@ -23,9 +32,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -54,10 +65,18 @@ fun GamePlayScreen(
     youCarRes: Int,
     powerUps: List<PowerUp>,
     expression: String = "Y = 13 - X",
-    options: List<String>,
+    options: List<Int?> = listOf(0, 0, 0, 0),
+    rivalProgress: Int = 0,
+    yourProgress: Int = 0,
+    isWaitingForAnswer: Boolean = false,
+    lastAnswerGiven: Int? = null,
+    lastAnswerWasCorrect: Boolean? = null,
+    showAnswerFeedback: Boolean = false,
+    isPenalized: Boolean = false,
+    expectedResult: String = "",
     onBack: () -> Unit,
     onPowerUpClick: (index: Int) -> Unit,
-    onOptionClick: (index: Int, value: String) -> Unit,
+    onOptionClick: (index: Int, value: Int?) -> Unit,
 ) {
     Scaffold(
         containerColor = BgDark,
@@ -79,7 +98,8 @@ fun GamePlayScreen(
                 titleColor = Color.White.copy(alpha = 0.65f),
                 trackRes = rivalTrackRes,
                 carRes = rivalCarRes,
-                underlineColor = Color(0xFF4BC3FF)
+                underlineColor = Color(0xFF4BC3FF),
+                progress = rivalProgress
             )
             Spacer(Modifier.height(10.dp))
 
@@ -89,12 +109,14 @@ fun GamePlayScreen(
                 titleColor = LabelBlue,
                 trackRes = youTrackRes,
                 carRes = youCarRes,
-                underlineColor = LabelBlue
+                underlineColor = LabelBlue,
+                progress = yourProgress
             )
 
             Spacer(Modifier.height(30.dp))
-
+/*
             // ====== POWER UPS ======
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
@@ -110,7 +132,7 @@ fun GamePlayScreen(
                     Spacer(Modifier.width(12.dp))
                 }
             }
-
+*/
             Spacer(Modifier.height(30.dp))
 
             // ====== EXPRESIÓN ======
@@ -134,7 +156,7 @@ fun GamePlayScreen(
 
             Spacer(Modifier.height(10.dp))
             Text(
-                text = "Elegí la opción para que la Y sea MAYOR",
+                text = "Elegí la opción para que la Y sea ${expectedResult.ifEmpty { "" }}",
                 color = Color.White.copy(alpha = 0.8f),
                 fontSize = 14.sp,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -152,14 +174,30 @@ fun GamePlayScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     OptionButton(
-                        text = options.getOrNull(0) ?: "",
+                        text = (options.getOrNull(0) ?: "").toString(),
                         modifier = Modifier.weight(1f),
-                        onClick = { onOptionClick(0, options.getOrNull(0) ?: "") }
+                        state = getOptionButtonState(
+                            option = options.getOrNull(0),
+                            lastAnswerGiven = lastAnswerGiven,
+                            lastAnswerWasCorrect = lastAnswerWasCorrect,
+                            showAnswerFeedback = showAnswerFeedback,
+                            isWaitingForAnswer = isWaitingForAnswer,
+                            isPenalized = isPenalized
+                        ),
+                        onClick = { onOptionClick(0, options.getOrNull(0)) }
                     )
                     OptionButton(
-                        text = options.getOrNull(1) ?: "",
+                        text = (options.getOrNull(1) ?: "").toString(),
                         modifier = Modifier.weight(1f),
-                        onClick = { onOptionClick(1, options.getOrNull(1) ?: "") }
+                        state = getOptionButtonState(
+                            option = options.getOrNull(1),
+                            lastAnswerGiven = lastAnswerGiven,
+                            lastAnswerWasCorrect = lastAnswerWasCorrect,
+                            showAnswerFeedback = showAnswerFeedback,
+                            isWaitingForAnswer = isWaitingForAnswer,
+                            isPenalized = isPenalized
+                        ),
+                        onClick = { onOptionClick(1, options.getOrNull(1)) }
                     )
                 }
                 Row(
@@ -167,14 +205,30 @@ fun GamePlayScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     OptionButton(
-                        text = options.getOrNull(2) ?: "",
+                        text = (options.getOrNull(2) ?: "").toString(),
                         modifier = Modifier.weight(1f),
-                        onClick = { onOptionClick(2, options.getOrNull(2) ?: "") }
+                        state = getOptionButtonState(
+                            option = options.getOrNull(2),
+                            lastAnswerGiven = lastAnswerGiven,
+                            lastAnswerWasCorrect = lastAnswerWasCorrect,
+                            showAnswerFeedback = showAnswerFeedback,
+                            isWaitingForAnswer = isWaitingForAnswer,
+                            isPenalized = isPenalized
+                        ),
+                        onClick = { onOptionClick(2, options.getOrNull(2)) }
                     )
                     OptionButton(
-                        text = options.getOrNull(3) ?: "",
+                        text = (options.getOrNull(3) ?: "").toString(),
                         modifier = Modifier.weight(1f),
-                        onClick = { onOptionClick(3, options.getOrNull(3) ?: "") }
+                        state = getOptionButtonState(
+                            option = options.getOrNull(3),
+                            lastAnswerGiven = lastAnswerGiven,
+                            lastAnswerWasCorrect = lastAnswerWasCorrect,
+                            showAnswerFeedback = showAnswerFeedback,
+                            isWaitingForAnswer = isWaitingForAnswer,
+                            isPenalized = isPenalized
+                        ),
+                        onClick = { onOptionClick(3, options.getOrNull(3)) }
                     )
                 }
             }
@@ -197,6 +251,7 @@ private fun TopBar(timeLabel: String, coins: Int, onBack: () -> Unit) {
             Icon(Icons.Filled.ArrowBack, contentDescription = "Atrás", tint = Color.White)
         }
         Spacer(Modifier.width(4.dp))
+        /*
         Text(
             text = timeLabel,
             color = Color.White,
@@ -208,6 +263,7 @@ private fun TopBar(timeLabel: String, coins: Int, onBack: () -> Unit) {
         // Indicadores / monedas (simplificado)
         Spacer(Modifier.width(6.dp))
         // Icono de combustible
+
         Icon(
             painter = painterResource(R.drawable.ic_fuel), // tu drawable
             contentDescription = "Combustible",
@@ -234,8 +290,10 @@ private fun TopBar(timeLabel: String, coins: Int, onBack: () -> Unit) {
                 .size(16.dp)
                 .background(Color(0xFF555555), RoundedCornerShape(4.dp))
         )
+        */
     }
 }
+
 
 @Composable
 private fun TrackCard(
@@ -243,7 +301,8 @@ private fun TrackCard(
     titleColor: Color,
     trackRes: Int,
     carRes: Int,
-    underlineColor: Color
+    underlineColor: Color,
+    progress: Int = 0
 ) {
     Column(
         modifier = Modifier
@@ -252,10 +311,8 @@ private fun TrackCard(
             .border(2.dp, BorderSoft, RoundedCornerShape(14.dp))
             .background(CardDark)
     ) {
-        // Imagen de pista con auto
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
+        BoxWithConstraints(
+            modifier = Modifier.fillMaxWidth()
         ) {
             Image(
                 painter = painterResource(trackRes),
@@ -267,14 +324,16 @@ private fun TrackCard(
                 contentScale = ContentScale.Crop
             )
 
+            // Etiqueta esquina sup-izq
             Box(
                 modifier = Modifier
                     .padding(start = 10.dp, top = 8.dp)
                     .clip(RoundedCornerShape(6.dp))
                     .background(Color.Black.copy(alpha = 0.35f))
+                    .align(Alignment.TopStart)
             ) {
                 Text(
-                    text = title,
+                    text = "$title ($progress/10)",
                     color = titleColor,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -282,27 +341,50 @@ private fun TrackCard(
                 )
             }
 
-            // Auto
+            val progress01 = (progress / 10f).coerceIn(0f, 1f)
+            val animated by animateFloatAsState(progress01, label = "carProgress")
+
+            val startMargin = 12.dp
+            val endMargin   = 12.dp
+            val carWidth    = 72.dp
+            val carHeight   = 48.dp
+
+            val density = LocalDensity.current
+            val offsetX = remember(maxWidth, animated) {
+                with(density) {
+                    val travelPx = (maxWidth - startMargin - endMargin - carWidth).toPx()
+                    (travelPx * animated).toDp()
+                }
+            }
+
             Image(
                 painter = painterResource(carRes),
                 contentDescription = null,
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(12.dp)
-                    .height(48.dp),
+                    .offset(x = startMargin + offsetX, y = 0.dp)
+                    .padding(bottom = 12.dp)
+                    .size(width = carWidth, height = carHeight),
                 contentScale = ContentScale.Fit
             )
         }
 
-        // Subrayado de color
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(3.dp)
-                .background(underlineColor)
-        )
+                .height(6.dp)
+                .background(Color.Gray.copy(alpha = 0.3f))
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(fraction = (progress / 10f).coerceIn(0f, 1f))
+                    .height(6.dp)
+                    .background(underlineColor)
+            )
+        }
     }
 }
+
 
 @Composable
 private fun PowerUpChip(
@@ -344,28 +426,70 @@ private fun PowerUpChip(
     }
 }
 
+enum class OptionButtonState {
+    NORMAL, SELECTED, CORRECT, INCORRECT, DISABLED
+}
+
+private fun getOptionButtonState(
+    option: Int?,
+    lastAnswerGiven: Int?,
+    lastAnswerWasCorrect: Boolean?,
+    showAnswerFeedback: Boolean,
+    isWaitingForAnswer: Boolean,
+    isPenalized: Boolean = false
+): OptionButtonState {
+    return when {
+        isPenalized -> OptionButtonState.DISABLED
+        showAnswerFeedback && option == lastAnswerGiven && lastAnswerWasCorrect == true -> OptionButtonState.CORRECT
+        showAnswerFeedback && option == lastAnswerGiven && lastAnswerWasCorrect == false -> OptionButtonState.INCORRECT
+        isWaitingForAnswer && option == lastAnswerGiven -> OptionButtonState.SELECTED
+        else -> OptionButtonState.NORMAL
+    }
+}
+
 @Composable
 private fun OptionButton(
     text: String,
     modifier: Modifier = Modifier,
+    state: OptionButtonState = OptionButtonState.NORMAL,
     onClick: () -> Unit
 ) {
+    val (backgroundColor, borderColor, emoji) = when (state) {
+        OptionButtonState.NORMAL -> Triple(OptionTeal, Color.White, "")
+        OptionButtonState.SELECTED -> Triple(Color(0xFF1976D2), Color(0xFF64B5F6), "⏳")
+        OptionButtonState.CORRECT -> Triple(Color(0xFF4CAF50), Color(0xFF81C784), text)
+        OptionButtonState.INCORRECT -> Triple(Color(0xFFF44336), Color(0xFFEF5350), text)
+        OptionButtonState.DISABLED -> Triple(Color(0xFF666666), Color(0xFF999999), "⏱️")
+    }
+
     Button(
         onClick = onClick,
-        modifier = modifier
-            .height(56.dp),
+        modifier = modifier.height(56.dp),
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = OptionTeal,
+            containerColor = backgroundColor,
             contentColor = Color.White
         ),
-        border = BorderStroke(2.dp, Color.White)
+        border = BorderStroke(2.dp, borderColor),
+        enabled = state == OptionButtonState.NORMAL || state == OptionButtonState.SELECTED
     ) {
-        Text(
-            text = text,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.ExtraBold
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = text,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.ExtraBold
+            )
+            if (emoji.isNotEmpty()) {
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = emoji,
+                    fontSize = 18.sp
+                )
+            }
+        }
     }
 }
 
@@ -489,38 +613,36 @@ private fun ResultRow(
 
 @Composable
 fun GameScreen(
+    gameId: String,
+    playerName: String = "Jugador",
     onNavigateBack: () -> Unit = {},
-    onGameFinished: () -> Unit = {}
+    onPlayAgain: () -> Unit = {},
+    viewModel: GameViewModel = hiltViewModel()
 ) {
-    var showResults by remember { mutableStateOf(false) }
-    
-    // Datos de ejemplo para los resultados
-    val resultsData = listOf(
-        PlayerResult(1, "Tú", 2500),
-        PlayerResult(2, "Rival", 1750)
-    )
+    val uiState by viewModel.uiState.collectAsState()
 
-    // Modal de resultados
-    if (showResults) {
-        ResultsModal(
-            open = true,
-            results = resultsData,
-            carImageRes = R.drawable.car,
-            medalGoldRes = R.drawable.medal_gold,
-            medalSilverRes = R.drawable.medal_silver,
-            onBack = {
-                showResults = false
-                onNavigateBack()
-            },
-            onReplay = { 
-                showResults = false
-                // Aquí podrías reiniciar el juego o navegar a una nueva partida
-            },
-            onDismiss = {
-                showResults = false
-                onNavigateBack()
+    // Inicializar el juego
+    LaunchedEffect(gameId, playerName) {
+        viewModel.initializeGame(gameId, playerName)
+    }
+
+    // Limpiar feedback automáticamente después de mostrar resultado
+    // Si la respuesta fue correcta, preparar la siguiente pregunta inmediatamente.
+    // Si fue incorrecta, el ViewModel realizará la preparación después de la penalización.
+    LaunchedEffect(uiState.showFeedback) {
+        if (uiState.showFeedback) {
+            if (uiState.isLastAnswerCorrect == true) {
+                // Respuesta correcta: mostrar un pequeño feedback y preparar la siguiente pregunta YA
+                kotlinx.coroutines.delay(200) // parpadeo rápido para el feedback
+                viewModel.clearFeedback()
+                viewModel.prepareForNextQuestion()
+            } else {
+                // Respuesta incorrecta: el ViewModel aplica penalización y se encargará de preparar la siguiente pregunta.
+                // Aquí solo mostramos el feedback durante 1s y lo limpiamos para que la penalización (si existe) se vea.
+                kotlinx.coroutines.delay(1000)
+                viewModel.clearFeedback()
             }
-        )
+        }
     }
 
     GamePlayScreen(
@@ -535,13 +657,51 @@ fun GameScreen(
             PowerUp(R.drawable.ic_shuffle, 99, Color.White),
             PowerUp(R.drawable.ic_bolt, 99, Color(0xFF76E4FF))
         ),
-        expression = "Y = 13 - X",
-        options = listOf("3", "6", "8", "10"),
+        expression = uiState.currentQuestion.ifEmpty { 
+            when {
+                uiState.isLoading -> "Conectando al juego..."
+                uiState.gameEnded -> "¡Juego terminado!"
+                    uiState.isPenalized -> "⏱️ PENALIZADO - Espera 1 segundo..."
+                uiState.selectedOption != null && !uiState.showFeedback -> "Procesando respuesta..."
+                uiState.showFeedback -> if (uiState.isLastAnswerCorrect == true) "✅ ¡Correcto!" else "❌ Incorrecto"
+                    else -> ""
+            }
+        },
+        options = uiState.options,
+        rivalProgress = uiState.opponentProgress,
+        yourProgress = uiState.playerProgress,
+        isWaitingForAnswer = uiState.selectedOption != null && !uiState.showFeedback,
+        lastAnswerGiven = uiState.selectedOption,
+        lastAnswerWasCorrect = uiState.isLastAnswerCorrect,
+        showAnswerFeedback = uiState.showFeedback,
+        isPenalized = uiState.isPenalized,
+        expectedResult = uiState.expectedResult,
         onBack = onNavigateBack,
         onPowerUpClick = { /* usar powerup[it] */ },
         onOptionClick = { index, value ->
-            // Al seleccionar una opción, mostrar el modal de resultados
-            showResults = true
+            // Solo permitir responder si hay pregunta, no está penalizado, y no está mostrando feedback
+            if (uiState.currentQuestion.isNotEmpty() && !uiState.isPenalized && !uiState.showFeedback) {
+                viewModel.submitAnswer(value)
+            }
         }
     )
+
+    // Modal de resultado del juego
+    if (uiState.gameEnded) {
+        GameResultModal(
+            isWinner = uiState.winner?.contains("Ganaste") == true,
+           // gameSummary = uiState.winner ?: "Juego terminado",
+            userName = uiState.playerName,
+            userNameRival = uiState.opponentName,
+            onDismiss = { 
+                // No necesitamos método específico, el estado ya está manejado
+            },
+            onPlayAgain = {
+                onPlayAgain()
+            },
+            onBackToHome = {
+                onNavigateBack()
+            }
+        )
+    }
 }
