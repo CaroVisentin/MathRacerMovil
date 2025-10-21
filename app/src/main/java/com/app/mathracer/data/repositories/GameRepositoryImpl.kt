@@ -12,8 +12,8 @@ class GameRepositoryImpl(
     private val signalRRemoteDataSource: SignalRRemoteDataSource
 ) : GameRepository {
 
-    private val hubUrl = "http://127.0.0.1:5153" // Emular en celu físico
-    // private val hubUrl = "http://10.0.2.2:5153" // Android emulator localhost
+   private val hubUrl = "http://192.168.0.100:5153" // este es para el router.
+   // private val hubUrl = "http://10.0.2.2:5153" // Acá juega con el local
 
     override suspend fun initializeConnection(): Result<Unit> {
         return try {

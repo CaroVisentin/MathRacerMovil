@@ -1,5 +1,6 @@
 package com.app.mathracer.data.remote
 
+import android.util.Log
 import com.app.mathracer.data.entities.GameUpdateEntity
 import com.google.gson.Gson
 import com.microsoft.signalr.*
@@ -76,7 +77,10 @@ class SignalRRemoteDataSource @Inject constructor() {
                 return@withContext Result.failure(Exception("Hub connection not initialized"))
             }
             
-            hubConnection?.start()
+            hubConnection?.start()!!.doOnError { e ->
+                    Log.e("SignalR", "Erorr connecting", e)
+                }
+
 
             kotlinx.coroutines.delay(1000)
             
