@@ -131,7 +131,7 @@ fun GamePlayScreen(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
+                horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 powerUps.forEachIndexed { i, p ->
@@ -402,7 +402,7 @@ private fun TrackCard(
 fun ScrollingTrack(
     trackRes: Int,
     height: Dp = 120.dp,
-    speedDpPerSec: Dp = 90.dp,   // velocidad horizontal
+    speedDpPerSec: Dp = 90.dp,
     corner: Dp = 10.dp
 ) {
     BoxWithConstraints(
@@ -731,8 +731,8 @@ fun GameScreen(
         youCarRes = R.drawable.car_game,
         powerUps = listOf(
             PowerUp(R.drawable.ic_shield, uiState.fireExtinguisherCount, Color(0xFFFF6B6B)), // Matafuegos
-            PowerUp(R.drawable.ic_shuffle, 99, Color.White),
-            PowerUp(R.drawable.ic_bolt, 99, Color(0xFF76E4FF))
+           // PowerUp(R.drawable.ic_shuffle, 99, Color.White),
+          //  PowerUp(R.drawable.ic_bolt, 99, Color(0xFF76E4FF))
         ),
         expression = uiState.currentQuestion.ifEmpty { 
             when {
