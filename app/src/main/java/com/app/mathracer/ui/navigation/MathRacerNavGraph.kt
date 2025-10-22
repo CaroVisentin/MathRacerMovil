@@ -45,7 +45,7 @@ fun MathRacerNavGraph(
                     // TODO: Implementar navegación a garage
                 },
                 onStatsClick = { 
-                    navController.navigate(Routes.SIGNALR_TEST)
+                  //  navController.navigate(Routes.SIGNALR_TEST)
                 }
             )
         }

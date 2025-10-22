@@ -79,4 +79,9 @@ dependencies {
     implementation(libs.signalr)
     implementation(libs.okhttp)
     implementation(libs.gson)
+
+    // Compose Animations
+    implementation(libs.ui)
+    implementation(libs.androidx.foundation)
+    implementation(libs.androidx.animation)
 }
