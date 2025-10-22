@@ -126,7 +126,7 @@ fun GamePlayScreen(
             )
 
             Spacer(Modifier.height(30.dp))
-/*
+
             // ====== POWER UPS ======
 
             Row(
@@ -144,7 +144,7 @@ fun GamePlayScreen(
                     Spacer(Modifier.width(12.dp))
                 }
             }
-*/
+
             Spacer(Modifier.height(30.dp))
 
             // ====== EXPRESIÓN ======
@@ -160,7 +160,7 @@ fun GamePlayScreen(
                 Text(
                     text = expression,
                     color = Color.White,
-                    fontSize = 28.sp,
+                    fontSize = 36.sp,
                     fontWeight = FontWeight.ExtraBold,
                     textAlign = TextAlign.Center
                 )
@@ -168,9 +168,15 @@ fun GamePlayScreen(
 
             Spacer(Modifier.height(10.dp))
             Text(
-                text = "Elegí la opción para que la Y sea ${expectedResult.ifEmpty { "" }}",
+                text = "Elegí la opción para que la Y sea",
                 color = Color.White.copy(alpha = 0.8f),
-                fontSize = 14.sp,
+                fontSize = 24.sp,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+            Text(
+                text = "${expectedResult.ifEmpty { "" }}",
+                color = Color.White.copy(alpha = 0.8f),
+                fontSize = 36.sp,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
 
@@ -548,7 +554,7 @@ private fun OptionButton(
         ) {
             Text(
                 text = text,
-                fontSize = 22.sp,
+                fontSize = 32.sp,
                 fontWeight = FontWeight.ExtraBold
             )
             if (emoji.isNotEmpty()) {
@@ -724,7 +730,7 @@ fun GameScreen(
         playerName = uiState.playerName,
         youCarRes = R.drawable.car_game,
         powerUps = listOf(
-            PowerUp(R.drawable.ic_shield, 99, Color(0xFFFF6B6B)),
+            PowerUp(R.drawable.ic_shield, uiState.fireExtinguisherCount, Color(0xFFFF6B6B)), // Matafuegos
             PowerUp(R.drawable.ic_shuffle, 99, Color.White),
             PowerUp(R.drawable.ic_bolt, 99, Color(0xFF76E4FF))
         ),
@@ -748,7 +754,12 @@ fun GameScreen(
         isPenalized = uiState.isPenalized,
         expectedResult = uiState.expectedResult,
         onBack = onNavigateBack,
-        onPowerUpClick = { /* usar powerup[it] */ },
+        onPowerUpClick = { index -> 
+            when (index) {
+                0 -> viewModel.useFireExtinguisher() // Matafuegos
+                // Agregar otros power-ups aquí cuando se implementen
+            }
+        },
         onOptionClick = { index, value ->
             // Solo permitir responder si hay pregunta, no está penalizado, y no está mostrando feedback
             if (uiState.currentQuestion.isNotEmpty() && !uiState.isPenalized && !uiState.showFeedback) {

@@ -48,6 +48,8 @@ import androidx.compose.runtime.remember
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.mathracer.R
 import com.app.mathracer.ui.theme.CyanMR
+import com.app.mathracer.ui.theme.TypographyJersey10
+import com.app.mathracer.ui.theme.customFontFamily
 
 @Composable
 fun HomeScreen(
