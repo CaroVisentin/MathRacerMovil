@@ -20,5 +20,7 @@ data class GameUiState(
     val gameEnded: Boolean = false,
     val winner: String? = null,
     val error: String? = null,
-    val expectedResult: String = "" // <-- NUEVO: para mostrar "MAYOR" o "MENOR"
+    val expectedResult: String = "", // <-- NUEVO: para mostrar "MAYOR" o "MENOR"
+    val fireExtinguisherActive: Boolean = false, // Estado del power-up matafuegos
+    val fireExtinguisherCount: Int = 1 // Cantidad de usos disponibles del matafuegos
 )

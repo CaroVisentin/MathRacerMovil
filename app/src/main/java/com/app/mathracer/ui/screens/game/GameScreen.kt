@@ -1,5 +1,7 @@
 package com.app.mathracer.ui.screens.game
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -37,10 +39,18 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.app.mathracer.R
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 
 private val PanelColor  = Color(0xE62C2C2C) // #2C2C2C con 90% alpha
 private val BorderLight = Color(0x66FFFFFF)
@@ -62,6 +72,8 @@ fun GamePlayScreen(
     rivalTrackRes: Int,
     youTrackRes: Int,
     rivalCarRes: Int,
+    opponentName: String,
+    playerName: String,
     youCarRes: Int,
     powerUps: List<PowerUp>,
     expression: String = "Y = 13 - X",
@@ -94,7 +106,7 @@ fun GamePlayScreen(
         ) {
             // ====== TRACK RIVAL ======
             TrackCard(
-                title = "RIVAL",
+                title = opponentName,
                 titleColor = Color.White.copy(alpha = 0.65f),
                 trackRes = rivalTrackRes,
                 carRes = rivalCarRes,
@@ -105,7 +117,7 @@ fun GamePlayScreen(
 
             // ====== TRACK VOS ======
             TrackCard(
-                title = "VOS",
+                title = playerName,
                 titleColor = LabelBlue,
                 trackRes = youTrackRes,
                 carRes = youCarRes,
@@ -114,12 +126,12 @@ fun GamePlayScreen(
             )
 
             Spacer(Modifier.height(30.dp))
-/*
+
             // ====== POWER UPS ======
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
+                horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 powerUps.forEachIndexed { i, p ->
@@ -132,7 +144,7 @@ fun GamePlayScreen(
                     Spacer(Modifier.width(12.dp))
                 }
             }
-*/
+
             Spacer(Modifier.height(30.dp))
 
             // ====== EXPRESIÓN ======
@@ -148,7 +160,7 @@ fun GamePlayScreen(
                 Text(
                     text = expression,
                     color = Color.White,
-                    fontSize = 28.sp,
+                    fontSize = 36.sp,
                     fontWeight = FontWeight.ExtraBold,
                     textAlign = TextAlign.Center
                 )
@@ -156,9 +168,15 @@ fun GamePlayScreen(
 
             Spacer(Modifier.height(10.dp))
             Text(
-                text = "Elegí la opción para que la Y sea ${expectedResult.ifEmpty { "" }}",
+                text = "Elegí la opción para que la Y sea",
                 color = Color.White.copy(alpha = 0.8f),
-                fontSize = 14.sp,
+                fontSize = 24.sp,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+            Text(
+                text = "${expectedResult.ifEmpty { "" }}",
+                color = Color.White.copy(alpha = 0.8f),
+                fontSize = 36.sp,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
 
@@ -294,7 +312,6 @@ private fun TopBar(timeLabel: String, coins: Int, onBack: () -> Unit) {
     }
 }
 
-
 @Composable
 private fun TrackCard(
     title: String,
@@ -314,14 +331,10 @@ private fun TrackCard(
         BoxWithConstraints(
             modifier = Modifier.fillMaxWidth()
         ) {
-            Image(
-                painter = painterResource(trackRes),
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(120.dp)
-                    .clip(RoundedCornerShape(10.dp)),
-                contentScale = ContentScale.Crop
+            ScrollingTrack(
+                trackRes = trackRes,
+                height = 120.dp,
+                speedDpPerSec = 90.dp  // prueba distintas velocidades
             )
 
             // Etiqueta esquina sup-izq
@@ -380,6 +393,68 @@ private fun TrackCard(
                     .fillMaxWidth(fraction = (progress / 10f).coerceIn(0f, 1f))
                     .height(6.dp)
                     .background(underlineColor)
+            )
+        }
+    }
+}
+
+@Composable
+fun ScrollingTrack(
+    trackRes: Int,
+    height: Dp = 120.dp,
+    speedDpPerSec: Dp = 90.dp,
+    corner: Dp = 10.dp
+) {
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(height)
+            .clip(RoundedCornerShape(corner))
+    ) {
+        val containerWidth: Dp = maxWidth
+        val density = LocalDensity.current
+        val containerWidthPx = with(density) { maxWidth.toPx() }
+        val speedPxPerSec    = with(density) { speedDpPerSec.toPx() }
+
+        // Animación infinita: 0 -> containerWidthPx y reinicia
+        val t = rememberInfiniteTransition(label = "track-scroll")
+        val x by t.animateFloat(
+            initialValue = 0f,
+            targetValue  = containerWidthPx,
+            animationSpec = infiniteRepeatable(
+                animation = tween(
+                    durationMillis = ((containerWidthPx / speedPxPerSec) * 1000f).toInt(),
+                    easing = LinearEasing
+                ),
+                repeatMode = RepeatMode.Restart
+            ),
+            label = "x"
+        )
+
+        // Desplazamiento modular (0..width)
+        val offsetPx = x % containerWidthPx
+
+        // Dos copias: una arrancando en -offset, otra a +width - offset
+        Box(Modifier.fillMaxSize()) {
+            Image(
+                painter = painterResource(trackRes),
+                contentDescription = null,
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .width(containerWidth)
+                    .fillMaxHeight()
+                    .offset { IntOffset(x = -offsetPx.roundToInt(), y = 0) },
+                contentScale = ContentScale.Crop
+            )
+            Image(
+                painter = painterResource(trackRes),
+                contentDescription = null,
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .width(containerWidth)
+                    .fillMaxHeight()
+                    .offset { IntOffset(x = (-offsetPx + containerWidthPx).roundToInt(), y = 0) },
+                contentScale = ContentScale.Crop
             )
         }
     }
@@ -479,7 +554,7 @@ private fun OptionButton(
         ) {
             Text(
                 text = text,
-                fontSize = 22.sp,
+                fontSize = 32.sp,
                 fontWeight = FontWeight.ExtraBold
             )
             if (emoji.isNotEmpty()) {
@@ -648,14 +723,16 @@ fun GameScreen(
     GamePlayScreen(
         timeLabel = "10 seg",
         coins = 123_000,
-        rivalTrackRes = R.drawable.track_day,
-        youTrackRes = R.drawable.track_night,
-        rivalCarRes = R.drawable.car,
-        youCarRes = R.drawable.car,
+        rivalTrackRes = R.drawable.track_city,
+        youTrackRes = R.drawable.track_cake,
+        rivalCarRes = R.drawable.car_game,
+        opponentName = uiState.opponentName,
+        playerName = uiState.playerName,
+        youCarRes = R.drawable.car_game,
         powerUps = listOf(
-            PowerUp(R.drawable.ic_shield, 99, Color(0xFFFF6B6B)),
-            PowerUp(R.drawable.ic_shuffle, 99, Color.White),
-            PowerUp(R.drawable.ic_bolt, 99, Color(0xFF76E4FF))
+            PowerUp(R.drawable.ic_shield, uiState.fireExtinguisherCount, Color(0xFFFF6B6B)), // Matafuegos
+           // PowerUp(R.drawable.ic_shuffle, 99, Color.White),
+          //  PowerUp(R.drawable.ic_bolt, 99, Color(0xFF76E4FF))
         ),
         expression = uiState.currentQuestion.ifEmpty { 
             when {
@@ -677,7 +754,12 @@ fun GameScreen(
         isPenalized = uiState.isPenalized,
         expectedResult = uiState.expectedResult,
         onBack = onNavigateBack,
-        onPowerUpClick = { /* usar powerup[it] */ },
+        onPowerUpClick = { index -> 
+            when (index) {
+                0 -> viewModel.useFireExtinguisher() // Matafuegos
+                // Agregar otros power-ups aquí cuando se implementen
+            }
+        },
         onOptionClick = { index, value ->
             // Solo permitir responder si hay pregunta, no está penalizado, y no está mostrando feedback
             if (uiState.currentQuestion.isNotEmpty() && !uiState.isPenalized && !uiState.showFeedback) {
@@ -704,4 +786,8 @@ fun GameScreen(
             }
         )
     }
+}
+
+fun onClickPowerUp(index: Int) {
+    // Lógica para usar el power-up correspondiente
 }

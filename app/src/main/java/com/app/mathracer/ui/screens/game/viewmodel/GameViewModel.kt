@@ -157,6 +157,28 @@ class GameViewModel @Inject constructor(
         }
     }
     
+    fun useFireExtinguisher() {
+        val currentState = _uiState.value
+        if (currentState.fireExtinguisherActive || currentState.gameEnded || currentState.options.isEmpty() || currentState.fireExtinguisherCount <= 0) return
+
+        // Encontrar la respuesta correcta
+        val correctAnswer = currentState.correctAnswer
+        if (correctAnswer == null) return
+
+        // Crear una lista filtrada con solo dos opciones: la correcta y una incorrecta
+        val filteredOptions = currentState.options.filter { it == correctAnswer }.take(1) +
+                            currentState.options.filter { it != correctAnswer }.shuffled().take(1)
+
+        // Asegurar que la lista esté ordenada aleatoriamente
+        val shuffledOptions = filteredOptions.shuffled()
+
+        _uiState.value = currentState.copy(
+            options = shuffledOptions,
+            fireExtinguisherActive = true,
+            fireExtinguisherCount = 0 // Reducir el contador a 0 cuando se usa
+        )
+    }
+
     fun submitAnswer(selectedOption: Int?) {
         val currentState = _uiState.value
         

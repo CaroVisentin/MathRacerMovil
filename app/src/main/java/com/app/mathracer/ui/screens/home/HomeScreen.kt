@@ -47,8 +47,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.mathracer.R
-import com.app.mathracer.ui.screens.home.viewmodel.HomeViewModel
-import com.app.mathracer.ui.screens.home.viewmodel.HomeUiState
+import com.app.mathracer.ui.theme.CyanMR
+import com.app.mathracer.ui.theme.TypographyJersey10
+import com.app.mathracer.ui.theme.customFontFamily
 
 @Composable
 fun HomeScreen(
@@ -159,19 +160,19 @@ fun HomeScreen(
                                 .padding(top = 32.dp, start = 64.dp, end = 64.dp)
                         ) {
                             TextButton(
-                                onClick = { 
-                                    // Solo navegar, no manejar conexiones aquí
+                                onClick = {
                                     viewModel.navigateToMultiplayer()
                                 },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .border(width = 2.dp, color = Color.White)
+                                    .border(width = 2.dp, color = CyanMR, shape = RoundedCornerShape(8.dp))
+                                    .background(Color.Black.copy(alpha = 0.6f), shape = RoundedCornerShape(8.dp))
                             ) {
                                 Text(
                                     text = "Multijugador",
                                     fontSize = 30.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.White,
+                                    color = CyanMR,
                                 )
                             }
                             
@@ -180,14 +181,14 @@ fun HomeScreen(
                                 enabled = false,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(color = Color.Gray)
-                                    .border(width = 2.dp, color = Color.White)
+                                    .border(width = 2.dp, color = CyanMR, shape = RoundedCornerShape(8.dp))
+                                    .background(Color.Gray.copy(alpha = 0.6f), shape = RoundedCornerShape(8.dp))
                             ) {
                                 Text(
                                     text = "Modo Historia",
                                     fontSize = 30.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.LightGray,
+                                    color = CyanMR,
                                 )
                             }
                             
@@ -196,14 +197,14 @@ fun HomeScreen(
                                 enabled = false,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(color = Color.Gray)
-                                    .border(width = 2.dp, color = Color.White)
+                                    .border(width = 2.dp, color = CyanMR, shape = RoundedCornerShape(8.dp))
+                                    .background(Color.Gray.copy(alpha = 0.6f), shape = RoundedCornerShape(8.dp))
                             ) {
                                 Text(
                                     text = "Práctica libre",
                                     fontSize = 30.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.LightGray,
+                                    color = CyanMR,
                                 )
                             }
                         }
@@ -220,13 +221,18 @@ fun HomeScreen(
                                 onClick = onShopClick,
                                 modifier = Modifier
                                     .shadow(4.dp, RoundedCornerShape(16.dp))
-                                    .background(Color.White, RoundedCornerShape(16.dp))
+                                    .border(
+                                        width = 2.dp,
+                                        color = CyanMR,
+                                        shape = RoundedCornerShape(16.dp)
+                                    )
+                                    .background(Color.Gray.copy(alpha = 0.6f), shape = RoundedCornerShape(8.dp))
                                     .size(64.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Filled.ShoppingCart,
                                     contentDescription = "Tienda",
-                                    tint = Color.Black,
+                                    tint = CyanMR,
                                     modifier = Modifier.size(32.dp)
                                 )
                             }
@@ -237,13 +243,18 @@ fun HomeScreen(
                                 onClick = onGarageClick,
                                 modifier = Modifier
                                     .shadow(4.dp, RoundedCornerShape(16.dp))
-                                    .background(Color.White, RoundedCornerShape(16.dp))
+                                    .border(
+                                        width = 2.dp,
+                                        color = CyanMR,
+                                        shape = RoundedCornerShape(16.dp)
+                                    )
+                                    .background(Color.Gray.copy(alpha = 0.6f), shape = RoundedCornerShape(8.dp))
                                     .size(64.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Filled.Home,
                                     contentDescription = "Garage",
-                                    tint = Color.Black,
+                                    tint = CyanMR,
                                     modifier = Modifier.size(32.dp)
                                 )
                             }
@@ -254,13 +265,18 @@ fun HomeScreen(
                                 onClick = onStatsClick,
                                 modifier = Modifier
                                     .shadow(4.dp, RoundedCornerShape(16.dp))
-                                    .background(Color.White, RoundedCornerShape(16.dp))
+                                    .border(
+                                        width = 2.dp,
+                                        color = CyanMR,
+                                        shape = RoundedCornerShape(16.dp)
+                                    )
+                                    .background(Color.Gray.copy(alpha = 0.6f), shape = RoundedCornerShape(8.dp))
                                     .size(64.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Filled.Star,
                                     contentDescription = "Estadísticas",
-                                    tint = Color.Black,
+                                    tint = CyanMR,
                                     modifier = Modifier.size(32.dp)
                                 )
                             }
