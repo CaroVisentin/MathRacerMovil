@@ -79,4 +79,22 @@ dependencies {
     implementation(libs.signalr)
     implementation(libs.okhttp)
     implementation(libs.gson)
+
+    // Compose Material 3
+    implementation(libs.material3)
+
+    // 🔹 Íconos Material (Filled)
+    implementation(libs.androidx.material.icons.extended)
+
+    // Ejemplo si usás Compose BOM:
+    implementation(platform("androidx.compose:compose-bom:2025.01.00"))
+
+    implementation(platform("androidx.compose:compose-bom:2025.01.00"))
+    implementation(libs.androidx.compose.material3.material3)
+    implementation(libs.material.icons.extended)
+
+    // Compose Animations
+    implementation(libs.ui)
+    implementation(libs.androidx.foundation)
+    implementation(libs.androidx.animation)
 }

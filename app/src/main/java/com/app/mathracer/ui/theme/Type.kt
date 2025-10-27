@@ -5,8 +5,15 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-
+import androidx.compose.ui.text.font.Font
+import com.app.mathracer.R
 // Set of Material typography styles to start with
+
+val customFontFamily = FontFamily(
+    Font(R.font.jersey_10_regular, FontWeight.Normal),
+    Font(R.font.jersey_10_regular, FontWeight.Bold)
+)
+
 val Typography = Typography(
     bodyLarge = TextStyle(
         fontFamily = FontFamily.Default,
@@ -14,6 +21,23 @@ val Typography = Typography(
         fontSize = 16.sp,
         lineHeight = 24.sp,
         letterSpacing = 0.5.sp
+    )
+)
+    val TypographyJersey10 = Typography(
+        bodyLarge = TextStyle(
+            fontFamily = customFontFamily,
+            fontWeight = FontWeight.Normal,
+            fontSize = 16.sp,
+            lineHeight = 24.sp,
+            letterSpacing = 0.5.sp
+        ),
+       labelLarge = TextStyle(
+        fontFamily = customFontFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = 18.sp,
+        lineHeight = 22.sp,
+        letterSpacing = 1.sp
+    )
     )
     /* Other default text styles to override
     titleLarge = TextStyle(
@@ -31,4 +55,3 @@ val Typography = Typography(
         letterSpacing = 0.5.sp
     )
     */
-)
