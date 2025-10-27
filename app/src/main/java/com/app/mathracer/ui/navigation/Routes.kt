@@ -5,7 +5,9 @@ object Routes {
     const val WAITING_OPPONENT = "waiting_opponent"
     const val GAME = "game"
     const val SIGNALR_TEST = "signalr_test"
-    
+    const val LOGIN = "login"
+    const val REGISTER = "register"
+
     // Rutas con argumentos
     fun gameWithIdAndPlayer(gameId: String, playerName: String) = "game/$gameId/$playerName"
 }

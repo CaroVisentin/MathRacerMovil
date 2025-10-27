@@ -1,5 +1,6 @@
 package com.app.mathracer.ui.navigation
 
+import LoginScreen
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -7,6 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import androidx.navigation.NavType
+import com.app.mathracer.ui.RegisterScreen
 import com.app.mathracer.ui.screens.home.HomeScreen
 import com.app.mathracer.ui.screens.game.GameScreen
 import com.app.mathracer.ui.screens.waitingOpponent.WaitingOpponentScreen
@@ -20,7 +22,7 @@ fun MathRacerNavGraph(
 
     NavHost(
         navController = navController,
-        startDestination = Routes.HOME
+        startDestination = Routes.LOGIN
     ) {
         composable(Routes.HOME) {
             HandleBackNavigation(
@@ -68,6 +70,41 @@ fun MathRacerNavGraph(
                 onNavigateBack = {
                     navController.navigateUp()
                 }
+            )
+        }
+
+        composable(Routes.LOGIN) {
+            HandleBackNavigation(
+                navController = navController,
+                currentRoute = currentRoute,
+                onBackPressed = { navController.navigateUp() } // volver atrás
+            )
+
+            LoginScreen(
+                onLogin = { user, pass ->
+                    // 🔹 Acá podés validar login o navegar al home
+                    navController.navigate(Routes.HOME) {
+                        popUpTo(Routes.HOME) { inclusive = true }
+                    }
+                },
+                onLoginWithGoogle = {
+                    // 🔹 Lógica para login con Google
+                },
+                onRegisterClick = {
+                    navController.navigate(Routes.REGISTER)
+                }
+            )
+        }
+
+        composable(Routes.REGISTER) {
+            RegisterScreen(
+                onRegister = { email: String, user: String, pass: String ->
+                    navController.navigate(Routes.HOME) {
+                        popUpTo(Routes.HOME) { inclusive = true }
+                    }
+                },
+                onGoogle = { /* flujo Google */ },
+                onLoginClick = { navController.navigate(Routes.LOGIN) }
             )
         }
         
