@@ -11,6 +11,7 @@ import androidx.navigation.NavType
 import com.app.mathracer.ui.RegisterScreen
 import com.app.mathracer.ui.screens.home.HomeScreen
 import com.app.mathracer.ui.screens.game.GameScreen
+import com.app.mathracer.ui.screens.profile.ProfileScreen
 import com.app.mathracer.ui.screens.waitingOpponent.WaitingOpponentScreen
 
 @Composable
@@ -48,7 +49,8 @@ fun MathRacerNavGraph(
                 },
                 onStatsClick = { 
                   //  navController.navigate(Routes.SIGNALR_TEST)
-                }
+                },
+                onProfileClick = { navController.navigate(Routes.PROFILE) }
             )
         }
         
@@ -107,7 +109,20 @@ fun MathRacerNavGraph(
                 onLoginClick = { navController.navigate(Routes.LOGIN) }
             )
         }
-        
+
+        composable(Routes.PROFILE) {
+            HandleBackNavigation(
+                navController = navController,
+                currentRoute = currentRoute,
+                onBackPressed = { navController.navigateUp() }
+            )
+
+            ProfileScreen(
+               // onNavigateBack = { navController.navigateUp() }
+            )
+        }
+
+
         composable(
             route = "game/{gameId}/{playerName}",
             arguments = listOf(

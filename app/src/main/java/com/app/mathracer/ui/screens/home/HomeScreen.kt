@@ -3,6 +3,7 @@ package com.app.mathracer.ui.screens.home
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -59,6 +60,7 @@ fun HomeScreen(
     onShopClick: () -> Unit = {},
     onGarageClick: () -> Unit = {},
     onStatsClick: () -> Unit = {},
+    onProfileClick: () -> Unit = {},
     viewModel: com.app.mathracer.ui.screens.home.viewmodel.HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -137,6 +139,7 @@ fun HomeScreen(
                                 modifier = Modifier
                                     .size(60.dp)
                                     .clip(CircleShape)
+                                    .clickable { onProfileClick() }
                             )
                         }
                     }
