@@ -46,6 +46,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import android.content.Context
+import com.app.mathracer.ui.screens.tutorial.TutorialOverlay
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.mathracer.R
 import com.app.mathracer.ui.theme.CyanMR
@@ -65,6 +70,16 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val _context = LocalContext.current
+    var showTutorial by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        try {
+            val prefs = _context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+            showTutorial = prefs.getBoolean("show_tutorial_on_next_launch", false)
+        } catch (_: Throwable) {
+            showTutorial = false
+        }
+    }
     
     // Observar cuando se debe navegar
     LaunchedEffect(uiState.navigateToWaiting) {
@@ -288,7 +303,7 @@ fun HomeScreen(
                 }
             }
             
-            // SnackbarHost para mostrar errores
+                 
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -297,6 +312,11 @@ fun HomeScreen(
             ) {
                 SnackbarHost(hostState = snackbarHostState)
             }
+
+                
+                if (showTutorial) {
+                    TutorialOverlay(onFinish = { showTutorial = false })
+                }
         }
     }
 }
