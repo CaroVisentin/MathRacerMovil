@@ -8,6 +8,8 @@ object Routes {
     const val LOGIN = "login"
     const val REGISTER = "register"
     const val PROFILE = "profile"
+    const val WORLDS = "worlds"
+    const val LEVELS = "levels"
 
     // Rutas con argumentos
     fun gameWithIdAndPlayer(gameId: String, playerName: String) = "game/$gameId/$playerName"

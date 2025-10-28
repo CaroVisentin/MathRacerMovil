@@ -1,99 +1,59 @@
 package com.app.mathracer.ui.screens.levels
-
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.tooling.preview.Preview
-import com.app.mathracer.ui.screens.worlds.StarryBackground
-import com.app.mathracer.ui.screens.worlds.TopBar
+import com.app.mathracer.ui.screens.levels.viewmodel.LevelUiModel
+import com.app.mathracer.ui.screens.levels.viewmodel.LevelsViewModel
 
 @Composable
-fun LevelsScreen(
-    worldName: String,
-    worldDescription: String,
-    levels: List<Level>,
-    onLevelClick: (Level) -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF0B032D))
-    ) {
-        StarryBackground()
+fun LevelsScreen(viewModel: LevelsViewModel) {
+    val uiState by viewModel.uiState.collectAsState()
 
+    if (uiState.isLoading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = Color.Cyan)
+        }
+    } else {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
+                .background(Color(0xFF1B102C))
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            TopBar(energy = 10)
-
             Text(
-                text = worldName,
+                text = uiState.worldName,
                 color = Color.Cyan,
-                fontSize = 26.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 8.dp, bottom = 16.dp)
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold
             )
 
-            LevelGrid(levels = levels, onLevelClick = onLevelClick)
+            Spacer(modifier = Modifier.height(16.dp))
 
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Box(
-                modifier = Modifier
-                    .background(Color(0xFF0E043A), RoundedCornerShape(12.dp))
-                    .border(2.dp, Color.Cyan, RoundedCornerShape(12.dp))
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = worldDescription,
-                    color = Color.Cyan,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-
-            Spacer(modifier = Modifier.height(48.dp))
-        }
-    }
-}
-
-@Composable
-fun LevelGrid(levels: List<Level>, onLevelClick: (Level) -> Unit) {
-    val columns = 3
-    val chunkedLevels = levels.chunked(columns)
-
-    Column(
-        verticalArrangement = Arrangement.spacedBy(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        chunkedLevels.forEach { rowLevels ->
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(24.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                rowLevels.forEach { level ->
-                    LevelCard(level = level, onClick = { onLevelClick(level) })
-                }
-                // Si la última fila no tiene 3 elementos, agregamos espaciadores
-                if (rowLevels.size < columns) {
-                    repeat(columns - rowLevels.size) {
-                        Spacer(modifier = Modifier.size(80.dp))
+                itemsIndexed(uiState.levels) { index, level ->
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = if (index % 2 == 0) Alignment.CenterStart else Alignment.CenterEnd
+                    ) {
+                        LevelCard(level)
                     }
                 }
             }
@@ -102,74 +62,22 @@ fun LevelGrid(levels: List<Level>, onLevelClick: (Level) -> Unit) {
 }
 
 @Composable
-fun LevelCard(level: Level, onClick: () -> Unit) {
-    val borderColor = if (level.locked) Color.DarkGray else Color(0xFFFFC107)
-    val textColor = if (level.locked) Color.Gray else Color(0xFFFFC107)
-    val icon = "🏁"
-
-    Box(
+fun LevelCard(level: LevelUiModel) {
+    Card(
         modifier = Modifier
-            .size(90.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .background(Color(0xFF14063D))
-            .border(2.dp, borderColor, RoundedCornerShape(8.dp))
-            .clickable(enabled = !level.locked) { onClick() },
-        contentAlignment = Alignment.Center
+            .width(140.dp)
+            .height(140.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (level.isUnlocked) Color(0xFFFFC107) else Color.Gray
+        )
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceEvenly,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
-                horizontalArrangement = Arrangement.End
-            ) {
-                Text(text = icon, fontSize = 14.sp)
-            }
-
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
             Text(
-                text = level.number.toString(),
-                color = textColor,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold
+                text = level.name,
+                color = Color.Black,
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp
             )
-
-            Row(horizontalArrangement = Arrangement.Center) {
-                repeat(3) { index ->
-                    val filled = index < level.stars
-                    Text(
-                        text = if (filled) "★" else "☆",
-                        color = if (filled) Color(0xFFFFC107) else Color.Gray,
-                        fontSize = 14.sp
-                    )
-                }
-            }
         }
     }
-}
-
-data class Level(
-    val number: Int,
-    val stars: Int,
-    val locked: Boolean
-)
-
-@Preview(showBackground = true)
-@Composable
-fun LevelsScreenPreview() {
-    val sampleLevels = (1..12).map {
-        Level(
-            number = it,
-            stars = (0..3).random(),
-            locked = it > 6
-        )
-    }
-
-    LevelsScreen(
-        worldName = "Mundo 1",
-        worldDescription = "Operaciones de suma y resta",
-        levels = sampleLevels,
-        onLevelClick = {}
-    )
 }

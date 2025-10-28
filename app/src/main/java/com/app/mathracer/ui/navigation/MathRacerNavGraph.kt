@@ -13,6 +13,8 @@ import com.app.mathracer.ui.screens.home.HomeScreen
 import com.app.mathracer.ui.screens.game.GameScreen
 import com.app.mathracer.ui.screens.profile.ProfileScreen
 import com.app.mathracer.ui.screens.waitingOpponent.WaitingOpponentScreen
+import com.app.mathracer.ui.screens.worlds.WorldsScreen
+import com.app.mathracer.ui.screens.worlds.WorldsScreenRoute
 
 @Composable
 fun MathRacerNavGraph(
@@ -36,7 +38,7 @@ fun MathRacerNavGraph(
                     navController.navigate(Routes.WAITING_OPPONENT)
                 },
                 onStoryModeClick = { 
-                    // TODO: Implementar navegación a modo historia
+                    navController.navigate(Routes.WORLDS)
                 },
                 onFreePracticeClick = { 
                     // TODO: Implementar navegación a práctica libre
@@ -122,6 +124,14 @@ fun MathRacerNavGraph(
             )
         }
 
+        composable(Routes.WORLDS) {
+            WorldsScreenRoute(
+                onWorldClick = { world ->
+                    // Aquí defines a dónde navega cuando el usuario hace click en un mundo
+                    navController.navigate("level/${world.id}") // ejemplo
+                }
+            )
+        }
 
         composable(
             route = "game/{gameId}/{playerName}",

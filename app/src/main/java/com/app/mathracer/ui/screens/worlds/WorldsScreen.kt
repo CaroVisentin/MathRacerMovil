@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,6 +32,44 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.app.mathracer.ui.screens.worlds.viewmodel.WorldsViewModel
+
+@Composable
+fun WorldsScreenRoute(
+    viewModel: WorldsViewModel = hiltViewModel(),
+    onWorldClick: (World) -> Unit
+) {
+    // Obtenemos el estado desde el ViewModel
+    val uiState = viewModel.uiState.collectAsState().value
+
+    when {
+        uiState.isLoading -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Cargando...", color = Color.White)
+            }
+        }
+        uiState.errorMessage != null -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(uiState.errorMessage, color = Color.Red)
+            }
+        }
+        else -> {
+            WorldsScreen(
+                worlds = uiState.worlds,
+                onWorldClick = { world ->
+                    viewModel.onWorldClicked(world, onWorldClick)
+                }
+            )
+        }
+    }
+}
 
 @Composable
 fun WorldsScreen(
