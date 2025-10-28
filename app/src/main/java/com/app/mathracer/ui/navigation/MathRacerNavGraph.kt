@@ -1,6 +1,8 @@
 package com.app.mathracer.ui.navigation
 
 import LoginScreen
+import android.content.Context
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -99,8 +101,15 @@ fun MathRacerNavGraph(
         }
 
         composable(Routes.REGISTER) {
+            val _ctx = LocalContext.current
             RegisterScreen(
                 onRegister = { email: String, user: String, pass: String ->
+                    try {
+                        val prefs = _ctx.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                        prefs.edit().putBoolean("show_tutorial_on_next_launch", true).apply()
+                    } catch (_: Throwable) {
+                        // ignore
+                    }
                     navController.navigate(Routes.HOME) {
                         popUpTo(Routes.HOME) { inclusive = true }
                     }

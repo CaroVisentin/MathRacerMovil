@@ -85,6 +85,8 @@ fun GamePlayScreen(
     lastAnswerWasCorrect: Boolean? = null,
     showAnswerFeedback: Boolean = false,
     isPenalized: Boolean = false,
+    // controla si los botones de opción muestran sombra/relieve
+    optionsHaveShadows: Boolean = true,
     expectedResult: String = "",
     onBack: () -> Unit,
     onPowerUpClick: (index: Int) -> Unit,
@@ -202,6 +204,7 @@ fun GamePlayScreen(
                             isWaitingForAnswer = isWaitingForAnswer,
                             isPenalized = isPenalized
                         ),
+                        hasShadow = optionsHaveShadows,
                         onClick = { onOptionClick(0, options.getOrNull(0)) }
                     )
                     OptionButton(
@@ -215,6 +218,7 @@ fun GamePlayScreen(
                             isWaitingForAnswer = isWaitingForAnswer,
                             isPenalized = isPenalized
                         ),
+                        hasShadow = optionsHaveShadows,
                         onClick = { onOptionClick(1, options.getOrNull(1)) }
                     )
                 }
@@ -233,6 +237,7 @@ fun GamePlayScreen(
                             isWaitingForAnswer = isWaitingForAnswer,
                             isPenalized = isPenalized
                         ),
+                        hasShadow = optionsHaveShadows,
                         onClick = { onOptionClick(2, options.getOrNull(2)) }
                     )
                     OptionButton(
@@ -246,6 +251,7 @@ fun GamePlayScreen(
                             isWaitingForAnswer = isWaitingForAnswer,
                             isPenalized = isPenalized
                         ),
+                        hasShadow = optionsHaveShadows,
                         onClick = { onOptionClick(3, options.getOrNull(3)) }
                     )
                 }
@@ -527,6 +533,7 @@ private fun OptionButton(
     text: String,
     modifier: Modifier = Modifier,
     state: OptionButtonState = OptionButtonState.NORMAL,
+    hasShadow: Boolean = true,
     onClick: () -> Unit
 ) {
     val (backgroundColor, borderColor, emoji) = when (state) {
@@ -537,9 +544,15 @@ private fun OptionButton(
         OptionButtonState.DISABLED -> Triple(Color(0xFF666666), Color(0xFF999999), "⏱️")
     }
 
+    // aplicar sombra solo si hasShadow == true
+    val btnModifier = if (hasShadow) modifier
+        .height(56.dp)
+        .shadow(6.dp, RoundedCornerShape(12.dp))
+    else modifier.height(56.dp)
+
     Button(
         onClick = onClick,
-        modifier = modifier.height(56.dp),
+        modifier = btnModifier,
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = backgroundColor,
