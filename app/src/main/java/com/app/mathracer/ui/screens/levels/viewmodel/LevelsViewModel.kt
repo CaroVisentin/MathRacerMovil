@@ -32,6 +32,7 @@ class LevelsViewModel : ViewModel() {
 
             _uiState.value = LevelsUiState(
                 worldName = worldName,
+                worldDescription = "Descripción del $worldName",
                 levels = levels,
                 isLoading = false
             )

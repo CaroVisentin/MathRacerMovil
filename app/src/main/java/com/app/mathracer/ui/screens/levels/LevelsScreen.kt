@@ -44,6 +44,7 @@ fun LevelsScreen(viewModel: LevelsViewModel) {
                     .padding(horizontal = 24.dp, vertical = 46.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // 🔹 Título del mundo
                 Text(
                     text = uiState.worldName,
                     color = Color.Cyan,
@@ -52,10 +53,13 @@ fun LevelsScreen(viewModel: LevelsViewModel) {
                     modifier = Modifier.padding(bottom = 24.dp)
                 )
 
+                // 🔹 Lista de niveles (scrolleable)
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f) // 👈 hace que use el espacio restante
                 ) {
                     itemsIndexed(uiState.levels) { index, level ->
                         Box(
@@ -69,10 +73,31 @@ fun LevelsScreen(viewModel: LevelsViewModel) {
                         }
                     }
                 }
+
+                // 🔹 Descripción fija visible sin scroll
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .background(Color(0xFF0E043A), RoundedCornerShape(12.dp))
+                        .border(2.dp, Color.Cyan, RoundedCornerShape(12.dp))
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                ) {
+                    Text(
+                        text = uiState.worldDescription,
+                        color = Color.Cyan,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
             }
         }
     }
 }
+
 
 @Composable
 fun LevelCard(level: LevelUiModel) {
