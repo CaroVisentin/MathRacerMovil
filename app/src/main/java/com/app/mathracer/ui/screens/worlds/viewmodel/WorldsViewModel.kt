@@ -31,9 +31,8 @@ class WorldsViewModel : ViewModel() {
         }
     }
 
-    fun onWorldClicked(world: World, onNavigate: (World) -> Unit) {
-        if (!world.locked) {
-            onNavigate(world)
-        }
+    fun onWorldClicked(world: World, onWorldClick: (World) -> Unit) {
+        onWorldClick(world)
     }
+
 }

@@ -8,21 +8,19 @@ import kotlinx.coroutines.launch
 
 class LevelsViewModel : ViewModel() {
 
-    private val _uiState = MutableStateFlow(LevelsUiState(isLoading = true))
+    private val _uiState = MutableStateFlow(LevelsUiState(isLoading = false))
     val uiState: StateFlow<LevelsUiState> = _uiState
 
-    init {
-        loadLevels()
-    }
+    fun loadLevelsForWorld(worldId: Int, worldName: String) {
+        _uiState.value = _uiState.value.copy(isLoading = true)
 
-    private fun loadLevels() {
         viewModelScope.launch {
-            // Simula carga de datos
+            // Simula carga de datos según el ID del mundo
             val levels = (1..12).map {
                 LevelUiModel(
                     id = it,
                     name = "Nivel $it",
-                    isUnlocked = it <= 5,
+                    isUnlocked = it <= worldId * 3,
                     stars = when {
                         it <= 2 -> 3
                         it == 3 -> 2
@@ -33,7 +31,7 @@ class LevelsViewModel : ViewModel() {
             }
 
             _uiState.value = LevelsUiState(
-                worldName = "Mundo 1",
+                worldName = worldName,
                 levels = levels,
                 isLoading = false
             )

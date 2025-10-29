@@ -2,6 +2,7 @@ package com.app.mathracer.ui.navigation
 
 import LoginScreen
 import androidx.compose.runtime.Composable
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -11,6 +12,8 @@ import androidx.navigation.NavType
 import com.app.mathracer.ui.RegisterScreen
 import com.app.mathracer.ui.screens.home.HomeScreen
 import com.app.mathracer.ui.screens.game.GameScreen
+import com.app.mathracer.ui.screens.levels.LevelsScreen
+import com.app.mathracer.ui.screens.levels.viewmodel.LevelsViewModel
 import com.app.mathracer.ui.screens.profile.ProfileScreen
 import com.app.mathracer.ui.screens.waitingOpponent.WaitingOpponentScreen
 import com.app.mathracer.ui.screens.worlds.WorldsScreen
@@ -127,11 +130,28 @@ fun MathRacerNavGraph(
         composable(Routes.WORLDS) {
             WorldsScreenRoute(
                 onWorldClick = { world ->
-                    // Aquí defines a dónde navega cuando el usuario hace click en un mundo
-                    navController.navigate("level/${world.id}") // ejemplo
+                    navController.navigate("levels/${world.id}/${world.title}")
                 }
             )
         }
+
+        composable(
+            route = "levels/{worldId}/{worldName}",
+            arguments = listOf(
+                navArgument("worldId") { type = NavType.IntType },
+                navArgument("worldName") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val viewModel: LevelsViewModel = hiltViewModel()
+            val worldId = backStackEntry.arguments?.getInt("worldId") ?: 0
+            val worldName = backStackEntry.arguments?.getString("worldName") ?: ""
+
+            // Cargar datos del mundo seleccionado
+            viewModel.loadLevelsForWorld(worldId, worldName)
+
+            LevelsScreen(viewModel = viewModel)
+        }
+
 
         composable(
             route = "game/{gameId}/{playerName}",
