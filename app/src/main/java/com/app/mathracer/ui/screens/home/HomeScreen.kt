@@ -196,11 +196,10 @@ fun HomeScreen(
                             
                             TextButton(
                                 onClick = onStoryModeClick,
-                                enabled = false,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .border(width = 2.dp, color = CyanMR, shape = RoundedCornerShape(8.dp))
-                                    .background(Color.Gray.copy(alpha = 0.6f), shape = RoundedCornerShape(8.dp))
+                                    .background(Color.Black.copy(alpha = 0.6f), shape = RoundedCornerShape(8.dp))
                             ) {
                                 Text(
                                     text = "Modo Historia",

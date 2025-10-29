@@ -4,6 +4,7 @@ import LoginScreen
 import android.content.Context
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.Composable
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -13,8 +14,12 @@ import androidx.navigation.NavType
 import com.app.mathracer.ui.RegisterScreen
 import com.app.mathracer.ui.screens.home.HomeScreen
 import com.app.mathracer.ui.screens.game.GameScreen
+import com.app.mathracer.ui.screens.levels.LevelsScreen
+import com.app.mathracer.ui.screens.levels.viewmodel.LevelsViewModel
 import com.app.mathracer.ui.screens.profile.ProfileScreen
 import com.app.mathracer.ui.screens.waitingOpponent.WaitingOpponentScreen
+import com.app.mathracer.ui.screens.worlds.WorldsScreen
+import com.app.mathracer.ui.screens.worlds.WorldsScreenRoute
 
 @Composable
 fun MathRacerNavGraph(
@@ -38,7 +43,7 @@ fun MathRacerNavGraph(
                     navController.navigate(Routes.WAITING_OPPONENT)
                 },
                 onStoryModeClick = { 
-                    // TODO: Implementar navegación a modo historia
+                    navController.navigate(Routes.WORLDS)
                 },
                 onFreePracticeClick = { 
                     // TODO: Implementar navegación a práctica libre
@@ -129,6 +134,31 @@ fun MathRacerNavGraph(
             ProfileScreen(
                // onNavigateBack = { navController.navigateUp() }
             )
+        }
+
+        composable(Routes.WORLDS) {
+            WorldsScreenRoute(
+                onWorldClick = { world ->
+                    navController.navigate("levels/${world.id}/${world.title}")
+                }
+            )
+        }
+
+        composable(
+            route = "levels/{worldId}/{worldName}",
+            arguments = listOf(
+                navArgument("worldId") { type = NavType.IntType },
+                navArgument("worldName") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val viewModel: LevelsViewModel = hiltViewModel()
+            val worldId = backStackEntry.arguments?.getInt("worldId") ?: 0
+            val worldName = backStackEntry.arguments?.getString("worldName") ?: ""
+
+            // Cargar datos del mundo seleccionado
+            viewModel.loadLevelsForWorld(worldId, worldName)
+
+            LevelsScreen(viewModel = viewModel)
         }
 
 
