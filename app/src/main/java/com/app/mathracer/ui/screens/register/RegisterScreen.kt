@@ -2,6 +2,10 @@
 
 package com.app.mathracer.ui
 
+import android.app.Instrumentation
+import android.content.Intent
+import android.widget.Toast
+import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -25,6 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.mathracer.R
+import com.app.mathracer.ui.screens.register.viewmodel.RegisterViewModel
 
 // Colores rápidos (ajustá a tu theme)
 private val PlateBg      = Color(0xCC000000)      // negro 80%
@@ -35,16 +41,28 @@ private val PrimaryTeal  = Color(0xFF2EB7A7)
 
 @Composable
 fun RegisterScreen(
-    onRegister: (email: String, user: String, pass: String) -> Unit,
-    onGoogle: () -> Unit,
-    onLoginClick: () -> Unit
+    viewModel: RegisterViewModel,
+    onGoogleSignIn: (launcher: ManagedActivityResultLauncher<Intent, Instrumentation.ActivityResult>) -> Unit,
+    onNavigateToLogin: () -> Unit,
+    onRegisterSuccess: () -> Unit
 ) {
-    var email by remember { mutableStateOf("") }
-    var user by remember { mutableStateOf("") }
-    var pass by remember { mutableStateOf("") }
-    var repass by remember { mutableStateOf("") }
-    var showPass by remember { mutableStateOf(false) }
-    var showRePass by remember { mutableStateOf(false) }
+    val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    // Mostrar errores o éxito
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            viewModel.resetError()
+        }
+    }
+    LaunchedEffect(uiState.isSuccess) {
+        if (uiState.isSuccess) {
+            Toast.makeText(context, "Registro exitoso", Toast.LENGTH_SHORT).show()
+            viewModel.resetSuccess()
+            onRegisterSuccess()
+        }
+    }
 
     Box(Modifier.fillMaxSize()) {
         // Fondo
@@ -54,42 +72,29 @@ fun RegisterScreen(
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
-        // Oscurecer sutil
         Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.25f)))
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp)
-                .padding(top = 24.dp, bottom = 18.dp),
+                .padding(horizontal = 24.dp, vertical = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Logo con placa
-            Box(
+            Image(
+                painter = painterResource(R.drawable.logo),
+                contentDescription = "Math Racer",
                 modifier = Modifier
-                    .padding(bottom = 24.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(PlateBg)
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.logo),
-                    contentDescription = "Math Racer",
-                    modifier = Modifier.width(200.dp),
-                    contentScale = ContentScale.Fit
-                )
-            }
+                    .width(200.dp)
+                    .padding(bottom = 32.dp)
+            )
 
-            // Campos
+            // Email
             OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
+                value = uiState.email,
+                onValueChange = viewModel::onEmailChange,
                 placeholder = { Text("Email", color = Color.White.copy(alpha = 0.6f)) },
-                singleLine = true,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
                     .background(Color(0xCC1F1F1F)),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color.White,
@@ -99,14 +104,13 @@ fun RegisterScreen(
                 textStyle = LocalTextStyle.current.copy(color = Color.White)
             )
             Spacer(Modifier.height(10.dp))
+
+            // Usuario
             OutlinedTextField(
-                value = user,
-                onValueChange = { user = it },
+                value = uiState.user,
+                onValueChange = viewModel::onUserChange,
                 placeholder = { Text("Usuario", color = Color.White.copy(alpha = 0.6f)) },
-                singleLine = true,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
                     .background(Color(0xCC1F1F1F)),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color.White,
@@ -116,24 +120,24 @@ fun RegisterScreen(
                 textStyle = LocalTextStyle.current.copy(color = Color.White)
             )
             Spacer(Modifier.height(10.dp))
+
+            // Contraseña
+            var showPass by remember { mutableStateOf(false) }
             OutlinedTextField(
-                value = pass,
-                onValueChange = { pass = it },
+                value = uiState.password,
+                onValueChange = viewModel::onPasswordChange,
                 placeholder = { Text("Contraseña", color = Color.White.copy(alpha = 0.6f)) },
-                singleLine = true,
                 visualTransformation = if (showPass) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
                     IconButton(onClick = { showPass = !showPass }) {
                         Icon(
-                            imageVector = if (showPass) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                            imageVector = if (showPass) Icons.Default.VisibilityOff else Icons.Default.Visibility,
                             contentDescription = null,
                             tint = Color.White
                         )
                     }
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
                     .background(Color(0xCC1F1F1F)),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color.White,
@@ -143,24 +147,24 @@ fun RegisterScreen(
                 textStyle = LocalTextStyle.current.copy(color = Color.White)
             )
             Spacer(Modifier.height(10.dp))
+
+            // Repetir contraseña
+            var showRePass by remember { mutableStateOf(false) }
             OutlinedTextField(
-                value = repass,
-                onValueChange = { repass = it },
+                value = uiState.repeatPassword,
+                onValueChange = viewModel::onRepeatPasswordChange,
                 placeholder = { Text("Repetir contraseña", color = Color.White.copy(alpha = 0.6f)) },
-                singleLine = true,
-                visualTransformation = if (showPass) VisualTransformation.None else PasswordVisualTransformation(),
+                visualTransformation = if (showRePass) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
-                    IconButton(onClick = { showPass = !showPass }) {
+                    IconButton(onClick = { showRePass = !showRePass }) {
                         Icon(
-                            imageVector = if (showPass) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                            imageVector = if (showRePass) Icons.Default.VisibilityOff else Icons.Default.Visibility,
                             contentDescription = null,
                             tint = Color.White
                         )
                     }
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
                     .background(Color(0xCC1F1F1F)),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color.White,
@@ -172,27 +176,33 @@ fun RegisterScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // Botón Registrarse
+            // Botón registrarse
             Button(
-                onClick = { onRegister(email.trim(), user.trim(), pass) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
+                onClick = { viewModel.registerUser() },
+                modifier = Modifier.fillMaxWidth().height(48.dp),
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = PrimaryTeal,
+                    containerColor = Color(0xFF2EB7A7),
                     contentColor = Color.White
-                )
-            ) { Text("Registrarse", fontWeight = FontWeight.Bold, fontSize = 18.sp) }
+                ),
+                enabled = !uiState.isLoading
+            ) {
+                if (uiState.isLoading)
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(22.dp)
+                    )
+                else
+                    Text("Registrarse", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            }
 
             Spacer(Modifier.height(12.dp))
 
-            // Google
+            // Google Sign-in
             OutlinedButton(
-                onClick = onGoogle,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(44.dp),
+                onClick = { onGoogleSignIn },
+                modifier = Modifier.fillMaxWidth().height(44.dp),
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
                     containerColor = Color.White,
@@ -211,24 +221,19 @@ fun RegisterScreen(
             }
 
             Spacer(Modifier.height(16.dp))
-
-            // Link a Login
             Row {
+                Text("¿Ya tenés cuenta? ", color = Color.White)
                 Text(
-                    text = "¿Ya tenés cuenta? ",
-                    color = Color.White,
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    text = "Inicia sesión acá",
+                    "Iniciá sesión acá",
                     color = Color(0xFF7FD7FF),
                     fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.clickable { onLoginClick() }
+                    modifier = Modifier.clickable { onNavigateToLogin() }
                 )
             }
         }
     }
 }
+
 
 /* ---- Componentes auxiliares con look del mock ---- */
 

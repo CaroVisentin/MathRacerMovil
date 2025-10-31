@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "809019274165",
+    "project_id": "mathi-racer",
+    "storage_bucket": "mathi-racer.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:809019274165:android:dd321abed939d9cf709ffc",
+        "android_client_info": {
+          "package_name": "com.app.mathracer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "809019274165-9cu8kvb6il9cskpvbu1antisdsg5fhuf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAe09b31SrvSwBHEtkXTzjd4HCoKAkqCaI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "809019274165-9cu8kvb6il9cskpvbu1antisdsg5fhuf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -2,8 +2,11 @@ package com.app.mathracer.ui.navigation
 
 import LoginScreen
 import android.content.Context
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -11,12 +14,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import androidx.navigation.NavType
+import com.app.mathracer.R
 import com.app.mathracer.ui.RegisterScreen
 import com.app.mathracer.ui.screens.home.HomeScreen
 import com.app.mathracer.ui.screens.game.GameScreen
 import com.app.mathracer.ui.screens.levels.LevelsScreen
 import com.app.mathracer.ui.screens.levels.viewmodel.LevelsViewModel
 import com.app.mathracer.ui.screens.profile.ProfileScreen
+import com.app.mathracer.ui.screens.register.viewmodel.RegisterViewModel
 import com.app.mathracer.ui.screens.waitingOpponent.WaitingOpponentScreen
 import com.app.mathracer.ui.screens.worlds.WorldsScreen
 import com.app.mathracer.ui.screens.worlds.WorldsScreenRoute
@@ -106,23 +111,52 @@ fun MathRacerNavGraph(
         }
 
         composable(Routes.REGISTER) {
-            val _ctx = LocalContext.current
+            val context = LocalContext.current
+            val registerViewModel: RegisterViewModel = hiltViewModel()
+
+            // Configurar Google Sign-In
+            val googleSignInClient = remember {
+                val gso = com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(
+                    com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN
+                )
+                    .requestIdToken(context.getString(R.string.default_web_client_id))
+                    .requestEmail()
+                    .build()
+                com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(context, gso)
+            }
+
+            val launcher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.StartActivityForResult()
+            ) { result ->
+                val task = com.google.android.gms.auth.api.signin.GoogleSignIn.getSignedInAccountFromIntent(result.data)
+                try {
+                    val account = task.result
+                    account?.idToken?.let { token ->
+                        registerViewModel.signInWithGoogle(token)
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+
             RegisterScreen(
-                onRegister = { email: String, user: String, pass: String ->
-                    try {
-                        val prefs = _ctx.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-                        prefs.edit().putBoolean("show_tutorial_on_next_launch", true).apply()
-                    } catch (_: Throwable) {
-                        // ignore
-                    }
+                viewModel = registerViewModel,
+                onGoogleSignIn = { launcher.launch(googleSignInClient.signInIntent) },
+                onNavigateToLogin = { navController.navigate(Routes.LOGIN) },
+                onRegisterSuccess = {
+                    // Guardar preferencias o datos si hace falta
+                    context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                        .edit()
+                        .putBoolean("show_tutorial_on_next_launch", true)
+                        .apply()
+
                     navController.navigate(Routes.HOME) {
-                        popUpTo(Routes.HOME) { inclusive = true }
+                        popUpTo(Routes.LOGIN) { inclusive = true }
                     }
-                },
-                onGoogle = { /* flujo Google */ },
-                onLoginClick = { navController.navigate(Routes.LOGIN) }
+                }
             )
         }
+
 
         composable(Routes.PROFILE) {
             HandleBackNavigation(
