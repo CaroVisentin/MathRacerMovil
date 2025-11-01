@@ -94,22 +94,75 @@ fun MathRacerNavGraph(
             HandleBackNavigation(
                 navController = navController,
                 currentRoute = currentRoute,
-                onBackPressed = { navController.navigateUp() } // volver atrás
+                onBackPressed = { navController.navigateUp() }
             )
 
+            val context = LocalContext.current
+            val loginViewModel: com.app.mathracer.ui.screens.login.viewmodel.LoginViewModel = hiltViewModel()
+
+            // Google Sign-In config igual que en registro
+            android.util.Log.d("GoogleSignIn", "Configurando cliente de Google Sign-In (Login)")
+            val googleSignInClient = remember {
+                try {
+                    val gso = com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(
+                        com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN
+                    )
+                        .requestIdToken(context.getString(R.string.default_web_client_id))
+                        .requestEmail()
+                        .requestProfile()
+                        .build()
+                    android.util.Log.d("GoogleSignIn", "GSO configurado correctamente (Login)")
+                    com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(context, gso)
+                } catch (e: Exception) {
+                    android.util.Log.e("GoogleSignIn", "Error al configurar GSO (Login)", e)
+                    throw e
+                }
+            }
+
+            val launcher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.StartActivityForResult()
+            ) { result ->
+                android.util.Log.d("GoogleSignIn", "Resultado recibido (Login): ${result.resultCode}")
+                when (result.resultCode) {
+                    android.app.Activity.RESULT_OK -> {
+                        android.util.Log.d("GoogleSignIn", "Result OK, procesando resultado... (Login)")
+                        try {
+                            if (result.data == null) {
+                                android.util.Log.e("GoogleSignIn", "Intent de resultado es null (Login)")
+                                return@rememberLauncherForActivityResult
+                            }
+                            val task = com.google.android.gms.auth.api.signin.GoogleSignIn
+                                .getSignedInAccountFromIntent(result.data)
+                            try {
+                                val account = task.result
+                                android.util.Log.d("GoogleSignIn", "Cuenta obtenida (Login): ${account.email}, ID: ${account.id}")
+                            } catch (e: Exception) {
+                                android.util.Log.e("GoogleSignIn", "Error al obtener cuenta de manera síncrona (Login)", e)
+                            }
+                            loginViewModel.handleGoogleSignInResult(result.data)
+                        } catch (e: Exception) {
+                            android.util.Log.e("GoogleSignIn", "Error al procesar resultado (Login)", e)
+                            e.printStackTrace()
+                        }
+                    }
+                    android.app.Activity.RESULT_CANCELED -> {
+                        android.util.Log.d("GoogleSignIn", "Usuario canceló el inicio de sesión (Login)")
+                    }
+                    else -> {
+                        android.util.Log.e("GoogleSignIn", "Error desconocido: ${result.resultCode} (Login)")
+                    }
+                }
+            }
+
             LoginScreen(
-                onLogin = { user, pass ->
-                    // 🔹 Acá podés validar login o navegar al home
+                onLoginWithGoogle = { launcher.launch(googleSignInClient.signInIntent) },
+                onRegisterClick = { navController.navigate(Routes.REGISTER) },
+                onLoginSuccess = {
                     navController.navigate(Routes.HOME) {
                         popUpTo(Routes.HOME) { inclusive = true }
                     }
                 },
-                onLoginWithGoogle = {
-                    // 🔹 Lógica para login con Google
-                },
-                onRegisterClick = {
-                    navController.navigate(Routes.REGISTER)
-                }
+                viewModel = loginViewModel
             )
         }
 
@@ -126,7 +179,7 @@ fun MathRacerNavGraph(
                     )
                         .requestIdToken(context.getString(R.string.default_web_client_id))
                         .requestEmail()
-                        .requestProfile()  // Solicitar perfil básico
+                        .requestProfile()
                         .build()
                     android.util.Log.d("GoogleSignIn", "GSO configurado correctamente")
                     com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(context, gso)
@@ -182,7 +235,6 @@ fun MathRacerNavGraph(
                 onGoogleSignIn = { launcher.launch(googleSignInClient.signInIntent) },
                 onNavigateToLogin = { navController.navigate(Routes.LOGIN) },
                 onRegisterSuccess = {
-                    // Guardar preferencias o datos si hace falta
                     context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
                         .edit()
                         .putBoolean("show_tutorial_on_next_launch", true)
