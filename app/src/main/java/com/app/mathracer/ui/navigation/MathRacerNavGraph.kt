@@ -18,6 +18,10 @@ import com.app.mathracer.ui.screens.levels.LevelsScreen
 import com.app.mathracer.ui.screens.levels.viewmodel.LevelsViewModel
 import com.app.mathracer.ui.screens.profile.ProfileScreen
 import com.app.mathracer.ui.screens.waitingOpponent.WaitingOpponentScreen
+import com.app.mathracer.ui.screens.multiplayer.MultiplayerOptionsScreen
+import com.app.mathracer.ui.screens.multiplayer.CreateMatchScreen
+import com.app.mathracer.ui.screens.multiplayer.JoinMatchesScreen
+import com.app.mathracer.ui.screens.multiplayer.InviteFriendsScreen
 import com.app.mathracer.ui.screens.worlds.WorldsScreen
 import com.app.mathracer.ui.screens.worlds.WorldsScreenRoute
 
@@ -40,7 +44,7 @@ fun MathRacerNavGraph(
             
             HomeScreen(
                 onMultiplayerClick = {
-                    navController.navigate(Routes.WAITING_OPPONENT)
+                    navController.navigate(Routes.MULTIPLAYER_OPTIONS)
                 },
                 onStoryModeClick = { 
                     navController.navigate(Routes.WORLDS)
@@ -79,6 +83,80 @@ fun MathRacerNavGraph(
                 onNavigateBack = {
                     navController.navigateUp()
                 }
+            )
+        }
+
+        composable(Routes.MULTIPLAYER_OPTIONS) {
+            HandleBackNavigation(
+                navController = navController,
+                currentRoute = currentRoute,
+                onBackPressed = { navController.navigateUp() }
+            )
+
+            MultiplayerOptionsScreen(
+                onCreateGame = {
+                    navController.navigate(Routes.CREATE_MATCH)
+                },
+                onJoinGame = {
+                    navController.navigate(Routes.JOIN_MATCHES)
+                },
+                onInviteFriend = {
+                    navController.navigate(Routes.INVITE_FRIENDS)
+                },
+                onCompetitiveMatch = {
+                    navController.navigate(Routes.WAITING_OPPONENT)
+                },
+                onRanking = {
+                    navController.navigate(Routes.PROFILE)
+                },
+                onBack = { navController.navigateUp() }
+            )
+        }
+
+        composable(Routes.INVITE_FRIENDS) {
+            HandleBackNavigation(
+                navController = navController,
+                currentRoute = currentRoute,
+                onBackPressed = { navController.navigateUp() }
+            )
+
+            InviteFriendsScreen(
+                onInvite = { friendId, difficulty, resultType ->
+                    // aca hay que hacer que se envie la invitacion al back, asique hice que vuelva a la pantalla anterior por ahora
+                    navController.navigateUp()
+                },
+                onBack = { navController.navigateUp() }
+            )
+        }
+
+        composable(Routes.CREATE_MATCH) {
+            HandleBackNavigation(
+                navController = navController,
+                currentRoute = currentRoute,
+                onBackPressed = { navController.navigateUp() }
+            )
+
+            CreateMatchScreen(
+                onCreateMatch = { name, privacy, difficulty, resultType ->
+                    navController.navigate(Routes.WAITING_OPPONENT)
+                },
+                onBack = { navController.navigateUp() }
+            )
+        }
+
+        composable(Routes.JOIN_MATCHES) {
+            HandleBackNavigation(
+                navController = navController,
+                currentRoute = currentRoute,
+                onBackPressed = { navController.navigateUp() }
+            )
+
+            JoinMatchesScreen(
+                onJoinConfirmed = { matchId, password ->
+                   //cuando se haga lo de la contraseña hay que validarla aca, ahora hice que mande directo a la partida
+                    navController.navigate(Routes.WAITING_OPPONENT)
+                },
+                onBack = { navController.navigateUp() }
             )
         }
 
