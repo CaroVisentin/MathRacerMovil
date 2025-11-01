@@ -2,6 +2,7 @@ package com.app.mathracer.ui.navigation
 
 import LoginScreen
 import android.content.Context
+import android.content.Context.MODE_PRIVATE
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
@@ -30,8 +31,7 @@ import com.app.mathracer.ui.screens.worlds.WorldsScreenRoute
 
 @Composable
 fun MathRacerNavGraph(
-    navController: NavHostController,
-    onGoogleSignIn: (launcher: ActivityResultLauncher<Intent>) -> Unit = {}
+    navController: NavHostController
 ) {
     val currentBackStackEntry = navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry.value?.destination?.route
@@ -100,7 +100,6 @@ fun MathRacerNavGraph(
             val context = LocalContext.current
             val loginViewModel: com.app.mathracer.ui.screens.login.viewmodel.LoginViewModel = hiltViewModel()
 
-            // Google Sign-In config igual que en registro
             android.util.Log.d("GoogleSignIn", "Configurando cliente de Google Sign-In (Login)")
             val googleSignInClient = remember {
                 try {
@@ -158,6 +157,8 @@ fun MathRacerNavGraph(
                 onLoginWithGoogle = { launcher.launch(googleSignInClient.signInIntent) },
                 onRegisterClick = { navController.navigate(Routes.REGISTER) },
                 onLoginSuccess = {
+                    val prefs = context.getSharedPreferences("app_prefs", MODE_PRIVATE)
+                    prefs.edit().putBoolean("show_tutorial_on_next_launch", false).apply()
                     navController.navigate(Routes.HOME) {
                         popUpTo(Routes.HOME) { inclusive = true }
                     }
@@ -170,7 +171,6 @@ fun MathRacerNavGraph(
             val context = LocalContext.current
             val registerViewModel: RegisterViewModel = hiltViewModel()
 
-            // Configurar Google Sign-In
             android.util.Log.d("GoogleSignIn", "Configurando cliente de Google Sign-In")
             val googleSignInClient = remember {
                 try {
@@ -197,7 +197,6 @@ fun MathRacerNavGraph(
                     android.app.Activity.RESULT_OK -> {
                         android.util.Log.d("GoogleSignIn", "Result OK, procesando resultado...")
                         try {
-                            // Verificar si hay datos en el intent
                             if (result.data == null) {
                                 android.util.Log.e("GoogleSignIn", "Intent de resultado es null")
                                 return@rememberLauncherForActivityResult
