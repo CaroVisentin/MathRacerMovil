@@ -22,6 +22,8 @@ import com.app.mathracer.ui.screens.multiplayer.MultiplayerOptionsScreen
 import com.app.mathracer.ui.screens.multiplayer.CreateMatchScreen
 import com.app.mathracer.ui.screens.multiplayer.JoinMatchesScreen
 import com.app.mathracer.ui.screens.multiplayer.InviteFriendsScreen
+import com.app.mathracer.ui.screens.ranking.RankingScreen
+import com.app.mathracer.ui.screens.ranking.viewmodel.RankingViewModel
 import com.app.mathracer.ui.screens.worlds.WorldsScreen
 import com.app.mathracer.ui.screens.worlds.WorldsScreenRoute
 
@@ -58,8 +60,8 @@ fun MathRacerNavGraph(
                 onGarageClick = { 
                     // TODO: Implementar navegación a garage
                 },
-                onStatsClick = { 
-                  //  navController.navigate(Routes.SIGNALR_TEST)
+                onStatsClick = {
+                    navController.navigate(Routes.RANKING)
                 },
                 onProfileClick = { navController.navigate(Routes.PROFILE) }
             )
@@ -122,12 +124,23 @@ fun MathRacerNavGraph(
 
             InviteFriendsScreen(
                 onInvite = { friendId, difficulty, resultType ->
-                    // aca hay que hacer que se envie la invitacion al back, asique hice que vuelva a la pantalla anterior por ahora
                     navController.navigateUp()
                 },
                 onBack = { navController.navigateUp() }
             )
         }
+
+        composable(Routes.RANKING) {
+            HandleBackNavigation(
+                navController = navController,
+                currentRoute = currentRoute,
+                onBackPressed = { navController.navigateUp() }
+            )
+
+            val viewModel: RankingViewModel = hiltViewModel()
+            RankingScreen(viewModel = viewModel)
+        }
+
 
         composable(Routes.CREATE_MATCH) {
             HandleBackNavigation(
