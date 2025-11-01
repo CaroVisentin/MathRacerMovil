@@ -26,6 +26,7 @@ import com.app.mathracer.ui.screens.ranking.RankingScreen
 import com.app.mathracer.ui.screens.ranking.viewmodel.RankingViewModel
 import com.app.mathracer.ui.screens.worlds.WorldsScreen
 import com.app.mathracer.ui.screens.worlds.WorldsScreenRoute
+import com.app.mathracer.ui.rules.RulesScreen
 
 @Composable
 fun MathRacerNavGraph(
@@ -109,7 +110,7 @@ fun MathRacerNavGraph(
                     navController.navigate(Routes.WAITING_OPPONENT)
                 },
                 onRanking = {
-                    navController.navigate(Routes.PROFILE)
+                    navController.navigate(Routes.RANKING)
                 },
                 onBack = { navController.navigateUp() }
             )
@@ -224,6 +225,7 @@ fun MathRacerNavGraph(
 
             ProfileScreen(
                // onNavigateBack = { navController.navigateUp() }
+               onHelpClick = { navController.navigate(Routes.RULES) }
             )
         }
 
@@ -233,6 +235,17 @@ fun MathRacerNavGraph(
                     navController.navigate("levels/${world.id}/${world.title}")
                 }
             )
+        }
+
+        // Rules screen route
+        composable(Routes.RULES) {
+            HandleBackNavigation(
+                navController = navController,
+                currentRoute = currentRoute,
+                onBackPressed = { navController.navigateUp() }
+            )
+
+            RulesScreen()
         }
 
         composable(
