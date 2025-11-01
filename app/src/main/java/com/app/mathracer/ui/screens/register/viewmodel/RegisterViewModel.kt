@@ -1,8 +1,13 @@
 package com.app.mathracer.ui.screens.register.viewmodel
 
+import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -61,24 +66,54 @@ class RegisterViewModel : ViewModel() {
         }
     }
 
-    fun signInWithGoogle(idToken: String) {
-        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-
-        val credential = com.google.firebase.auth.GoogleAuthProvider.getCredential(idToken, null)
-        auth.signInWithCredential(credential)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        isSuccess = true
-                    )
-                } else {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        errorMessage = task.exception?.localizedMessage ?: "Error con Google"
-                    )
-                }
+    fun handleGoogleSignInResult(data: Intent?) {
+        android.util.Log.d("GoogleSignIn", "Iniciando proceso de autenticación con Google")
+        try {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            
+            val account = GoogleSignIn.getSignedInAccountFromIntent(data)
+                .getResult(ApiException::class.java)
+            
+            android.util.Log.d("GoogleSignIn", "Cuenta Google obtenida: ${account?.email}")
+            
+            // Si llegamos aquí, el sign-in fue exitoso
+            account?.let { googleAccount ->
+                android.util.Log.d("GoogleSignIn", "ID Token obtenido, procediendo con Firebase")
+                val credential = GoogleAuthProvider.getCredential(googleAccount.idToken, null)
+                
+                auth.signInWithCredential(credential)
+                    .addOnSuccessListener { authResult ->
+                        android.util.Log.d("GoogleSignIn", "Autenticación Firebase exitosa")
+                        // Crear o actualizar el perfil del usuario
+                        authResult.user?.let { firebaseUser ->
+                            android.util.Log.d("GoogleSignIn", "Usuario Firebase: ${firebaseUser.email}")
+                            _uiState.value = _uiState.value.copy(
+                                isLoading = false,
+                                isSuccess = true
+                            )
+                        }
+                    }
+                    .addOnFailureListener { e ->
+                        android.util.Log.e("GoogleSignIn", "Error en autenticación Firebase", e)
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            errorMessage = "Error al autenticar con Firebase: ${e.message}"
+                        )
+                    }
+            } ?: run {
+                android.util.Log.e("GoogleSignIn", "Cuenta Google es null")
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = "No se pudo obtener la cuenta de Google"
+                )
             }
+        } catch (e: ApiException) {
+            android.util.Log.e("GoogleSignIn", "Error en Google Sign In", e)
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                errorMessage = "Error al iniciar sesión con Google: ${e.message}"
+            )
+        }
     }
 
     fun resetError() {

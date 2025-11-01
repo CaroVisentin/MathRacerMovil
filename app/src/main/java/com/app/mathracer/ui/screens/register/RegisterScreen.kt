@@ -2,9 +2,12 @@
 
 package com.app.mathracer.ui
 
-import android.app.Instrumentation
+import android.app.Activity
 import android.content.Intent
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -42,7 +45,7 @@ private val PrimaryTeal  = Color(0xFF2EB7A7)
 @Composable
 fun RegisterScreen(
     viewModel: RegisterViewModel,
-    onGoogleSignIn: (launcher: ManagedActivityResultLauncher<Intent, Instrumentation.ActivityResult>) -> Unit,
+    onGoogleSignIn: () -> Unit,
     onNavigateToLogin: () -> Unit,
     onRegisterSuccess: () -> Unit
 ) {
@@ -201,7 +204,7 @@ fun RegisterScreen(
 
             // Google Sign-in
             OutlinedButton(
-                onClick = { onGoogleSignIn },
+                onClick = onGoogleSignIn,
                 modifier = Modifier.fillMaxWidth().height(44.dp),
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
