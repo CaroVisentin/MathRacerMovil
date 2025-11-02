@@ -22,8 +22,11 @@ import com.app.mathracer.ui.screens.multiplayer.MultiplayerOptionsScreen
 import com.app.mathracer.ui.screens.multiplayer.CreateMatchScreen
 import com.app.mathracer.ui.screens.multiplayer.JoinMatchesScreen
 import com.app.mathracer.ui.screens.multiplayer.InviteFriendsScreen
+import com.app.mathracer.ui.screens.ranking.RankingScreen
+import com.app.mathracer.ui.screens.ranking.viewmodel.RankingViewModel
 import com.app.mathracer.ui.screens.worlds.WorldsScreen
 import com.app.mathracer.ui.screens.worlds.WorldsScreenRoute
+import com.app.mathracer.ui.rules.RulesScreen
 
 @Composable
 fun MathRacerNavGraph(
@@ -58,8 +61,8 @@ fun MathRacerNavGraph(
                 onGarageClick = { 
                     // TODO: Implementar navegación a garage
                 },
-                onStatsClick = { 
-                  //  navController.navigate(Routes.SIGNALR_TEST)
+                onStatsClick = {
+                    navController.navigate(Routes.RANKING)
                 },
                 onProfileClick = { navController.navigate(Routes.PROFILE) }
             )
@@ -107,7 +110,7 @@ fun MathRacerNavGraph(
                     navController.navigate(Routes.WAITING_OPPONENT)
                 },
                 onRanking = {
-                    navController.navigate(Routes.PROFILE)
+                    navController.navigate(Routes.RANKING)
                 },
                 onBack = { navController.navigateUp() }
             )
@@ -122,12 +125,23 @@ fun MathRacerNavGraph(
 
             InviteFriendsScreen(
                 onInvite = { friendId, difficulty, resultType ->
-                    // aca hay que hacer que se envie la invitacion al back, asique hice que vuelva a la pantalla anterior por ahora
                     navController.navigateUp()
                 },
                 onBack = { navController.navigateUp() }
             )
         }
+
+        composable(Routes.RANKING) {
+            HandleBackNavigation(
+                navController = navController,
+                currentRoute = currentRoute,
+                onBackPressed = { navController.navigateUp() }
+            )
+
+            val viewModel: RankingViewModel = hiltViewModel()
+            RankingScreen(viewModel = viewModel)
+        }
+
 
         composable(Routes.CREATE_MATCH) {
             HandleBackNavigation(
@@ -211,6 +225,7 @@ fun MathRacerNavGraph(
 
             ProfileScreen(
                // onNavigateBack = { navController.navigateUp() }
+               onHelpClick = { navController.navigate(Routes.RULES) }
             )
         }
 
@@ -220,6 +235,17 @@ fun MathRacerNavGraph(
                     navController.navigate("levels/${world.id}/${world.title}")
                 }
             )
+        }
+
+        // Rules screen route
+        composable(Routes.RULES) {
+            HandleBackNavigation(
+                navController = navController,
+                currentRoute = currentRoute,
+                onBackPressed = { navController.navigateUp() }
+            )
+
+            RulesScreen()
         }
 
         composable(

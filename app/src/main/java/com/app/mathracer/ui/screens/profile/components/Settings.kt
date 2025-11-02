@@ -32,7 +32,8 @@ fun Settings(
     onSoundVolumeChange: (Float) -> Unit,
     onMusicVolumeChange: (Float) -> Unit,
     onLogout: () -> Unit,
-    onDeleteAccount: () -> Unit
+    onDeleteAccount: () -> Unit,
+    onHelpClick: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -148,23 +149,6 @@ fun Settings(
             }
         }
 
-        Box(
-            modifier = Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.BottomEnd
-        ) {
-            IconButton(
-                onClick = { /* ayuda */ },
-                modifier = Modifier
-                    .size(48.dp)
-                    .border(2.dp, Color.Cyan, RoundedCornerShape(8.dp))
-            ) {
-                Text(
-                    text = "?",
-                    color = Color.Cyan,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 22.sp
-                )
-            }
-        }
+        // Help button removed from Settings — it's provided globally by ProfileScreen
     }
 }
