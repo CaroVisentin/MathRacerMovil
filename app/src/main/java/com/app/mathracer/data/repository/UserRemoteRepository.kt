@@ -1,6 +1,7 @@
 package com.app.mathracer.data.repository
 
 import com.app.mathracer.data.model.User
+import com.app.mathracer.data.model.UserLogin
 import com.app.mathracer.data.network.RetrofitClient
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -30,15 +31,20 @@ object UserRemoteRepository {
         return api.createUser(header, user)
     }
 
-    suspend fun getUserById(id: String): Response<User> {
-        val token = try { getIdToken() } catch (e: Exception) { null }
+    suspend fun loginUser(user: UserLogin): Response<User> {
+        val token = try {
+            getIdToken()
+        } catch (e: Exception) {
+            null
+        }
         val header = token?.let { "Bearer $it" }
-        return api.getUser(header, id)
+        return api.loginUser(header, user)
     }
-
+/*
     suspend fun getUserByUid(uid: String): Response<User> {
         val token = try { getIdToken() } catch (e: Exception) { null }
         val header = token?.let { "Bearer $it" }
         return api.getUserByUid(header, uid)
     }
+    */
 }

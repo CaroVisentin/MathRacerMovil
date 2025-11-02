@@ -40,34 +40,77 @@ fun MathRacerNavGraph(
         navController = navController,
         startDestination = Routes.LOGIN
     ) {
-        composable(Routes.HOME) {
-            HandleBackNavigation(
-                navController = navController,
-                currentRoute = currentRoute
-            )
-            
-            HomeScreen(
-                onMultiplayerClick = {
-                    navController.navigate(Routes.WAITING_OPPONENT)
-                },
-                onStoryModeClick = { 
-                    navController.navigate(Routes.WORLDS)
-                },
-                onFreePracticeClick = { 
-                    // TODO: Implementar navegación a práctica libre
-                },
-                onShopClick = { 
-                    // TODO: Implementar navegación a tienda
-                },
-                onGarageClick = { 
-                    // TODO: Implementar navegación a garage
-                },
-                onStatsClick = { 
-                  //  navController.navigate(Routes.SIGNALR_TEST)
-                },
-                onProfileClick = { navController.navigate(Routes.PROFILE) }
-            )
-        }
+        
+            composable(Routes.HOME) {
+                HandleBackNavigation(
+                    navController = navController,
+                    currentRoute = currentRoute
+                )
+
+                HomeScreen(
+                    userName = null,
+                    userEmail = null,
+                    onMultiplayerClick = {
+                        navController.navigate(Routes.MULTIPLAYER_OPTIONS)
+                    },
+                    onStoryModeClick = {
+                        navController.navigate(Routes.WORLDS)
+                    },
+                    onFreePracticeClick = {
+                        // TODO: Implementar navegación a práctica libre
+                    },
+                    onShopClick = {
+                        // TODO: Implementar navegación a tienda
+                    },
+                    onGarageClick = {
+                        // TODO: Implementar navegación a garage
+                    },
+                    onStatsClick = {
+                        navController.navigate(Routes.RANKING)
+                    },
+                    onProfileClick = { navController.navigate(Routes.PROFILE) }
+                )
+            }
+
+            composable(
+                route = "home?userName={userName}&userEmail={userEmail}",
+                arguments = listOf(
+                    navArgument("userName") { type = NavType.StringType; defaultValue = "" },
+                    navArgument("userEmail") { type = NavType.StringType; defaultValue = "" }
+                )
+            ) { backStackEntry ->
+                HandleBackNavigation(
+                    navController = navController,
+                    currentRoute = currentRoute
+                )
+
+                val userName = backStackEntry.arguments?.getString("username")?.let { java.net.URLDecoder.decode(it, "utf-8") } ?: ""
+                val userEmail = backStackEntry.arguments?.getString("userEmail")?.let { java.net.URLDecoder.decode(it, "utf-8") } ?: ""
+
+                HomeScreen(
+                    userName = if (userName.isNotBlank()) userName else null,
+                    userEmail = if (userEmail.isNotBlank()) userEmail else null,
+                    onMultiplayerClick = {
+                        navController.navigate(Routes.MULTIPLAYER_OPTIONS)
+                    },
+                    onStoryModeClick = {
+                        navController.navigate(Routes.WORLDS)
+                    },
+                    onFreePracticeClick = {
+                        // TODO: Implementar navegación a práctica libre
+                    },
+                    onShopClick = {
+                        // TODO: Implementar navegación a tienda
+                    },
+                    onGarageClick = {
+                        // TODO: Implementar navegación a garage
+                    },
+                    onStatsClick = {
+                        navController.navigate(Routes.RANKING)
+                    },
+                    onProfileClick = { navController.navigate(Routes.PROFILE) }
+                )
+            }
         
         composable(Routes.WAITING_OPPONENT) {
             HandleBackNavigation(
@@ -159,7 +202,10 @@ fun MathRacerNavGraph(
                 onLoginSuccess = {
                     val prefs = context.getSharedPreferences("app_prefs", MODE_PRIVATE)
                     prefs.edit().putBoolean("show_tutorial_on_next_launch", false).apply()
-                    navController.navigate(Routes.HOME) {
+                    val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+                    val displayName = firebaseUser?.displayName ?: ""
+                    val email = firebaseUser?.email ?: ""
+                    navController.navigate(Routes.homeWithUser(displayName, email)) {
                         popUpTo(Routes.HOME) { inclusive = true }
                     }
                 },
@@ -239,7 +285,11 @@ fun MathRacerNavGraph(
                         .putBoolean("show_tutorial_on_next_launch", true)
                         .apply()
 
-                    navController.navigate(Routes.HOME) {
+                    val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+                    val displayName = firebaseUser?.displayName ?: ""
+                    val email = firebaseUser?.email ?: ""
+
+                    navController.navigate(Routes.homeWithUser(displayName, email)) {
                         popUpTo(Routes.LOGIN) { inclusive = true }
                     }
                 }

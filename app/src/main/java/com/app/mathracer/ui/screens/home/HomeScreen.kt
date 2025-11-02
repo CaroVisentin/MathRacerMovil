@@ -50,6 +50,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import android.content.Context
+import android.util.Log
 import com.app.mathracer.ui.screens.tutorial.TutorialOverlay
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.mathracer.R
@@ -59,6 +60,8 @@ import com.app.mathracer.ui.theme.customFontFamily
 
 @Composable
 fun HomeScreen(
+    userName: String? = null,
+    userEmail: String? = null,
     onMultiplayerClick: () -> Unit = {},
     onStoryModeClick: () -> Unit = {},
     onFreePracticeClick: () -> Unit = {},
@@ -74,13 +77,14 @@ fun HomeScreen(
     var showTutorial by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         try {
+            Log.d("userlogin", "userName=$userName userEmail=$userEmail")
             val prefs = _context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
             showTutorial = prefs.getBoolean("show_tutorial_on_next_launch", false)
         } catch (_: Throwable) {
             showTutorial = false
         }
     }
-    
+
     // Observar cuando se debe navegar
     LaunchedEffect(uiState.navigateToWaiting) {
         if (uiState.navigateToWaiting) {
@@ -319,9 +323,10 @@ fun HomeScreen(
         }
     }
 }
-
+/*
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
     HomeScreen()
 }
+*/

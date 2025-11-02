@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 
 import android.content.Intent
+import android.util.Log
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
@@ -14,6 +15,7 @@ import com.app.mathracer.data.repository.UserRemoteRepository
 import com.app.mathracer.data.CurrentUser
 import com.app.mathracer.data.model.User
 import androidx.lifecycle.viewModelScope
+import com.app.mathracer.data.model.UserLogin
 import kotlinx.coroutines.launch
 
 class LoginViewModel : ViewModel() {
@@ -45,12 +47,13 @@ class LoginViewModel : ViewModel() {
             auth.signInWithEmailAndPassword(state.user, state.pass)
                 .addOnCompleteListener { task ->
                     if (task.isSuccessful) {
-                        // Obtener usuario desde backend usando uid
                         val uid = auth.currentUser?.uid
+                        val user = UserLogin(email = state.user, password = state.pass)
                         if (!uid.isNullOrBlank()) {
                             viewModelScope.launch {
                                 try {
-                                    val response = UserRemoteRepository.getUserByUid(uid)
+                                    val response = UserRemoteRepository.loginUser(user) //getUserByUid(uid)
+                                    Log.d("Login response", "getUser response: $response")
                                     if (response.isSuccessful) {
                                         CurrentUser.user = response.body()
                                     } else {
@@ -92,12 +95,11 @@ class LoginViewModel : ViewModel() {
                 auth.signInWithCredential(credential)
                     .addOnSuccessListener { authResult ->
                         android.util.Log.d("GoogleSignIn", "Login: Autenticación Firebase exitosa")
-                        // Intentar obtener usuario desde backend; si no existe, intentar crear uno
                         val uid = authResult.user?.uid
                         if (!uid.isNullOrBlank()) {
                             viewModelScope.launch {
                                 try {
-                                    val response = UserRemoteRepository.getUserByUid(uid)
+                                    val response = UserRemoteRepository.loginUser(UserLogin(email = googleAccount.email, password = "holi"))
                                     if (response.isSuccessful) {
                                         CurrentUser.user = response.body()
                                     } else {
