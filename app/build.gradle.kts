@@ -21,6 +21,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Base URL for local backend running on your machine.
+        // Use 10.0.2.2 for Android emulator -> maps to host localhost.
+        buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:5153/api/\"")
     }
 
     buildTypes {
@@ -41,6 +44,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -81,6 +85,10 @@ dependencies {
     implementation(libs.signalr)
     implementation(libs.okhttp)
     implementation(libs.gson)
+    // Retrofit for backend calls
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
 
     // Firebase Authentication
     implementation(libs.firebase.auth)

@@ -7,6 +7,9 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
+import com.app.mathracer.data.model.User
+import com.app.mathracer.data.repository.UserRemoteRepository
+import com.app.mathracer.data.CurrentUser
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -52,10 +55,27 @@ class RegisterViewModel : ViewModel() {
             auth.createUserWithEmailAndPassword(state.email, state.password)
                 .addOnCompleteListener { task ->
                     if (task.isSuccessful) {
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            isSuccess = true
+                        // Registrar en backend con el uid de Firebase
+                        val firebaseUser = auth.currentUser
+                        val createdUser = User(
+                            id = firebaseUser?.uid ?: "",
+                            email = firebaseUser?.email ?: state.email,
+                            name = state.user
                         )
+                        // Llamada suspend dentro de coroutine
+                        viewModelScope.launch {
+                            try {
+                                val resp = UserRemoteRepository.createUser(createdUser)
+                                if (resp.isSuccessful) CurrentUser.user = resp.body() else CurrentUser.user = createdUser
+                            } catch (e: Exception) {
+                                android.util.Log.e("Register", "Error creando usuario en backend", e)
+                                CurrentUser.user = createdUser
+                            }
+                            _uiState.value = _uiState.value.copy(
+                                isLoading = false,
+                                isSuccess = true
+                            )
+                        }
                     } else {
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
@@ -84,13 +104,27 @@ class RegisterViewModel : ViewModel() {
                 auth.signInWithCredential(credential)
                     .addOnSuccessListener { authResult ->
                         android.util.Log.d("GoogleSignIn", "Autenticación Firebase exitosa")
-                        // Crear o actualizar el perfil del usuario
+                        // Crear o actualizar el perfil del usuario y guardarlo en backend
                         authResult.user?.let { firebaseUser ->
                             android.util.Log.d("GoogleSignIn", "Usuario Firebase: ${firebaseUser.email}")
-                            _uiState.value = _uiState.value.copy(
-                                isLoading = false,
-                                isSuccess = true
+                            val createdUser = User(
+                                id = firebaseUser.uid,
+                                email = firebaseUser.email,
+                                name = _uiState.value.user
                             )
+                            viewModelScope.launch {
+                                try {
+                                    val resp = UserRemoteRepository.createUser(createdUser)
+                                    if (resp.isSuccessful) CurrentUser.user = resp.body() else CurrentUser.user = createdUser
+                                } catch (e: Exception) {
+                                    android.util.Log.e("Register", "Error creando usuario en backend", e)
+                                    CurrentUser.user = createdUser
+                                }
+                                _uiState.value = _uiState.value.copy(
+                                    isLoading = false,
+                                    isSuccess = true
+                                )
+                            }
                         }
                     }
                     .addOnFailureListener { e ->
