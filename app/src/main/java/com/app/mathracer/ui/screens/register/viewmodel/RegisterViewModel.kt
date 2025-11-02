@@ -55,14 +55,13 @@ class RegisterViewModel : ViewModel() {
             auth.createUserWithEmailAndPassword(state.email, state.password)
                 .addOnCompleteListener { task ->
                     if (task.isSuccessful) {
-                        // Registrar en backend con el uid de Firebase
+                        // Registrar en back con el uid de Firebase
                         val firebaseUser = auth.currentUser
                         val createdUser = User(
                             id = firebaseUser?.uid ?: "",
                             email = firebaseUser?.email ?: state.email,
                             name = state.user
                         )
-                        // Llamada suspend dentro de coroutine
                         viewModelScope.launch {
                             try {
                                 val resp = UserRemoteRepository.createUser(createdUser)
@@ -95,8 +94,7 @@ class RegisterViewModel : ViewModel() {
                 .getResult(ApiException::class.java)
             
             android.util.Log.d("GoogleSignIn", "Cuenta Google obtenida: ${account?.email}")
-            
-            // Si llegamos aquí, el sign-in fue exitoso
+
             account?.let { googleAccount ->
                 android.util.Log.d("GoogleSignIn", "ID Token obtenido, procediendo con Firebase")
                 val credential = GoogleAuthProvider.getCredential(googleAccount.idToken, null)
@@ -104,7 +102,6 @@ class RegisterViewModel : ViewModel() {
                 auth.signInWithCredential(credential)
                     .addOnSuccessListener { authResult ->
                         android.util.Log.d("GoogleSignIn", "Autenticación Firebase exitosa")
-                        // Crear o actualizar el perfil del usuario y guardarlo en backend
                         authResult.user?.let { firebaseUser ->
                             android.util.Log.d("GoogleSignIn", "Usuario Firebase: ${firebaseUser.email}")
                             val createdUser = User(

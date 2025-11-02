@@ -35,9 +35,8 @@ import androidx.compose.ui.unit.sp
 import com.app.mathracer.R
 import com.app.mathracer.ui.screens.register.viewmodel.RegisterViewModel
 
-// Colores rápidos (ajustá a tu theme)
-private val PlateBg      = Color(0xCC000000)      // negro 80%
-private val FieldBg      = Color(0xCC0F2A3B)      // azul petróleo translúcido
+private val PlateBg      = Color(0xCC000000)
+private val FieldBg      = Color(0xCC0F2A3B)
 private val FieldHint    = Color(0xFFB8D9EA)
 private val FieldStroke  = Color(0xFF1EC5FF)
 private val PrimaryTeal  = Color(0xFF2EB7A7)
@@ -52,7 +51,6 @@ fun RegisterScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
-    // Mostrar errores o éxito
     LaunchedEffect(uiState.errorMessage) {
         uiState.errorMessage?.let {
             Toast.makeText(context, it, Toast.LENGTH_LONG).show()
@@ -68,7 +66,7 @@ fun RegisterScreen(
     }
 
     Box(Modifier.fillMaxSize()) {
-        // Fondo
+
         Image(
             painter = painterResource(R.drawable.login_background),
             contentDescription = null,
@@ -92,7 +90,6 @@ fun RegisterScreen(
                     .padding(bottom = 32.dp)
             )
 
-            // Email
             OutlinedTextField(
                 value = uiState.email,
                 onValueChange = viewModel::onEmailChange,
@@ -108,7 +105,6 @@ fun RegisterScreen(
             )
             Spacer(Modifier.height(10.dp))
 
-            // Usuario
             OutlinedTextField(
                 value = uiState.user,
                 onValueChange = viewModel::onUserChange,
@@ -124,7 +120,6 @@ fun RegisterScreen(
             )
             Spacer(Modifier.height(10.dp))
 
-            // Contraseña
             var showPass by remember { mutableStateOf(false) }
             OutlinedTextField(
                 value = uiState.password,
@@ -151,7 +146,6 @@ fun RegisterScreen(
             )
             Spacer(Modifier.height(10.dp))
 
-            // Repetir contraseña
             var showRePass by remember { mutableStateOf(false) }
             OutlinedTextField(
                 value = uiState.repeatPassword,
@@ -179,7 +173,6 @@ fun RegisterScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // Botón registrarse
             Button(
                 onClick = { viewModel.registerUser() },
                 modifier = Modifier.fillMaxWidth().height(48.dp),
@@ -202,7 +195,6 @@ fun RegisterScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            // Google Sign-in
             OutlinedButton(
                 onClick = onGoogleSignIn,
                 modifier = Modifier.fillMaxWidth().height(44.dp),
@@ -236,9 +228,6 @@ fun RegisterScreen(
         }
     }
 }
-
-
-/* ---- Componentes auxiliares con look del mock ---- */
 
 @Composable
 private fun AuthField(

@@ -84,17 +84,17 @@ class LoginViewModel : ViewModel() {
     }
 
     fun handleGoogleSignInResult(data: Intent?) {
-        android.util.Log.d("GoogleSignIn", "Login: Iniciando autenticación con Google")
+        Log.d("GoogleSignIn", "Login: Iniciando autenticación con Google")
         try {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
             val account = GoogleSignIn.getSignedInAccountFromIntent(data)
                 .getResult(ApiException::class.java)
-            android.util.Log.d("GoogleSignIn", "Login: Cuenta Google obtenida: ${account?.email}")
+            Log.d("GoogleSignIn", "Login: Cuenta Google obtenida: ${account?.email}")
             account?.let { googleAccount ->
                 val credential = GoogleAuthProvider.getCredential(googleAccount.idToken, null)
                 auth.signInWithCredential(credential)
                     .addOnSuccessListener { authResult ->
-                        android.util.Log.d("GoogleSignIn", "Login: Autenticación Firebase exitosa")
+                        Log.d("GoogleSignIn", "Login: Autenticación Firebase exitosa")
                         val uid = authResult.user?.uid
                         if (!uid.isNullOrBlank()) {
                             viewModelScope.launch {
@@ -109,12 +109,12 @@ class LoginViewModel : ViewModel() {
                                             val createResp = UserRemoteRepository.createUser(created)
                                             if (createResp.isSuccessful) CurrentUser.user = createResp.body() else CurrentUser.user = created
                                         } catch (e: Exception) {
-                                            android.util.Log.e("Login", "Error creando usuario en backend", e)
+                                            Log.e("Login", "Error creando usuario en backend", e)
                                             CurrentUser.user = created
                                         }
                                     }
                                 } catch (e: Exception) {
-                                    android.util.Log.e("Login", "Error obteniendo usuario del backend", e)
+                                    Log.e("Login", "Error obteniendo usuario del backend", e)
                                 }
                                 _uiState.value = _uiState.value.copy(
                                     isLoading = false,
@@ -129,21 +129,21 @@ class LoginViewModel : ViewModel() {
                         }
                     }
                     .addOnFailureListener { e ->
-                        android.util.Log.e("GoogleSignIn", "Login: Error en autenticación Firebase", e)
+                        Log.e("GoogleSignIn", "Login: Error en autenticación Firebase", e)
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
                             errorMessage = "Error al autenticar con Firebase: ${e.message}"
                         )
                     }
             } ?: run {
-                android.util.Log.e("GoogleSignIn", "Login: Cuenta Google es null")
+                Log.e("GoogleSignIn", "Login: Cuenta Google es null")
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     errorMessage = "No se pudo obtener la cuenta de Google"
                 )
             }
         } catch (e: ApiException) {
-            android.util.Log.e("GoogleSignIn", "Login: Error en Google Sign In", e)
+            Log.e("GoogleSignIn", "Login: Error en Google Sign In", e)
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
                 errorMessage = "Error al iniciar sesión con Google: ${e.message}"
