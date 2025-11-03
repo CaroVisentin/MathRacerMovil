@@ -17,7 +17,7 @@ object Routes {
     const val WORLDS = "worlds"
     const val LEVELS = "levels"
     const val RANKING = "ranking"
-    const val MULTIPLAYER_OPTIONS = "multiplayer_options"
+    //const val MULTIPLAYER_OPTIONS = "multiplayer_options"
 
     // Rutas con argumentos
     fun gameWithIdAndPlayer(gameId: String, playerName: String) = "game/$gameId/$playerName"
