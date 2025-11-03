@@ -195,25 +195,6 @@ fun RegisterScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            OutlinedButton(
-                onClick = onGoogleSignIn,
-                modifier = Modifier.fillMaxWidth().height(44.dp),
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = Color.White,
-                    contentColor = Color.Black
-                )
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Image(
-                        painter = painterResource(R.drawable.ic_google),
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text("Continuar con Google")
-                }
-            }
 
             Spacer(Modifier.height(16.dp))
             Row {

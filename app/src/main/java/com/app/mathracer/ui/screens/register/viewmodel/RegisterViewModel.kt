@@ -1,6 +1,7 @@
 package com.app.mathracer.ui.screens.register.viewmodel
 
 import android.content.Intent
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -107,7 +108,7 @@ class RegisterViewModel : ViewModel() {
                             val createdUser = User(
                                 id = firebaseUser.uid,
                                 email = firebaseUser.email,
-                                name = _uiState.value.user
+                                name = firebaseUser.displayName
                             )
                             viewModelScope.launch {
                                 try {

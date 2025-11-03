@@ -84,66 +84,60 @@ class LoginViewModel : ViewModel() {
     }
 
     fun handleGoogleSignInResult(data: Intent?) {
-        Log.d("GoogleSignIn", "Login: Iniciando autenticación con Google")
+        android.util.Log.d("GoogleSignIn", "Iniciando proceso de autenticación con Google")
         try {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+
             val account = GoogleSignIn.getSignedInAccountFromIntent(data)
                 .getResult(ApiException::class.java)
-            Log.d("GoogleSignIn", "Login: Cuenta Google obtenida: ${account?.email}")
+
+            android.util.Log.d("GoogleSignIn", "Cuenta Google obtenida: ${account?.email}")
+
             account?.let { googleAccount ->
+                android.util.Log.d("GoogleSignIn", "ID Token obtenido, procediendo con Firebase")
                 val credential = GoogleAuthProvider.getCredential(googleAccount.idToken, null)
+
                 auth.signInWithCredential(credential)
                     .addOnSuccessListener { authResult ->
-                        Log.d("GoogleSignIn", "Login: Autenticación Firebase exitosa")
-                        val uid = authResult.user?.uid
-                        if (!uid.isNullOrBlank()) {
+                        android.util.Log.d("GoogleSignIn", "Autenticación Firebase exitosa")
+                        authResult.user?.let { firebaseUser ->
+                            android.util.Log.d("GoogleSignIn", "Usuario Firebase: ${firebaseUser.email}")
+                            val createdUser = User(
+                                id = firebaseUser.uid,
+                                email = firebaseUser.email,
+                                name = firebaseUser.displayName //_uiState.value.user
+                            )
                             viewModelScope.launch {
                                 try {
-                                    val response = UserRemoteRepository.loginUser(UserLogin(email = googleAccount.email, password = "holi"))
-                                    if (response.isSuccessful) {
-                                        CurrentUser.user = response.body()
-                                    } else {
-                                        android.util.Log.w("Login", "Usuario no encontrado en backend, creando uno localmente: ${response.code()}")
-                                        val created = User(id = uid, email = authResult.user?.email)
-                                        try {
-                                            val createResp = UserRemoteRepository.createUser(created)
-                                            if (createResp.isSuccessful) CurrentUser.user = createResp.body() else CurrentUser.user = created
-                                        } catch (e: Exception) {
-                                            Log.e("Login", "Error creando usuario en backend", e)
-                                            CurrentUser.user = created
-                                        }
-                                    }
+                                    val resp = UserRemoteRepository.createUser(createdUser)
+                                    if (resp.isSuccessful) CurrentUser.user = resp.body() else CurrentUser.user = createdUser
                                 } catch (e: Exception) {
-                                    Log.e("Login", "Error obteniendo usuario del backend", e)
+                                    android.util.Log.e("Register", "Error creando usuario en backend", e)
+                                    CurrentUser.user = createdUser
                                 }
                                 _uiState.value = _uiState.value.copy(
                                     isLoading = false,
                                     isSuccess = true
                                 )
                             }
-                        } else {
-                            _uiState.value = _uiState.value.copy(
-                                isLoading = false,
-                                isSuccess = true
-                            )
                         }
                     }
                     .addOnFailureListener { e ->
-                        Log.e("GoogleSignIn", "Login: Error en autenticación Firebase", e)
+                        android.util.Log.e("GoogleSignIn", "Error en autenticación Firebase", e)
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
                             errorMessage = "Error al autenticar con Firebase: ${e.message}"
                         )
                     }
             } ?: run {
-                Log.e("GoogleSignIn", "Login: Cuenta Google es null")
+                android.util.Log.e("GoogleSignIn", "Cuenta Google es null")
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     errorMessage = "No se pudo obtener la cuenta de Google"
                 )
             }
         } catch (e: ApiException) {
-            Log.e("GoogleSignIn", "Login: Error en Google Sign In", e)
+            android.util.Log.e("GoogleSignIn", "Error en Google Sign In", e)
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
                 errorMessage = "Error al iniciar sesión con Google: ${e.message}"
