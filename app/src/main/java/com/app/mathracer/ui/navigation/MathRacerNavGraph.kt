@@ -9,7 +9,9 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -35,6 +37,10 @@ import com.app.mathracer.ui.screens.ranking.viewmodel.RankingViewModel
 import com.app.mathracer.ui.screens.worlds.WorldsScreen
 import com.app.mathracer.ui.screens.worlds.WorldsScreenRoute
 import com.app.mathracer.ui.rules.RulesScreen
+import com.app.mathracer.data.local.UserPreferences
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 @Composable
 fun MathRacerNavGraph(
@@ -45,8 +51,25 @@ fun MathRacerNavGraph(
 
     NavHost(
         navController = navController,
-        startDestination = Routes.LOGIN
+        startDestination = Routes.SPLASH
     ) {
+       
+        composable(Routes.SPLASH) {
+            val context = LocalContext.current
+            LaunchedEffect(Unit) {
+                val user = UserPreferences.getUserFlow(context).first()
+                if (user != null) {
+                   
+                    navController.navigate(Routes.homeWithUser(user.username, user.email)) {
+                        popUpTo(Routes.SPLASH) { inclusive = true }
+                    }
+                } else {
+                    navController.navigate(Routes.LOGIN) {
+                        popUpTo(Routes.SPLASH) { inclusive = true }
+                    }
+                }
+            }
+        }
         
             composable(Routes.HOME) {
                 HandleBackNavigation(
@@ -288,17 +311,31 @@ fun MathRacerNavGraph(
                 }
             }
 
+            val coroutineScope = rememberCoroutineScope()
+
             LoginScreen(
                 onLoginWithGoogle = { launcher.launch(googleSignInClient.signInIntent) },
                 onRegisterClick = { navController.navigate(Routes.REGISTER) },
                 onLoginSuccess = {
                     val prefs = context.getSharedPreferences("app_prefs", MODE_PRIVATE)
                     prefs.edit().putBoolean("show_tutorial_on_next_launch", false).apply()
-                    val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+                    val firebaseUser = FirebaseAuth.getInstance().currentUser
                     val displayName = firebaseUser?.displayName ?: ""
                     val email = firebaseUser?.email ?: ""
-                    navController.navigate(Routes.homeWithUser(displayName, email)) {
-                        popUpTo(Routes.HOME) { inclusive = true }
+
+                   
+                    if (firebaseUser != null) {
+                        coroutineScope.launch {
+                            UserPreferences.saveUser(context, firebaseUser.uid, displayName, email)
+                            
+                            navController.navigate(Routes.homeWithUser(displayName, email)) {
+                                popUpTo(Routes.HOME) { inclusive = true }
+                            }
+                        }
+                    } else {
+                        navController.navigate(Routes.homeWithUser(displayName, email)) {
+                            popUpTo(Routes.HOME) { inclusive = true }
+                        }
                     }
                 },
                 viewModel = loginViewModel
@@ -367,6 +404,8 @@ fun MathRacerNavGraph(
                 }
             }
 
+            val registerCoroutine = rememberCoroutineScope()
+
             RegisterScreen(
                 viewModel = registerViewModel,
                 onGoogleSignIn = { launcher.launch(googleSignInClient.signInIntent) },
@@ -377,12 +416,21 @@ fun MathRacerNavGraph(
                         .putBoolean("show_tutorial_on_next_launch", true)
                         .apply()
 
-                    val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+                    val firebaseUser = FirebaseAuth.getInstance().currentUser
                     val displayName = firebaseUser?.displayName ?: ""
                     val email = firebaseUser?.email ?: ""
 
-                    navController.navigate(Routes.homeWithUser(displayName, email)) {
-                        popUpTo(Routes.LOGIN) { inclusive = true }
+                    if (firebaseUser != null) {
+                        registerCoroutine.launch {
+                            UserPreferences.saveUser(context, firebaseUser.uid, displayName, email)
+                            navController.navigate(Routes.homeWithUser(displayName, email)) {
+                                popUpTo(Routes.LOGIN) { inclusive = true }
+                            }
+                        }
+                    } else {
+                        navController.navigate(Routes.homeWithUser(displayName, email)) {
+                            popUpTo(Routes.LOGIN) { inclusive = true }
+                        }
                     }
                 }
             )
@@ -396,9 +444,20 @@ fun MathRacerNavGraph(
                 onBackPressed = { navController.navigateUp() }
             )
 
+            val context = LocalContext.current
+            val logoutScope = rememberCoroutineScope()
+
             ProfileScreen(
-               // onNavigateBack = { navController.navigateUp() }
-               onHelpClick = { navController.navigate(Routes.RULES) }
+                onHelpClick = { navController.navigate(Routes.RULES) },
+                onLogout = {
+                    logoutScope.launch {
+                    FirebaseAuth.getInstance().signOut()
+                    UserPreferences.clearUser(context)
+                    navController.navigate(Routes.LOGIN) {
+                            popUpTo(Routes.HOME) { inclusive = true }
+                        }
+                    }
+                }
             )
         }
 

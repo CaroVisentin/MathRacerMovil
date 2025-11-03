@@ -50,7 +50,8 @@ import com.app.mathracer.ui.screens.profile.components.Settings
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel(),
-    onHelpClick: () -> Unit = {}
+    onHelpClick: () -> Unit = {},
+    onLogout: () -> Unit = {}
 ) {
 
     val uiState by viewModel.uiState.collectAsState()
@@ -88,7 +89,7 @@ fun ProfileScreen(
                     musicVolume = uiState.musicVolume,
                     onSoundVolumeChange = viewModel::onSoundVolumeChange,
                     onMusicVolumeChange = viewModel::onMusicVolumeChange,
-                    onLogout = viewModel::onLogout,
+                    onLogout = onLogout,
                     onDeleteAccount = viewModel::onDeleteAccount
                 )
             }
