@@ -51,9 +51,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import android.content.Context
 import android.util.Log
+import androidx.compose.ui.text.style.TextAlign
 import com.app.mathracer.ui.screens.tutorial.TutorialOverlay
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.mathracer.R
+import com.app.mathracer.data.CurrentUser
 import com.app.mathracer.ui.theme.CyanMR
 import com.app.mathracer.ui.theme.TypographyJersey10
 import com.app.mathracer.ui.theme.customFontFamily
@@ -78,6 +80,7 @@ fun HomeScreen(
     LaunchedEffect(Unit) {
         try {
             Log.d("userlogin", "userName=$userName userEmail=$userEmail")
+            Log.d("userlogin", "CurrentUser=${CurrentUser.user}")
             val prefs = _context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
             showTutorial = prefs.getBoolean("show_tutorial_on_next_launch", false)
         } catch (_: Throwable) {
@@ -141,7 +144,7 @@ fun HomeScreen(
                                     )
                                     Box(modifier = Modifier.width(8.dp))
                                     Text(
-                                        "123.000",
+                                        text = "${CurrentUser.user?.coins ?: 0}",
                                         color = Color.White,
                                         fontSize = 20.sp,
                                         fontWeight = FontWeight.Bold
@@ -150,16 +153,32 @@ fun HomeScreen(
                             }
                             
                             Box(modifier = Modifier.width(24.dp))
-                            
-                            Image(
-                                painter = painterResource(R.drawable.avatar),
-                                contentDescription = "avatar",
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .size(60.dp)
-                                    .clip(CircleShape)
-                                    .clickable { onProfileClick() }
-                            )
+
+                            // --- Avatar + nombre de usuario ---
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Image(
+                                    painter = painterResource(R.drawable.avatar),
+                                    contentDescription = "avatar",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .size(60.dp)
+                                        .clip(CircleShape)
+                                        .clickable { onProfileClick() }
+                                )
+
+                                // Texto con el nombre del usuario debajo del avatar
+                                Text(
+                                    text = CurrentUser.user?.name ?: "",
+                                    color = Color.White,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.padding(top = 4.dp)
+                                )
+                            }
+
                         }
                     }
                 ) { innerPadding ->

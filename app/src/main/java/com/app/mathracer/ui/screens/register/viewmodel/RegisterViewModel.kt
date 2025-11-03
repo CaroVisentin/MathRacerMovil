@@ -59,9 +59,9 @@ class RegisterViewModel : ViewModel() {
                         // Registrar en back con el uid de Firebase
                         val firebaseUser = auth.currentUser
                         val createdUser = User(
-                            id = firebaseUser?.uid ?: "",
+                            uid = firebaseUser?.uid ?: "",
                             email = firebaseUser?.email ?: state.email,
-                            name = state.user
+                            username = state.user
                         )
                         viewModelScope.launch {
                             try {
@@ -106,9 +106,9 @@ class RegisterViewModel : ViewModel() {
                         authResult.user?.let { firebaseUser ->
                             android.util.Log.d("GoogleSignIn", "Usuario Firebase: ${firebaseUser.email}")
                             val createdUser = User(
-                                id = firebaseUser.uid,
+                                uid = firebaseUser.uid,
                                 email = firebaseUser.email,
-                                name = firebaseUser.displayName
+                                username = firebaseUser.displayName
                             )
                             viewModelScope.launch {
                                 try {

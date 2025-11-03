@@ -56,6 +56,7 @@ class LoginViewModel : ViewModel() {
                                     Log.d("Login response", "getUser response: $response")
                                     if (response.isSuccessful) {
                                         CurrentUser.user = response.body()
+                                        Log.d("Login", "Usuario obtenido del backend: ${CurrentUser.user}")
                                     } else {
                                         android.util.Log.e("Login", "getUser failed: ${response.code()}")
                                     }
@@ -103,9 +104,9 @@ class LoginViewModel : ViewModel() {
                         authResult.user?.let { firebaseUser ->
                             android.util.Log.d("GoogleSignIn", "Usuario Firebase: ${firebaseUser.email}")
                             val createdUser = User(
-                                id = firebaseUser.uid,
+                                uid = firebaseUser.uid,
                                 email = firebaseUser.email,
-                                name = firebaseUser.displayName //_uiState.value.user
+                                username = firebaseUser.displayName //_uiState.value.use
                             )
                             viewModelScope.launch {
                                 try {
