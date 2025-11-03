@@ -48,44 +48,71 @@ import com.app.mathracer.ui.screens.profile.components.Profile
 import com.app.mathracer.ui.screens.profile.components.Settings
 
 @Composable
-fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()){
+fun ProfileScreen(
+    viewModel: ProfileViewModel = hiltViewModel(),
+    onHelpClick: () -> Unit = {}
+) {
 
     val uiState by viewModel.uiState.collectAsState()
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
-            .padding(top = 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(top = 24.dp)
     ) {
-        // Barra superior
-        TopBarProfile(
-            selectedTab = uiState.selectedTab,
-            onTabSelected = viewModel::onTabSelected
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Muestra composable según la pestaña seleccionada
-        when (uiState.selectedTab) {
-            "Perfil" -> Profile(
-                userName = uiState.userName,
-                gamesPlayed = uiState.gamesPlayed,
-                points = uiState.points,
-                userEmail = uiState.userEmail
+        Column(
+            modifier = Modifier
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            TopBarProfile(
+                selectedTab = uiState.selectedTab,
+                onTabSelected = viewModel::onTabSelected
             )
 
-            "Amigos" -> Friends(friends = uiState.friends)
+            Spacer(modifier = Modifier.height(24.dp))
 
-            "Ajustes" -> Settings(
-                soundVolume = uiState.soundVolume,
-                musicVolume = uiState.musicVolume,
-                onSoundVolumeChange = viewModel::onSoundVolumeChange,
-                onMusicVolumeChange = viewModel::onMusicVolumeChange,
-                onLogout = viewModel::onLogout,
-                onDeleteAccount = viewModel::onDeleteAccount
-            )
+            when (uiState.selectedTab) {
+                "Perfil" -> Profile(
+                    userName = uiState.userName,
+                    gamesPlayed = uiState.gamesPlayed,
+                    points = uiState.points,
+                    userEmail = uiState.userEmail
+                )
+
+                "Amigos" -> Friends(friends = uiState.friends)
+
+                "Ajustes" -> Settings(
+                    soundVolume = uiState.soundVolume,
+                    musicVolume = uiState.musicVolume,
+                    onSoundVolumeChange = viewModel::onSoundVolumeChange,
+                    onMusicVolumeChange = viewModel::onMusicVolumeChange,
+                    onLogout = viewModel::onLogout,
+                    onDeleteAccount = viewModel::onDeleteAccount
+                )
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            contentAlignment = Alignment.BottomEnd
+        ) {
+            IconButton(
+                onClick = onHelpClick,
+                modifier = Modifier
+                    .size(56.dp)
+                    .border(2.dp, Color.Cyan, RoundedCornerShape(8.dp))
+            ) {
+                Text(
+                    text = "?",
+                    color = Color.Cyan,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp
+                )
+            }
         }
     }
 

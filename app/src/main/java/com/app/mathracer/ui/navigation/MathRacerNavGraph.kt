@@ -26,8 +26,15 @@ import com.app.mathracer.ui.screens.levels.viewmodel.LevelsViewModel
 import com.app.mathracer.ui.screens.profile.ProfileScreen
 import com.app.mathracer.ui.screens.register.viewmodel.RegisterViewModel
 import com.app.mathracer.ui.screens.waitingOpponent.WaitingOpponentScreen
+import com.app.mathracer.ui.screens.multiplayer.MultiplayerOptionsScreen
+import com.app.mathracer.ui.screens.multiplayer.CreateMatchScreen
+import com.app.mathracer.ui.screens.multiplayer.JoinMatchesScreen
+import com.app.mathracer.ui.screens.multiplayer.InviteFriendsScreen
+import com.app.mathracer.ui.screens.ranking.RankingScreen
+import com.app.mathracer.ui.screens.ranking.viewmodel.RankingViewModel
 import com.app.mathracer.ui.screens.worlds.WorldsScreen
 import com.app.mathracer.ui.screens.worlds.WorldsScreenRoute
+import com.app.mathracer.ui.rules.RulesScreen
 
 @Composable
 fun MathRacerNavGraph(
@@ -130,6 +137,91 @@ fun MathRacerNavGraph(
                 onNavigateBack = {
                     navController.navigateUp()
                 }
+            )
+        }
+
+        composable(Routes.MULTIPLAYER_OPTIONS) {
+            HandleBackNavigation(
+                navController = navController,
+                currentRoute = currentRoute,
+                onBackPressed = { navController.navigateUp() }
+            )
+
+            MultiplayerOptionsScreen(
+                onCreateGame = {
+                    navController.navigate(Routes.CREATE_MATCH)
+                },
+                onJoinGame = {
+                    navController.navigate(Routes.JOIN_MATCHES)
+                },
+                onInviteFriend = {
+                    navController.navigate(Routes.INVITE_FRIENDS)
+                },
+                onCompetitiveMatch = {
+                    navController.navigate(Routes.WAITING_OPPONENT)
+                },
+                onRanking = {
+                    navController.navigate(Routes.RANKING)
+                },
+                onBack = { navController.navigateUp() }
+            )
+        }
+
+        composable(Routes.INVITE_FRIENDS) {
+            HandleBackNavigation(
+                navController = navController,
+                currentRoute = currentRoute,
+                onBackPressed = { navController.navigateUp() }
+            )
+
+            InviteFriendsScreen(
+                onInvite = { friendId, difficulty, resultType ->
+                    navController.navigateUp()
+                },
+                onBack = { navController.navigateUp() }
+            )
+        }
+
+        composable(Routes.RANKING) {
+            HandleBackNavigation(
+                navController = navController,
+                currentRoute = currentRoute,
+                onBackPressed = { navController.navigateUp() }
+            )
+
+            val viewModel: RankingViewModel = hiltViewModel()
+            RankingScreen(viewModel = viewModel)
+        }
+
+
+        composable(Routes.CREATE_MATCH) {
+            HandleBackNavigation(
+                navController = navController,
+                currentRoute = currentRoute,
+                onBackPressed = { navController.navigateUp() }
+            )
+
+            CreateMatchScreen(
+                onCreateMatch = { name, privacy, difficulty, resultType ->
+                    navController.navigate(Routes.WAITING_OPPONENT)
+                },
+                onBack = { navController.navigateUp() }
+            )
+        }
+
+        composable(Routes.JOIN_MATCHES) {
+            HandleBackNavigation(
+                navController = navController,
+                currentRoute = currentRoute,
+                onBackPressed = { navController.navigateUp() }
+            )
+
+            JoinMatchesScreen(
+                onJoinConfirmed = { matchId, password ->
+                   //cuando se haga lo de la contraseña hay que validarla aca, ahora hice que mande directo a la partida
+                    navController.navigate(Routes.WAITING_OPPONENT)
+                },
+                onBack = { navController.navigateUp() }
             )
         }
 
@@ -306,6 +398,7 @@ fun MathRacerNavGraph(
 
             ProfileScreen(
                // onNavigateBack = { navController.navigateUp() }
+               onHelpClick = { navController.navigate(Routes.RULES) }
             )
         }
 
@@ -315,6 +408,17 @@ fun MathRacerNavGraph(
                     navController.navigate("levels/${world.id}/${world.title}")
                 }
             )
+        }
+
+        // Rules screen route
+        composable(Routes.RULES) {
+            HandleBackNavigation(
+                navController = navController,
+                currentRoute = currentRoute,
+                onBackPressed = { navController.navigateUp() }
+            )
+
+            RulesScreen()
         }
 
         composable(
