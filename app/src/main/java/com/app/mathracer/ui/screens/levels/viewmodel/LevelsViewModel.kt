@@ -1,7 +1,13 @@
 package com.app.mathracer.ui.screens.levels.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.app.mathracer.data.model.Levels
+import com.app.mathracer.data.model.Worlds
+import com.app.mathracer.data.repository.LevelsRemoteRepository
+import com.app.mathracer.data.repository.WorldsRemoteRepository
+import com.app.mathracer.ui.screens.worlds.viewmodel.WorldsUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -10,6 +16,36 @@ class LevelsViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow(LevelsUiState(isLoading = false))
     val uiState: StateFlow<LevelsUiState> = _uiState
+
+    fun loadLevelsForWorld(worldId: Int, worldName: String) {
+        _uiState.value = _uiState.value.copy(isLoading = true)
+
+        viewModelScope.launch {
+            try {
+                val response = LevelsRemoteRepository.getLevels(worldId) //getUserByUid(uid)
+                Log.d("Level response", "getLevels response: $response")
+                if (response.isSuccessful) {
+                    val levels: Levels? = response.body()
+                    if (levels != null) {
+                        _uiState.value = LevelsUiState(
+                            levels = levels?.levels,
+                            isLoading = false,
+                            worldName = levels.worldName,
+                            lastCompletedLevelId = levels.lastCompletedLevelId
+                        )
+                    }
+
+                    Log.d("Login", "Usuario obtenido del backend: ${levels}")
+                } else {
+                    android.util.Log.e("Login", "getUser failed: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("Login", "Error obteniendo usuario del backend", e)
+            }
+        }
+    }
+
+    /*
 
     fun loadLevelsForWorld(worldId: Int, worldName: String) {
         _uiState.value = _uiState.value.copy(isLoading = true)
@@ -38,4 +74,5 @@ class LevelsViewModel : ViewModel() {
             )
         }
     }
+     */
 }

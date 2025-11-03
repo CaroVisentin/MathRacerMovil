@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.mathracer.data.model.WorldDto
 import com.app.mathracer.data.model.Worlds
-import com.app.mathracer.data.repository.WorlsRemoteRepository
+import com.app.mathracer.data.repository.WorldsRemoteRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -22,7 +22,7 @@ class WorldsViewModel : ViewModel() {
     private fun loadWorlds() {
         viewModelScope.launch {
             try {
-                val response = WorlsRemoteRepository.getWorlds() //getUserByUid(uid)
+                val response = WorldsRemoteRepository.getWorlds() //getUserByUid(uid)
                 Log.d("Login response", "getUser response: $response")
                 if (response.isSuccessful) {
                     val worlds: Worlds? = response.body()

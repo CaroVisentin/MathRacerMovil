@@ -19,7 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.app.mathracer.ui.screens.levels.viewmodel.LevelUiModel
+import com.app.mathracer.data.model.LevelDto
 import com.app.mathracer.ui.screens.levels.viewmodel.LevelsViewModel
 
 @Composable
@@ -44,7 +44,6 @@ fun LevelsScreen(viewModel: LevelsViewModel) {
                     .padding(horizontal = 24.dp, vertical = 46.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // 🔹 Título del mundo
                 Text(
                     text = uiState.worldName,
                     color = Color.Cyan,
@@ -53,15 +52,14 @@ fun LevelsScreen(viewModel: LevelsViewModel) {
                     modifier = Modifier.padding(bottom = 24.dp)
                 )
 
-                // 🔹 Lista de niveles (scrolleable)
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f) // 👈 hace que use el espacio restante
+                        .weight(1f)
                 ) {
-                    itemsIndexed(uiState.levels) { index, level ->
+                    itemsIndexed(uiState.levels.orEmpty()) { index, level ->
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth(0.75f)
@@ -69,12 +67,11 @@ fun LevelsScreen(viewModel: LevelsViewModel) {
                             contentAlignment = if (index % 2 == 0)
                                 Alignment.CenterStart else Alignment.CenterEnd
                         ) {
-                            LevelCard(level)
+                            LevelCard(level, uiState.lastCompletedLevelId)
                         }
                     }
                 }
 
-                // 🔹 Descripción fija visible sin scroll
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Box(
@@ -85,7 +82,7 @@ fun LevelsScreen(viewModel: LevelsViewModel) {
                         .padding(horizontal = 16.dp, vertical = 12.dp)
                 ) {
                     Text(
-                        text = uiState.worldDescription,
+                        text = "descripcion q no llega del back",// uiState.worldDescription,
                         color = Color.Cyan,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium
@@ -98,22 +95,27 @@ fun LevelsScreen(viewModel: LevelsViewModel) {
     }
 }
 
-
 @Composable
-fun LevelCard(level: LevelUiModel) {
+fun LevelCard(level: LevelDto, lastCompletedLevelId: Int) {
     val gold = Color(0xFFFFC107)
     val darkTransparent = Color(0xAA0A031F)
-    val borderColor = if (level.isUnlocked) gold else Color.DarkGray
-    val textColor = if (level.isUnlocked) gold else Color.Gray
-    val flag = "🏁"
+    val colorCard = when {
+        level.id == lastCompletedLevelId + 1 -> Color.Magenta
+        level.id <= lastCompletedLevelId -> gold
+        else -> Color.DarkGray
+    }
+    val iconCard = when {
+        level.id == lastCompletedLevelId + 1 -> "🔓"
+        level.id <= lastCompletedLevelId-> "🏁"
+        else -> "🔒"
+    }
 
     Box(
         modifier = Modifier
             .size(100.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(darkTransparent)
-            .border(2.dp, borderColor, RoundedCornerShape(12.dp)),
-//            .clickable(enabled = level.isUnlocked) { onClick() },
+            .border(2.dp, colorCard, RoundedCornerShape(12.dp)),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -130,43 +132,39 @@ fun LevelCard(level: LevelUiModel) {
                 horizontalArrangement = Arrangement.End
             ) {
                 Text(
-                    text = flag,
+                    text = iconCard,
                     fontSize = 16.sp
                 )
             }
 
-            Text(
-                text = level.name.replace("Nivel ", ""), // Muestra solo el número
-                color = textColor,
-                fontSize = 26.sp,
-                fontWeight = FontWeight.ExtraBold
-            )
-
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxWidth()
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentAlignment = Alignment.Center
             ) {
-                repeat(3) { index ->
-                    val filled = index < level.stars
-                    Text(
-                        text = if (filled) "★" else "☆",
-                        color = if (filled) gold else Color.DarkGray,
-                        fontSize = 16.sp
-                    )
-                }
+                Text(
+                    text = level.number.toString(),
+                    color = colorCard,
+                    fontSize = 40.sp,
+                    fontWeight = FontWeight.ExtraBold
+                )
             }
 
-            if (!level.isUnlocked) {
+            if (level.id > lastCompletedLevelId + 1) {
                 Text(
                     text = "BLOQUEADO",
                     color = Color.Gray.copy(alpha = 0.7f),
                     fontSize = 10.sp,
                     modifier = Modifier.padding(bottom = 2.dp)
                 )
+            } else {
+                Spacer(modifier = Modifier.height(10.dp))
             }
         }
     }
 }
+
 
 @Composable
 fun StarryBackground() {
