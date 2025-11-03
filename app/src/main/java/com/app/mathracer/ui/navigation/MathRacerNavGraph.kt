@@ -405,7 +405,7 @@ fun MathRacerNavGraph(
         composable(Routes.WORLDS) {
             WorldsScreenRoute(
                 onWorldClick = { world ->
-                    navController.navigate("levels/${world.id}/${world.title}")
+                    navController.navigate("levels/${world.id}/${world.name}")
                 }
             )
         }

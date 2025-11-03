@@ -1,9 +1,11 @@
 package com.app.mathracer.ui.screens.worlds.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.app.mathracer.ui.screens.worlds.World
-import kotlinx.coroutines.delay
+import com.app.mathracer.data.model.WorldDto
+import com.app.mathracer.data.model.Worlds
+import com.app.mathracer.data.repository.WorlsRemoteRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -19,19 +21,25 @@ class WorldsViewModel : ViewModel() {
 
     private fun loadWorlds() {
         viewModelScope.launch {
-            // Simular carga de datos
-            delay(1000)
-            val worlds = listOf(
-                World(1, "Mundo 1", "Suma y Resta", 10, 10, false),
-                World(2, "Mundo 2", "Multiplicación", 6, 15, false),
-                World(3, "Mundo 3", "División", 0, 10, true),
-                World(4, "Mundo 4", "Operaciones Mixtas", 0, 10, true)
-            )
-            _uiState.value = WorldsUiState(worlds = worlds, isLoading = false)
+            try {
+                val response = WorlsRemoteRepository.getWorlds() //getUserByUid(uid)
+                Log.d("Login response", "getUser response: $response")
+                if (response.isSuccessful) {
+                    val worlds: Worlds? = response.body()
+                    _uiState.value = WorldsUiState(worlds = worlds?.worlds, isLoading = false, lastAvailableWorldId = worlds?.lastAvailableWorldId ?: 0)
+
+                    Log.d("Login", "Usuario obtenido del backend: ${worlds}")
+                } else {
+                    android.util.Log.e("Login", "getUser failed: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("Login", "Error obteniendo usuario del backend", e)
+            }
         }
     }
 
-    fun onWorldClicked(world: World, onWorldClick: (World) -> Unit) {
+
+    fun onWorldClicked(world: WorldDto, onWorldClick: (WorldDto) -> Unit) {
         onWorldClick(world)
     }
 

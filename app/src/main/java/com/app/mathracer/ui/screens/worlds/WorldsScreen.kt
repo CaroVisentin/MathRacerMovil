@@ -17,9 +17,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -33,12 +35,13 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.app.mathracer.data.model.WorldDto
 import com.app.mathracer.ui.screens.worlds.viewmodel.WorldsViewModel
 
 @Composable
 fun WorldsScreenRoute(
     viewModel: WorldsViewModel = hiltViewModel(),
-    onWorldClick: (World) -> Unit
+    onWorldClick: (WorldDto) -> Unit
 ) {
     // Obtenemos el estado desde el ViewModel
     val uiState = viewModel.uiState.collectAsState().value
@@ -63,6 +66,7 @@ fun WorldsScreenRoute(
         else -> {
             WorldsScreen(
                 worlds = uiState.worlds,
+                lastAvailableWorldId = uiState.lastAvailableWorldId,
                 onWorldClick = { world ->
                     viewModel.onWorldClicked(world, onWorldClick)
                 }
@@ -73,8 +77,9 @@ fun WorldsScreenRoute(
 
 @Composable
 fun WorldsScreen(
-    worlds: List<World>,
-    onWorldClick: (World) -> Unit
+    worlds: List<WorldDto>?,
+    lastAvailableWorldId: Int,
+    onWorldClick: (WorldDto) -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -104,9 +109,10 @@ fun WorldsScreen(
                 contentPadding = PaddingValues(vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(48.dp)
             ) {
-                itemsIndexed(worlds) { index, world ->
+                itemsIndexed(worlds.orEmpty()) { index, world ->
                     ZigZagWorldItem(
                         world = world,
+                        lastAvailableWorldId = lastAvailableWorldId,
                         index = index,
                         onWorldClick = onWorldClick
                     )
@@ -118,9 +124,10 @@ fun WorldsScreen(
 
 @Composable
 fun ZigZagWorldItem(
-    world: World,
+    world: WorldDto,
+    lastAvailableWorldId: Int,
     index: Int,
-    onWorldClick: (World) -> Unit
+    onWorldClick: (WorldDto) -> Unit
 ) {
     val isEven = index % 2 == 0
     val alignment = if (isEven) Arrangement.Start else Arrangement.End
@@ -131,7 +138,7 @@ fun ZigZagWorldItem(
             .padding(horizontal = 24.dp),
         horizontalArrangement = alignment
     ) {
-        WorldCard(world = world, onClick = { onWorldClick(world) })
+        WorldCard(world = world, onClick = { onWorldClick(world) }, lastAvailableWorldId = lastAvailableWorldId)
     }
 }
 
@@ -155,9 +162,14 @@ fun TopBar(energy: Int) {
 }
 
 @Composable
-fun WorldCard(world: World, onClick: () -> Unit) {
-    val borderColor = if (world.locked) Color.Gray else Color.Magenta
-    val textColor = if (world.locked) Color.Gray else Color.White
+fun WorldCard(
+    world: WorldDto,
+    onClick: () -> Unit,
+    lastAvailableWorldId: Int
+) {
+    val borderColor = if (world.id > lastAvailableWorldId) Color.Gray else Color.Magenta
+    val textColor = if (world.id > lastAvailableWorldId) Color.Gray else Color.White
+    val titleColor = if (world.id > lastAvailableWorldId) Color.Gray else Color.Cyan
 
     Box(
         modifier = Modifier
@@ -166,7 +178,7 @@ fun WorldCard(world: World, onClick: () -> Unit) {
             .clip(RoundedCornerShape(12.dp))
             .background(Color(0xFF1A0633))
             .border(2.dp, borderColor, RoundedCornerShape(12.dp))
-            .clickable(enabled = !world.locked) { onClick() }
+            .clickable(enabled = world.id <= lastAvailableWorldId) { onClick() }
             .padding(12.dp)
     ) {
         Column(
@@ -175,43 +187,53 @@ fun WorldCard(world: World, onClick: () -> Unit) {
             modifier = Modifier.fillMaxSize()
         ) {
             Text(
-                text = world.title,
-                color = Color.Cyan,
+                text = world.name,
+                color = titleColor,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
 
             Text(
-                text = world.topic,
+                text = world.difficulty,
                 color = textColor,
                 fontSize = 14.sp
             )
 
             // Barra de progreso
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                repeat(world.totalLevels) { index ->
-                    Box(
-                        modifier = Modifier
-                            .size(12.dp, 24.dp)
-                            .padding(horizontal = 1.dp)
-                            .background(
-                                if (index < world.completedLevels) Color.Yellow else Color.DarkGray,
-                                RoundedCornerShape(2.dp)
-                            )
+            if(world.id > lastAvailableWorldId) {
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = "Blocked",
+                        tint = Color.Gray
                     )
                 }
-            }
-
-            if (world.locked) {
                 Text(
                     text = "BLOQUEADO",
                     color = Color.Gray,
                     fontSize = 12.sp,
                     modifier = Modifier.padding(top = 4.dp)
                 )
+            } else {
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    repeat(15) { index ->
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp, 24.dp)
+                                .padding(horizontal = 1.dp)
+                                .background(
+                                    if (world.id <= lastAvailableWorldId) Color.Yellow else Color.DarkGray, //me tengo q traer los niveles y setearlo con eso
+                                    RoundedCornerShape(2.dp)
+                                )
+                        )
+                    }
+                }
             }
         }
     }
@@ -253,5 +275,5 @@ fun WorldsScreenPreview() {
         World(3, "Mundo 3", "División", 0, 10, true),
         World(4, "Mundo 4", "Operaciones Mixtas", 0, 10, true)
     )
-    WorldsScreen(worlds = sampleWorlds, onWorldClick = {})
+//    WorldsScreen(worlds = sampleWorlds, onWorldClick = {})
 }
