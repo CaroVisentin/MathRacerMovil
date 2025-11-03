@@ -20,6 +20,7 @@ import androidx.navigation.NavType
 import com.app.mathracer.R
 import com.app.mathracer.ui.RegisterScreen
 import com.app.mathracer.ui.screens.home.HomeScreen
+import com.app.mathracer.ui.screens.store.StoreScreen
 import com.app.mathracer.ui.screens.game.GameScreen
 import com.app.mathracer.ui.screens.levels.LevelsScreen
 import com.app.mathracer.ui.screens.levels.viewmodel.LevelsViewModel
@@ -67,7 +68,7 @@ fun MathRacerNavGraph(
                         // TODO: Implementar navegación a práctica libre
                     },
                     onShopClick = {
-                        // TODO: Implementar navegación a tienda
+                        navController.navigate(Routes.STORE)
                     },
                     onGarageClick = {
                         // TODO: Implementar navegación a garage
@@ -107,7 +108,7 @@ fun MathRacerNavGraph(
                         // TODO: Implementar navegación a práctica libre
                     },
                     onShopClick = {
-                        // TODO: Implementar navegación a tienda
+                        navController.navigate(Routes.STORE)
                     },
                     onGarageClick = {
                         // TODO: Implementar navegación a garage
@@ -408,6 +409,16 @@ fun MathRacerNavGraph(
                     navController.navigate("levels/${world.id}/${world.title}")
                 }
             )
+        }
+
+        composable(Routes.STORE) {
+            HandleBackNavigation(
+                navController = navController,
+                currentRoute = currentRoute,
+                onBackPressed = { navController.navigateUp() }
+            )
+
+            StoreScreen(onBack = { navController.navigateUp() })
         }
 
         // Rules screen route
