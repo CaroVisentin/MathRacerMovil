@@ -10,8 +10,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.collectAsState
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -37,10 +39,10 @@ import com.app.mathracer.ui.screens.ranking.viewmodel.RankingViewModel
 import com.app.mathracer.ui.screens.worlds.WorldsScreen
 import com.app.mathracer.ui.screens.worlds.WorldsScreenRoute
 import com.app.mathracer.ui.rules.RulesScreen
-import com.app.mathracer.data.local.UserPreferences
+import com.app.mathracer.data.model.User
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
+
 
 @Composable
 fun MathRacerNavGraph(
@@ -51,25 +53,8 @@ fun MathRacerNavGraph(
 
     NavHost(
         navController = navController,
-        startDestination = Routes.SPLASH
+        startDestination = Routes.LOGIN
     ) {
-       
-        composable(Routes.SPLASH) {
-            val context = LocalContext.current
-            LaunchedEffect(Unit) {
-                val user = UserPreferences.getUserFlow(context).first()
-                if (user != null) {
-                   
-                    navController.navigate(Routes.homeWithUser(user.username, user.email)) {
-                        popUpTo(Routes.SPLASH) { inclusive = true }
-                    }
-                } else {
-                    navController.navigate(Routes.LOGIN) {
-                        popUpTo(Routes.SPLASH) { inclusive = true }
-                    }
-                }
-            }
-        }
         
             composable(Routes.HOME) {
                 HandleBackNavigation(
@@ -102,45 +87,7 @@ fun MathRacerNavGraph(
                 )
             }
 
-            composable(
-                route = "home?userName={userName}&userEmail={userEmail}",
-                arguments = listOf(
-                    navArgument("userName") { type = NavType.StringType; defaultValue = "" },
-                    navArgument("userEmail") { type = NavType.StringType; defaultValue = "" }
-                )
-            ) { backStackEntry ->
-                HandleBackNavigation(
-                    navController = navController,
-                    currentRoute = currentRoute
-                )
-
-                val userName = backStackEntry.arguments?.getString("username")?.let { java.net.URLDecoder.decode(it, "utf-8") } ?: ""
-                val userEmail = backStackEntry.arguments?.getString("userEmail")?.let { java.net.URLDecoder.decode(it, "utf-8") } ?: ""
-
-                HomeScreen(
-                    userName = if (userName.isNotBlank()) userName else null,
-                    userEmail = if (userEmail.isNotBlank()) userEmail else null,
-                    onMultiplayerClick = {
-                        navController.navigate(Routes.MULTIPLAYER_OPTIONS)
-                    },
-                    onStoryModeClick = {
-                        navController.navigate(Routes.WORLDS)
-                    },
-                    onFreePracticeClick = {
-                        // TODO: Implementar navegación a práctica libre
-                    },
-                    onShopClick = {
-                        // TODO: Implementar navegación a tienda
-                    },
-                    onGarageClick = {
-                        // TODO: Implementar navegación a garage
-                    },
-                    onStatsClick = {
-                        navController.navigate(Routes.RANKING)
-                    },
-                    onProfileClick = { navController.navigate(Routes.PROFILE) }
-                )
-            }
+            
         
         composable(Routes.WAITING_OPPONENT) {
             HandleBackNavigation(
@@ -197,7 +144,16 @@ fun MathRacerNavGraph(
                 onBackPressed = { navController.navigateUp() }
             )
 
+            val profileViewModel: com.app.mathracer.ui.screens.profile.viewmodel.ProfileViewModel = hiltViewModel()
+            val profileState by profileViewModel.uiState.collectAsState()
+
+             
+            val inviteList = profileState.friends.mapIndexed { index, f ->
+                com.app.mathracer.ui.screens.multiplayer.FriendItem(id = "${index}", name = f.name, points = f.score.toIntOrNull() ?: 0)
+            }
+
             InviteFriendsScreen(
+                friends = inviteList,
                 onInvite = { friendId, difficulty, resultType ->
                     navController.navigateUp()
                 },
@@ -311,31 +267,15 @@ fun MathRacerNavGraph(
                 }
             }
 
-            val coroutineScope = rememberCoroutineScope()
-
             LoginScreen(
                 onLoginWithGoogle = { launcher.launch(googleSignInClient.signInIntent) },
                 onRegisterClick = { navController.navigate(Routes.REGISTER) },
                 onLoginSuccess = {
-                    val prefs = context.getSharedPreferences("app_prefs", MODE_PRIVATE)
-                    prefs.edit().putBoolean("show_tutorial_on_next_launch", false).apply()
                     val firebaseUser = FirebaseAuth.getInstance().currentUser
                     val displayName = firebaseUser?.displayName ?: ""
                     val email = firebaseUser?.email ?: ""
-
-                   
-                    if (firebaseUser != null) {
-                        coroutineScope.launch {
-                            UserPreferences.saveUser(context, firebaseUser.uid, displayName, email)
-                            
-                            navController.navigate(Routes.homeWithUser(displayName, email)) {
-                                popUpTo(Routes.HOME) { inclusive = true }
-                            }
-                        }
-                    } else {
-                        navController.navigate(Routes.homeWithUser(displayName, email)) {
-                            popUpTo(Routes.HOME) { inclusive = true }
-                        }
+                    navController.navigate(Routes.homeWithUser(displayName, email)) {
+                        popUpTo(Routes.LOGIN) { inclusive = true }
                     }
                 },
                 viewModel = loginViewModel
@@ -404,8 +344,6 @@ fun MathRacerNavGraph(
                 }
             }
 
-            val registerCoroutine = rememberCoroutineScope()
-
             RegisterScreen(
                 viewModel = registerViewModel,
                 onGoogleSignIn = { launcher.launch(googleSignInClient.signInIntent) },
@@ -420,17 +358,8 @@ fun MathRacerNavGraph(
                     val displayName = firebaseUser?.displayName ?: ""
                     val email = firebaseUser?.email ?: ""
 
-                    if (firebaseUser != null) {
-                        registerCoroutine.launch {
-                            UserPreferences.saveUser(context, firebaseUser.uid, displayName, email)
-                            navController.navigate(Routes.homeWithUser(displayName, email)) {
-                                popUpTo(Routes.LOGIN) { inclusive = true }
-                            }
-                        }
-                    } else {
-                        navController.navigate(Routes.homeWithUser(displayName, email)) {
-                            popUpTo(Routes.LOGIN) { inclusive = true }
-                        }
+                    navController.navigate(Routes.homeWithUser(displayName, email)) {
+                        popUpTo(Routes.LOGIN) { inclusive = true }
                     }
                 }
             )
@@ -445,17 +374,13 @@ fun MathRacerNavGraph(
             )
 
             val context = LocalContext.current
-            val logoutScope = rememberCoroutineScope()
 
             ProfileScreen(
                 onHelpClick = { navController.navigate(Routes.RULES) },
                 onLogout = {
-                    logoutScope.launch {
                     FirebaseAuth.getInstance().signOut()
-                    UserPreferences.clearUser(context)
                     navController.navigate(Routes.LOGIN) {
-                            popUpTo(Routes.HOME) { inclusive = true }
-                        }
+                        popUpTo(Routes.HOME) { inclusive = true }
                     }
                 }
             )

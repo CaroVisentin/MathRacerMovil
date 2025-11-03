@@ -1,10 +1,8 @@
 package com.app.mathracer.ui.screens.profile
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,8 +18,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.window.Dialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -62,6 +64,9 @@ fun ProfileScreen(
             .background(Color.Black)
             .padding(top = 24.dp)
     ) {
+        var showAddDialog by remember { mutableStateOf(false) }
+        var newFriendIdText by remember { mutableStateOf("") }
+        var inviteResultMsg by remember { mutableStateOf<String?>(null) }
         Column(
             modifier = Modifier
                 .fillMaxSize(),
@@ -82,7 +87,48 @@ fun ProfileScreen(
                     userEmail = uiState.userEmail
                 )
 
-                "Amigos" -> Friends(friends = uiState.friends)
+                "Amigos" -> {
+                   
+                    if (uiState.pending.isNotEmpty()) {
+                        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                            Text(text = "Solicitudes pendientes", color = Color.White, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            uiState.pending.forEach { req ->
+                                Row(modifier = Modifier
+                                    .fillMaxWidth()
+                                    .border(1.dp, Color.Gray, RoundedCornerShape(8.dp))
+                                    .padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Text(text = req.name, color = Color.White, modifier = Modifier.weight(1f))
+                                    TextButton(onClick = {
+                                        android.util.Log.d("ProfileScreen", "Accepting request from id=${req.id}")
+                                        viewModel.acceptRequest(req.id) { success, msg ->
+                                            inviteResultMsg = msg ?: if (success) "Solicitud aceptada" else "Error al aceptar"
+                                            android.util.Log.d("ProfileScreen", "acceptRequest result: success=$success msg=$inviteResultMsg")
+                                        }
+                                    }) { Text("Aceptar", color = Color.Cyan) }
+                                    TextButton(onClick = {
+                                        android.util.Log.d("ProfileScreen", "Rejecting request from id=${req.id}")
+                                        viewModel.rejectRequest(req.id) { success, msg ->
+                                            inviteResultMsg = msg ?: if (success) "Solicitud rechazada" else "Error al rechazar"
+                                            android.util.Log.d("ProfileScreen", "rejectRequest result: success=$success msg=$inviteResultMsg")
+                                        }
+                                    }) { Text("Rechazar", color = Color.Red) }
+                                }
+                                Spacer(modifier = Modifier.height(6.dp))
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                        }
+                    }
+
+                    Friends(friends = uiState.friends,
+                        onAddFriend = { showAddDialog = true },
+                        onDeleteFriend = { friend ->
+                            
+                            val remote = uiState.remoteFriends.firstOrNull { it.name == friend.name }
+                            remote?.let { viewModel.deleteFriend(it.id) }
+                        }
+                    )
+                }
 
                 "Ajustes" -> Settings(
                     soundVolume = uiState.soundVolume,
@@ -113,6 +159,44 @@ fun ProfileScreen(
                     fontWeight = FontWeight.Bold,
                     fontSize = 22.sp
                 )
+            }
+        }
+
+        if (showAddDialog) {
+            Dialog(onDismissRequest = { showAddDialog = false; inviteResultMsg = null }) {
+                Column(modifier = Modifier
+                    .background(Color(0xFF07112B), shape = RoundedCornerShape(12.dp))
+                    .padding(16.dp)) {
+                    Text(text = "Agregar amigo por ID", color = Color.Cyan, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = newFriendIdText,
+                        onValueChange = { newFriendIdText = it },
+                        label = { Text("ID del jugador") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done)
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TextButton(onClick = { showAddDialog = false; inviteResultMsg = null }) { Text("Cancelar", color = Color.White) }
+                        TextButton(onClick = {
+                            val id = newFriendIdText.toIntOrNull()
+                            if (id != null) {
+                                android.util.Log.d("ProfileScreen", "Sending friend request from current user to id=$id")
+                                viewModel.inviteByPlayerId(id) { success, msg ->
+                                    inviteResultMsg = msg ?: if (success) "Solicitud enviada" else "Error al enviar"
+                                    android.util.Log.d("ProfileScreen", "inviteByPlayerId result: success=$success msg=$inviteResultMsg")
+                                }
+                            } else {
+                                inviteResultMsg = "ID inválido"
+                                android.util.Log.w("ProfileScreen", "Invalid ID entered: $newFriendIdText")
+                            }
+                        }) { Text("Enviar", color = Color.Cyan) }
+                    }
+                    inviteResultMsg?.let { msg ->
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(text = msg, color = Color.White)
+                    }
+                }
             }
         }
     }
