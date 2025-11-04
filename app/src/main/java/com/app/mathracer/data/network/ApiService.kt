@@ -37,4 +37,7 @@ interface ApiService {
 
     @POST("Friendship/delete")
     suspend fun deleteFriend(@Header("Authorization") authorization: String?, @Body body: com.app.mathracer.data.model.FriendshipActionRequest): Response<Unit>
+
+    @POST("Chest/complete-tutorial")
+    suspend fun completeTutorial(@Header("Authorization") authorization: String?): Response<com.app.mathracer.data.model.ChestResponse>
 }

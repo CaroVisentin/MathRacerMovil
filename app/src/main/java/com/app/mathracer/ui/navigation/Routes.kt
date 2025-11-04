@@ -23,6 +23,7 @@ object Routes {
     const val WORLDS = "worlds"
     const val LEVELS = "levels"
     const val RANKING = "ranking"
+    const val CHEST = "chest"
 
     // Rutas con argumentos
     fun gameWithIdAndPlayer(gameId: String, playerName: String) = "game/$gameId/$playerName"

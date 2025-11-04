@@ -83,7 +83,8 @@ fun MathRacerNavGraph(
                     onStatsClick = {
                         navController.navigate(Routes.RANKING)
                     },
-                    onProfileClick = { navController.navigate(Routes.PROFILE) }
+                    onProfileClick = { navController.navigate(Routes.PROFILE) },
+                    onTutorialComplete = { navController.navigate(Routes.CHEST) }
                 )
             }
 
@@ -108,6 +109,20 @@ fun MathRacerNavGraph(
                     navController.navigateUp()
                 }
             )
+        }
+
+        composable(Routes.CHEST) {
+            HandleBackNavigation(
+                navController = navController,
+                currentRoute = currentRoute,
+                onBackPressed = { navController.navigateUp() }
+            )
+
+            com.app.mathracer.ui.screens.chest.ChestScreen(onContinue = {
+                navController.navigate(Routes.HOME) {
+                    popUpTo(Routes.HOME) { inclusive = true }
+                }
+            })
         }
 
         composable(Routes.MULTIPLAYER_OPTIONS) {

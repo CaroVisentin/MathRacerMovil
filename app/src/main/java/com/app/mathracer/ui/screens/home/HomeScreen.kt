@@ -71,6 +71,7 @@ fun HomeScreen(
     onGarageClick: () -> Unit = {},
     onStatsClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
+    onTutorialComplete: () -> Unit = {},
     viewModel: com.app.mathracer.ui.screens.home.viewmodel.HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -337,7 +338,10 @@ fun HomeScreen(
 
                 
                 if (showTutorial) {
-                    TutorialOverlay(onFinish = { showTutorial = false })
+                    TutorialOverlay(onFinish = {
+                        showTutorial = false
+                        onTutorialComplete()
+                    })
                 }
         }
     }
