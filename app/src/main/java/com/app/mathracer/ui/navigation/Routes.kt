@@ -26,5 +26,5 @@ object Routes {
 
     // Rutas con argumentos
     fun gameWithIdAndPlayer(gameId: String, playerName: String) = "game/$gameId/$playerName"
-    fun historyGameWithLevelId(levelId: Int) = "history_game/$levelId"
+    fun historyGameWithLevelId(levelId: Int, resultType: String) = "history_game/$levelId/$resultType"
 }

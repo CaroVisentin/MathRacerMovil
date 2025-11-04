@@ -28,7 +28,7 @@ class LevelsViewModel : ViewModel() {
                     val levels: Levels? = response.body()
                     if (levels != null) {
                         _uiState.value = LevelsUiState(
-                            levels = levels?.levels,
+                            levels = levels.levels,
                             isLoading = false,
                             worldName = levels.worldName,
                             lastCompletedLevelId = levels.lastCompletedLevelId

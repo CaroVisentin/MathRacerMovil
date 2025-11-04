@@ -5,7 +5,7 @@ data class HistoryGameUiState(
     val gameId: Int? = null,
     val playerId: Int? = null,
     val playerName: String = "",
-    val machineName: String = "Máquina",
+    val machineName: String = "Mathi",
     val playerScore: Int = 0,
     val machineScore: Int = 0,
     val playerProgress: Int = 0,

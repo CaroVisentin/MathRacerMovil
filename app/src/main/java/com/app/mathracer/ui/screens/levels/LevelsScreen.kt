@@ -26,7 +26,7 @@ import com.app.mathracer.ui.screens.levels.viewmodel.LevelsViewModel
 @Composable
 fun LevelsScreen(
     viewModel: LevelsViewModel,
-    onLevelClick: (Int) -> Unit = {}
+    onLevelClick: (Int, String) -> Unit = { _, _ -> }
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -77,7 +77,7 @@ fun LevelsScreen(
                                 onClick = {
                                     // Solo permitir navegar si el nivel está desbloqueado
                                     if (level.id <= uiState.lastCompletedLevelId + 1) {
-                                        onLevelClick(level.id)
+                                        onLevelClick(level.id, level.resultType)
                                     }
                                 }
                             )

@@ -263,7 +263,7 @@ fun GamePlayScreen(
 }
 
 @Composable
-private fun TopBar(timeLabel: String, coins: Int, onBack: () -> Unit) {
+public fun TopBar(timeLabel: String, coins: Int, onBack: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -319,7 +319,7 @@ private fun TopBar(timeLabel: String, coins: Int, onBack: () -> Unit) {
 }
 
 @Composable
-private fun TrackCard(
+public fun TrackCard(
     title: String,
     titleColor: Color,
     trackRes: Int,
@@ -468,7 +468,7 @@ fun ScrollingTrack(
 
 
 @Composable
-private fun PowerUpChip(
+public fun PowerUpChip(
     iconRes: Int,
     count: Int,
     tint: Color,
@@ -529,7 +529,7 @@ private fun getOptionButtonState(
 }
 
 @Composable
-private fun OptionButton(
+public fun OptionButton(
     text: String,
     modifier: Modifier = Modifier,
     state: OptionButtonState = OptionButtonState.NORMAL,

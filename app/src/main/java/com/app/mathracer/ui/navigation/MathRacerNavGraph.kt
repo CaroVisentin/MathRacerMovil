@@ -444,8 +444,8 @@ fun MathRacerNavGraph(
 
             LevelsScreen(
                 viewModel = viewModel,
-                onLevelClick = { levelId ->
-                    navController.navigate(Routes.historyGameWithLevelId(levelId))
+                onLevelClick = { levelId, resultType ->
+                    navController.navigate(Routes.historyGameWithLevelId(levelId, resultType))
                 }
             )
         }
@@ -502,7 +502,7 @@ fun MathRacerNavGraph(
         }
         
         composable(
-            route = "history_game/{levelId}",
+            route = "history_game/{levelId}/{resultType}",
             arguments = listOf(
                 navArgument("levelId") { type = NavType.IntType }
             )
@@ -514,9 +514,10 @@ fun MathRacerNavGraph(
                     navController.navigateUp()
                 }
             )
-            
+
             val levelId = backStackEntry.arguments?.getInt("levelId") ?: 0
-            
+            val resultType = backStackEntry.arguments?.getString("resultType") ?: ""
+
             // Obtener el nombre del jugador desde Firebase si está disponible
             val playerName = com.google.firebase.auth.FirebaseAuth.getInstance()
                 .currentUser?.displayName ?: "Jugador"
@@ -524,11 +525,12 @@ fun MathRacerNavGraph(
             HistoryGameScreen(
                 levelId = levelId,
                 playerName = playerName,
+                resultType = resultType,
                 onNavigateBack = {
                     navController.navigateUp()
                 },
                 onPlayAgain = {
-                    navController.navigate(Routes.historyGameWithLevelId(levelId)) {
+                    navController.navigate(Routes.historyGameWithLevelId(levelId, resultType)) {
                         popUpTo(Routes.HOME)
                     }
                 }
