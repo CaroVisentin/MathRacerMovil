@@ -1,6 +1,10 @@
 package com.app.mathracer.data.network
 
 import com.app.mathracer.data.model.Levels
+import com.app.mathracer.data.model.SoloAnswerRequest
+import com.app.mathracer.data.model.SoloAnswerResponse
+import com.app.mathracer.data.model.SoloGameStartResponse
+import com.app.mathracer.data.model.SoloGameUpdateResponse
 import com.app.mathracer.data.model.User
 import com.app.mathracer.data.model.UserLogin
 import com.app.mathracer.data.model.Worlds
@@ -29,4 +33,24 @@ interface ApiService {
 
     @GET("/api/Levels/world/{worldId}")
     suspend fun getLevels(@Header("Authorization") authorization: String?, @Path("worldId") worldId: Int): Response<Levels>
+    
+    // Solo Game (History Mode) endpoints
+    @POST("/api/solo/start/{levelId}")
+    suspend fun startSoloGame(
+        @Header("Authorization") authorization: String?,
+        @Path("levelId") levelId: Int
+    ): Response<SoloGameStartResponse>
+    
+    @GET("/api/solo/{gameId}")
+    suspend fun getSoloGameUpdate(
+        @Header("Authorization") authorization: String?,
+        @Path("gameId") gameId: Int
+    ): Response<SoloGameUpdateResponse>
+    
+    @POST("/api/solo/{gameId}/answer")
+    suspend fun submitSoloAnswer(
+        @Header("Authorization") authorization: String?,
+        @Path("gameId") gameId: Int,
+        @Body answer: SoloAnswerRequest
+    ): Response<SoloAnswerResponse>
 }

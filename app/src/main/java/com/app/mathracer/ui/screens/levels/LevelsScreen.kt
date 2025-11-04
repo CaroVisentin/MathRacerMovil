@@ -1,5 +1,6 @@
 package com.app.mathracer.ui.screens.levels
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -23,7 +24,10 @@ import com.app.mathracer.data.model.LevelDto
 import com.app.mathracer.ui.screens.levels.viewmodel.LevelsViewModel
 
 @Composable
-fun LevelsScreen(viewModel: LevelsViewModel) {
+fun LevelsScreen(
+    viewModel: LevelsViewModel,
+    onLevelClick: (Int) -> Unit = {}
+) {
     val uiState by viewModel.uiState.collectAsState()
 
     Box(
@@ -67,7 +71,16 @@ fun LevelsScreen(viewModel: LevelsViewModel) {
                             contentAlignment = if (index % 2 == 0)
                                 Alignment.CenterStart else Alignment.CenterEnd
                         ) {
-                            LevelCard(level, uiState.lastCompletedLevelId)
+                            LevelCard(
+                                level = level,
+                                lastCompletedLevelId = uiState.lastCompletedLevelId,
+                                onClick = {
+                                    // Solo permitir navegar si el nivel está desbloqueado
+                                    if (level.id <= uiState.lastCompletedLevelId + 1) {
+                                        onLevelClick(level.id)
+                                    }
+                                }
+                            )
                         }
                     }
                 }
@@ -96,9 +109,15 @@ fun LevelsScreen(viewModel: LevelsViewModel) {
 }
 
 @Composable
-fun LevelCard(level: LevelDto, lastCompletedLevelId: Int) {
+fun LevelCard(
+    level: LevelDto,
+    lastCompletedLevelId: Int,
+    onClick: () -> Unit = {}
+) {
     val gold = Color(0xFFFFC107)
     val darkTransparent = Color(0xAA0A031F)
+    val isUnlocked = level.id <= lastCompletedLevelId + 1
+    
     val colorCard = when {
         level.id == lastCompletedLevelId + 1 -> Color.Magenta
         level.id <= lastCompletedLevelId -> gold
@@ -115,7 +134,14 @@ fun LevelCard(level: LevelDto, lastCompletedLevelId: Int) {
             .size(100.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(darkTransparent)
-            .border(2.dp, colorCard, RoundedCornerShape(12.dp)),
+            .border(2.dp, colorCard, RoundedCornerShape(12.dp))
+            .then(
+                if (isUnlocked) {
+                    Modifier.clickable(onClick = onClick)
+                } else {
+                    Modifier
+                }
+            ),
         contentAlignment = Alignment.Center
     ) {
         Column(

@@ -35,6 +35,7 @@ import com.app.mathracer.ui.screens.ranking.viewmodel.RankingViewModel
 import com.app.mathracer.ui.screens.worlds.WorldsScreen
 import com.app.mathracer.ui.screens.worlds.WorldsScreenRoute
 import com.app.mathracer.ui.rules.RulesScreen
+import com.app.mathracer.ui.screens.historyGame.HistoryGameScreen
 
 @Composable
 fun MathRacerNavGraph(
@@ -428,6 +429,12 @@ fun MathRacerNavGraph(
                 navArgument("worldName") { type = NavType.StringType }
             )
         ) { backStackEntry ->
+            HandleBackNavigation(
+                navController = navController,
+                currentRoute = currentRoute,
+                onBackPressed = { navController.navigateUp() }
+            )
+            
             val viewModel: LevelsViewModel = hiltViewModel()
             val worldId = backStackEntry.arguments?.getInt("worldId") ?: 0
             val worldName = backStackEntry.arguments?.getString("worldName") ?: ""
@@ -435,7 +442,12 @@ fun MathRacerNavGraph(
             // Cargar datos del mundo seleccionado
             viewModel.loadLevelsForWorld(worldId, worldName)
 
-            LevelsScreen(viewModel = viewModel)
+            LevelsScreen(
+                viewModel = viewModel,
+                onLevelClick = { levelId ->
+                    navController.navigate(Routes.historyGameWithLevelId(levelId))
+                }
+            )
         }
 
 
@@ -487,6 +499,40 @@ fun MathRacerNavGraph(
             )
             
 
+        }
+        
+        composable(
+            route = "history_game/{levelId}",
+            arguments = listOf(
+                navArgument("levelId") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            HandleBackNavigation(
+                navController = navController,
+                currentRoute = currentRoute,
+                onBackPressed = {
+                    navController.navigateUp()
+                }
+            )
+            
+            val levelId = backStackEntry.arguments?.getInt("levelId") ?: 0
+            
+            // Obtener el nombre del jugador desde Firebase si está disponible
+            val playerName = com.google.firebase.auth.FirebaseAuth.getInstance()
+                .currentUser?.displayName ?: "Jugador"
+            
+            HistoryGameScreen(
+                levelId = levelId,
+                playerName = playerName,
+                onNavigateBack = {
+                    navController.navigateUp()
+                },
+                onPlayAgain = {
+                    navController.navigate(Routes.historyGameWithLevelId(levelId)) {
+                        popUpTo(Routes.HOME)
+                    }
+                }
+            )
         }
     }
 }
