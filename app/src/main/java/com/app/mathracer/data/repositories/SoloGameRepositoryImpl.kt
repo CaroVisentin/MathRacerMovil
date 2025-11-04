@@ -8,6 +8,7 @@ import com.app.mathracer.data.repository.UserRemoteRepository
 import com.app.mathracer.domain.repositories.SoloGameRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.isActive
 import retrofit2.HttpException
 import java.io.IOException
 
@@ -83,21 +84,39 @@ class SoloGameRepositoryImpl : SoloGameRepository {
             Result.failure(e)
         }
     }
-    
+
     override fun observeSoloGameUpdates(gameId: Int, intervalMs: Long): Flow<SoloGameUpdateResponse?> {
         return flow {
-            while (true) {
+            // one-shot: si intervalMs <= 0, emitimos UNA vez y terminamos
+            if (intervalMs <= 0L) {
+                val once = getSoloGameUpdate(gameId)
+                once.fold(
+                    onSuccess = { emit(it) },
+                    onFailure = {
+                        android.util.Log.e("SoloGameRepository", "Error one-shot game update", it)
+                        emit(null)
+                    }
+                )
+                return@flow
+            }
+
+            // polling continuo
+            var backoffMs = intervalMs // podés ajustar backoff si falla
+            while (kotlin.coroutines.coroutineContext.isActive) {
                 val result = getSoloGameUpdate(gameId)
                 result.fold(
                     onSuccess = { update ->
                         emit(update)
+                        backoffMs = intervalMs // reset backoff al éxito
                     },
                     onFailure = { exception ->
                         android.util.Log.e("SoloGameRepository", "Error polling game update", exception)
                         emit(null)
+                        // backoff simple opcional: no lo hagas exponencial si no querés
+                        backoffMs = (backoffMs.coerceAtMost(60_000L))
                     }
                 )
-                kotlinx.coroutines.delay(intervalMs)
+                kotlinx.coroutines.delay(backoffMs)
             }
         }
     }

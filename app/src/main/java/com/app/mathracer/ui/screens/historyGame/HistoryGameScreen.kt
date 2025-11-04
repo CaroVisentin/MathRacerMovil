@@ -14,24 +14,33 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -42,18 +51,16 @@ import com.app.mathracer.R
 import com.app.mathracer.ui.screens.game.OptionButton
 import com.app.mathracer.ui.screens.game.OptionButtonState
 import com.app.mathracer.ui.screens.game.PowerUpChip
-import com.app.mathracer.ui.screens.game.TopBar
 import com.app.mathracer.ui.screens.game.TrackCard
 import com.app.mathracer.ui.screens.game.components.GameResultModal
 import com.app.mathracer.ui.screens.historyGame.viewmodel.HistoryGameViewModel
+import kotlinx.coroutines.delay
+import androidx.compose.runtime.*
+import com.app.mathracer.ui.screens.historyGame.viewmodel.HistoryGameUiState
 
-private val PanelColor  = Color(0xE62C2C2C) // #2C2C2C con 90% alpha
-private val BorderLight = Color(0x66FFFFFF)
-private val NextTeal    = Color(0xFF2EB7A7)
-private val GreyTitle   = Color.White.copy(alpha = 0.35f)
+
 private val BgDark        = Color(0xFF222224)
 private val CardDark      = Color(0xFF2C2C2C)
-private val BorderSoft    = Color(0x66FFFFFF)
 private val LabelBlue     = Color(0xFF51B7FF)
 private val OptionTeal    = Color(0xFF2EB7A7)
 
@@ -80,11 +87,11 @@ fun HistoryGameScreen(
     LaunchedEffect(uiState.showFeedback) {
         if (uiState.showFeedback) {
             if (uiState.isLastAnswerCorrect == true) {
-                kotlinx.coroutines.delay(200)
+                delay(200)
                 viewModel.clearFeedback()
                 viewModel.prepareForNextQuestion()
             } else {
-                kotlinx.coroutines.delay(1000)
+                delay(1000)
                 viewModel.clearFeedback()
             }
         }
@@ -99,6 +106,8 @@ fun HistoryGameScreen(
         opponentName = uiState.machineName,
         playerName = uiState.playerName,
         youCarRes = R.drawable.car_game,
+        livesRemaining = uiState.livesRemaining,
+        timePerEquation = uiState.timePerEquation,
         powerUps = listOf(
             PowerUp(R.drawable.ic_shield, uiState.fireExtinguisherCount, Color(0xFFFF6B6B))
         ),
@@ -131,7 +140,8 @@ fun HistoryGameScreen(
             if (uiState.currentQuestion.isNotEmpty() && !uiState.isPenalized && !uiState.showFeedback) {
                 viewModel.submitAnswer(value)
             }
-        }
+        },
+        uiState = uiState
     )
 
     // Modal de resultado del juego
@@ -163,6 +173,8 @@ fun GamePlayScreen(
     opponentName: String,
     playerName: String,
     youCarRes: Int,
+    livesRemaining: Int,
+    timePerEquation: Int,
     powerUps: List<PowerUp>,
     expression: String = "Y = 13 - X",
     options: List<Int?> = listOf(0, 0, 0, 0),
@@ -179,11 +191,15 @@ fun GamePlayScreen(
     onBack: () -> Unit,
     onPowerUpClick: (index: Int) -> Unit,
     onOptionClick: (index: Int, value: Int?) -> Unit,
+    uiState: HistoryGameUiState
 ) {
     Scaffold(
         containerColor = BgDark,
         topBar = {
-            TopBar(timeLabel = timeLabel, coins = coins, onBack = onBack)
+            TopBar(
+                uiState = uiState,
+                onBack = onBack
+            )
         }
     ) { inner ->
         Column(
@@ -598,6 +614,52 @@ fun OptionButton(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(text = symbol, fontSize = 18.sp)
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun TopBar(
+    uiState: HistoryGameUiState,
+    onBack: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(BgDark)
+            .padding(top = 50.dp, bottom = 10.dp, start = 8.dp, end = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Izquierda: Back
+        IconButton(onClick = onBack) {
+            Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Atrás", tint = Color.White)
+        }
+
+        // Centro: reloj + segundos
+        Box(
+            modifier = Modifier.weight(1f).wrapContentWidth(Alignment.CenterHorizontally),
+            contentAlignment = Alignment.Center
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                val timeLeft = uiState.timeLeft
+                val total = uiState.timePerEquation
+                val tint = when {
+                    timeLeft >= (total * 2) / 3 -> Color(0xFF4CAF50)
+                    timeLeft >= total / 3        -> Color(0xFFFFD600)
+                    else                         -> Color(0xFFF44336)
+                }
+                Icon(Icons.Default.AccessTime, "Temporizador", tint = tint, modifier = Modifier.size(24.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("$timeLeft s", fontWeight = FontWeight.Bold, color = tint)
+            }
+        }
+
+        // Derecha: vidas
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+            repeat(3) { i ->
+                val color = if (i < uiState.livesRemaining) Color(0xFFFFD600) else Color(0xFF555555)
+                Box(Modifier.size(16.dp).background(color, RoundedCornerShape(4.dp)))
             }
         }
     }

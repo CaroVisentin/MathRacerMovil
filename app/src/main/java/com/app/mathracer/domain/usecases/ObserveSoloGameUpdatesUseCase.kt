@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 class ObserveSoloGameUpdatesUseCase(
     private val soloGameRepository: SoloGameRepository
 ) {
-    operator fun invoke(gameId: Int, intervalMs: Long = 2000): Flow<SoloGameUpdateResponse?> {
+    operator fun invoke(gameId: Int, intervalMs: Long): Flow<SoloGameUpdateResponse?> {
         return soloGameRepository.observeSoloGameUpdates(gameId, intervalMs)
     }
 }

@@ -12,8 +12,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+private const val TIMEOUT_SENTINEL_ANSWER = -1
 
 @HiltViewModel
 class HistoryGameViewModel @Inject constructor(
@@ -24,7 +27,10 @@ class HistoryGameViewModel @Inject constructor(
     
     private val _uiState = MutableStateFlow(HistoryGameUiState())
     val uiState: StateFlow<HistoryGameUiState> = _uiState.asStateFlow()
-    
+
+    private var questionTimerJob: Job? = null
+    private var feedbackJob: Job? = null
+
     private var pollingJob: Job? = null
     
     fun initializeGame(levelId: Int, playerName: String = "Jugador") {
@@ -47,12 +53,15 @@ class HistoryGameViewModel @Inject constructor(
                         playerName = gameStart.playerName,
                         totalQuestions = gameStart.totalQuestions,
                         livesRemaining = gameStart.livesRemaining,
+                        timePerEquation = gameStart.timePerEquation,
                         isLoading = false,
                         currentQuestion = gameStart.currentQuestion?.equation ?: "",
                         options = gameStart.currentQuestion?.options ?: emptyList(),
-                        correctAnswer = null // Se obtendrá de la respuesta del servidor al enviar una respuesta
+                        correctAnswer = null,
+                        timeLeft = gameStart.timePerEquation,
                     )
-                    startPolling(gameStart.gameId)
+                    startPolling(gameStart.gameId, gameStart.timePerEquation)
+                    startQuestionTimer()
                 },
                 onFailure = { exception ->
                     android.util.Log.e("HistoryGameViewModel", "❌ Failed to start game", exception)
@@ -65,10 +74,10 @@ class HistoryGameViewModel @Inject constructor(
         }
     }
     
-    private fun startPolling(gameId: Int) {
+    private fun startPolling(gameId: Int, timePerEquation: Int) {
         pollingJob?.cancel()
         pollingJob = viewModelScope.launch {
-            observeSoloGameUpdatesUseCase(gameId, intervalMs = 2000).collect { update ->
+            observeSoloGameUpdatesUseCase(gameId, intervalMs = timePerEquation*1000L.toLong()).collect { update ->
                 update?.let { processGameUpdate(it) }
             }
         }
@@ -87,7 +96,7 @@ class HistoryGameViewModel @Inject constructor(
         
         val newQuestion = update.currentQuestion?.equation ?: ""
         val hasNewQuestion = newQuestion.isNotEmpty() && newQuestion != currentState.currentQuestion
-        
+
         if (hasNewQuestion) {
             android.util.Log.d("HistoryGameViewModel", "🆕 New question detected: '$newQuestion'")
         }
@@ -95,14 +104,13 @@ class HistoryGameViewModel @Inject constructor(
         val playerPosition = minOf(update.playerPosition, currentState.totalQuestions)
         val machinePosition = minOf(update.machinePosition, currentState.totalQuestions)
         
-        val gameFinished = update.status == "Finished" || playerPosition >= currentState.totalQuestions || machinePosition >= currentState.totalQuestions
+        val gameFinished = update.status != "InProgress" || playerPosition >= currentState.totalQuestions || machinePosition >= currentState.totalQuestions
+
         val winner = when {
             gameFinished -> {
                 when {
-                    playerPosition >= currentState.totalQuestions -> "¡Ganaste!"
-                    machinePosition >= currentState.totalQuestions -> "Perdiste"
-                    //update.winner == "Player" || playerPosition >= currentState.totalQuestions -> "¡Ganaste!"
-                    //update.winner == "Machine" || machinePosition >= currentState.totalQuestions -> "Perdiste"
+                    playerPosition >= currentState.totalQuestions || update.status  == "PlayerWon" -> "¡Ganaste!"
+                    machinePosition >= currentState.totalQuestions || update.status  == "MachineWon" || update.status  == "PlayerLost" -> "Perdiste"
                     else -> null
                 }
             }
@@ -121,21 +129,25 @@ class HistoryGameViewModel @Inject constructor(
             playerProgress = playerPosition,
             machineProgress = machinePosition,
             livesRemaining = update.livesRemaining,
+            timePerEquation = update.timePerEquation,
             gameEnded = gameFinished || currentState.gameEnded,
             winner = winner ?: currentState.winner,
          //   expectedResult = update. ?: "",
+            isLastAnswerCorrect = if (hasNewQuestion) null else currentState.isLastAnswerCorrect,
+            isPenalized = currentState.isPenalized,
             showFeedback = if (hasNewQuestion) false else currentState.showFeedback,
             selectedOption = if (hasNewQuestion) null else currentState.selectedOption,
-            isLastAnswerCorrect = if (hasNewQuestion) null else currentState.isLastAnswerCorrect,
-            isPenalized = currentState.isPenalized
+            canAnswer = if (hasNewQuestion) true else currentState.canAnswer
+
         )
-        
-        if (hasNewQuestion) {
-            android.util.Log.d("HistoryGameViewModel", "✅ New question loaded and UI updated!")
+
+        if (hasNewQuestion && !_uiState.value.gameEnded) {
+            startQuestionTimer() // <<< reinicia timer en pregunta nueva
         }
-        
+
         if (gameFinished) {
             pollingJob?.cancel()
+            stopQuestionTimer()
         }
     }
     
@@ -160,20 +172,18 @@ class HistoryGameViewModel @Inject constructor(
 
     fun submitAnswer(selectedOption: Int?) {
         val currentState = _uiState.value
-        
-        if (currentState.gameId == null || currentState.playerId == null) return
-        
+        if (currentState.gameId == null || currentState.playerId == null || currentState.gameEnded) return
+
         viewModelScope.launch {
-            // No podemos verificar localmente sin la respuesta correcta del servidor
-            // Enviaremos la respuesta y el servidor nos dirá si es correcta
             android.util.Log.d("HistoryGameViewModel", "🎯 Submitting answer: selected=$selectedOption")
-            
+
+            // Estado inicial al tocar una opción
             _uiState.value = currentState.copy(
                 selectedOption = selectedOption,
-                showFeedback = false, // Mostraremos feedback después de recibir respuesta del servidor
+                showFeedback = false,
                 isLastAnswerCorrect = null
             )
-            
+
             if (selectedOption == null) {
                 _uiState.value = _uiState.value.copy(
                     error = "La opción seleccionada no es un número válido",
@@ -182,61 +192,69 @@ class HistoryGameViewModel @Inject constructor(
                 )
                 return@launch
             }
-            
+
             val result = submitSoloAnswerUseCase(currentState.gameId!!, selectedOption)
-            
+
             result.fold(
                 onSuccess = { answerResult ->
                     android.util.Log.d("HistoryGameViewModel", "📤 Answer sent successfully to server")
-                    
-                    // Guardar la respuesta correcta para futuras referencias
+
+                    // Guardar la respuesta correcta provista por el server
                     _uiState.value = _uiState.value.copy(
                         correctAnswer = answerResult.correctAnswer
                     )
-                    
-                    // Verificar si la respuesta fue correcta usando la respuesta del servidor
+
                     val actuallyCorrect = answerResult.isCorrect
-                    
-                    // Actualizar el estado con el feedback correcto
-                    val current = _uiState.value
-                    _uiState.value = current.copy(
+                    val before = _uiState.value
+                    val newPlayerScore = answerResult.playerScore
+                    val newMachineScore = answerResult.machineScore
+                    val reachedEnd = newPlayerScore >= before.totalQuestions
+
+                    // Actualizar feedback y progreso con la respuesta del server
+                    _uiState.value = before.copy(
                         isLastAnswerCorrect = actuallyCorrect,
                         showFeedback = true,
-                        correctAnswer = answerResult.correctAnswer
+                        playerScore = newPlayerScore,
+                        machineScore = newMachineScore,
+                        playerProgress = minOf(newPlayerScore, before.totalQuestions),
+                        machineProgress = minOf(newMachineScore, before.totalQuestions),
+                        gameEnded = reachedEnd || before.gameEnded,
+                        winner = if (reachedEnd) "¡Ganaste!" else before.winner,
+                        correctAnswer = answerResult.correctAnswer,
+                        // Penalización visual si fue incorrecta (se limpia más abajo)
+                        isPenalized = !actuallyCorrect
                     )
-                    
-                    if (actuallyCorrect) {
-                        android.util.Log.d("HistoryGameViewModel", "✅ Correct answer! Applying server response...")
-                        
-                        val newScore = answerResult.playerScore
-                        val newProgress = minOf(newScore, current.totalQuestions)
-                        val reachedEnd = newProgress >= current.totalQuestions
 
-                        _uiState.value = current.copy(
-                            playerScore = newScore,
-                            machineScore = answerResult.machineScore,
-                            playerProgress = newProgress,
-                            machineProgress = minOf(answerResult.machineScore, current.totalQuestions),
-                            gameEnded = reachedEnd || current.gameEnded,
-                            winner = if (reachedEnd) "¡Ganaste!" else current.winner,
-                            isLastAnswerCorrect = actuallyCorrect,
-                            showFeedback = true,
-                            correctAnswer = answerResult.correctAnswer
-                        )
-                    } else {
-                        android.util.Log.d("HistoryGameViewModel", "❌ Wrong answer. Applying penalty, waiting for server to send new question...")
-                        _uiState.value = _uiState.value.copy(
-                            isPenalized = true,
-                            isLastAnswerCorrect = actuallyCorrect,
-                            showFeedback = true,
-                            correctAnswer = answerResult.correctAnswer
-                        )
+                    // Pequeña penalización visual si estuvo mal (opcional)
+                    if (!actuallyCorrect) {
+                        android.util.Log.d("HistoryGameViewModel", "❌ Wrong answer. Applying penalty visual...")
                         delay(1000)
-                        _uiState.value = _uiState.value.copy(
-                            isPenalized = false
-                        )
-                        prepareForNextQuestion()
+                        _uiState.value = _uiState.value.copy(isPenalized = false)
                     }
+
+                    // Si el juego terminó, no pedimos más preguntas
+                    if (_uiState.value.gameEnded) return@fold
+
+                    // Mantener feedback visible 3s y luego refrescar 1 vez la siguiente pregunta
+                    delay(3000)
+
+                    val gid = _uiState.value.gameId
+                    if (gid != null) {
+                        try {
+                            // One-shot: usamos el observe con intervalMs=0L y tomamos la primera emisión
+                            val update = observeSoloGameUpdatesUseCase(gid, intervalMs = 0L).firstOrNull()
+                            update?.let { processGameUpdate(it) }
+                        } catch (e: Exception) {
+                            android.util.Log.e("HistoryGameViewModel", "❌ Failed to fetch next question: ${e.message}", e)
+                        }
+                    }
+
+                    // Limpiar feedback/selección para la nueva pregunta (si llegó)
+                    _uiState.value = _uiState.value.copy(
+                        selectedOption = null,
+                        showFeedback = false,
+                        isLastAnswerCorrect = null
+                    )
                 },
                 onFailure = { exception ->
                     android.util.Log.e("HistoryGameViewModel", "❌ Failed to send answer: ${exception.message}")
@@ -274,5 +292,131 @@ class HistoryGameViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         pollingJob?.cancel()
+    }
+
+    private fun startQuestionTimer() {
+        questionTimerJob?.cancel()
+        val total = _uiState.value.timePerEquation
+
+        _uiState.value = _uiState.value.copy(
+            timeLeft = total,
+            canAnswer = true
+        )
+
+        questionTimerJob = viewModelScope.launch {
+            while (_uiState.value.timeLeft > 0 && _uiState.value.canAnswer && !_uiState.value.gameEnded) {
+                delay(1000)
+                _uiState.value = _uiState.value.copy(timeLeft = _uiState.value.timeLeft - 1)
+            }
+
+            // Si se acabó el tiempo sin responder y no terminó el juego
+            if (_uiState.value.timeLeft <= 0 && _uiState.value.canAnswer && !_uiState.value.gameEnded) {
+                onTimeExpired()
+            }
+        }
+    }
+
+    private fun stopQuestionTimer() {
+        questionTimerJob?.cancel()
+    }
+
+    private fun onTimeExpired() {
+        stopQuestionTimer()
+        val state = _uiState.value
+        val gid = state.gameId ?: return
+
+        viewModelScope.launch {
+            // Intento 1: avisar al backend como "respuesta incorrecta" usando un sentinela
+            val result = runCatching { submitSoloAnswerUseCase(gid, TIMEOUT_SENTINEL_ANSWER) }
+
+            result.fold(
+                onSuccess = { answerResult ->
+                    // Forzamos feedback de incorrecta con datos del server (si actualiza score/vidas)
+                    _uiState.value = _uiState.value.copy(
+                        isLastAnswerCorrect = false,
+                        showFeedback = true,
+//                        correctAnswer = answerResult.correctAnswer, // por si vuelve
+//                        playerScore = answerResult.playerScore,
+//                        machineScore = answerResult.machineScore,
+//                        playerProgress = minOf(answerResult.playerScore, state.totalQuestions),
+//                        machineProgress = minOf(answerResult.machineScore, state.totalQuestions),
+                        livesRemaining = _uiState.value.livesRemaining, // (o tomar del server si viene)
+                        canAnswer = false,
+                        isPenalized = true
+                    )
+
+                    // Breve penalización visual opcional
+                    delay(1000)
+                    _uiState.value = _uiState.value.copy(isPenalized = false)
+
+                    // Mantener feedback total 3s
+                    val remaining = 3000L - 1000L
+                    if (remaining > 0) delay(remaining)
+
+                    // Traer la siguiente y limpiar
+                    requestNextQuestionOnce()
+                    _uiState.value = _uiState.value.copy(
+                        selectedOption = null,
+                        showFeedback = false,
+                        isLastAnswerCorrect = null,
+                        canAnswer = true
+                    )
+                    if (!_uiState.value.gameEnded) startQuestionTimer()
+                },
+                onFailure = {
+                    // Fallback local si la API no acepta el sentinela: tratamos como incorrecta local
+                    _uiState.value = _uiState.value.copy(
+                        isLastAnswerCorrect = false,
+                        showFeedback = true,
+                        canAnswer = false,
+                        isPenalized = true
+                    )
+                    delay(1000)
+                    _uiState.value = _uiState.value.copy(isPenalized = false)
+                    delay(2000) // completa los ~3s de feedback
+
+                    requestNextQuestionOnce()
+                    _uiState.value = _uiState.value.copy(
+                        selectedOption = null,
+                        showFeedback = false,
+                        isLastAnswerCorrect = null,
+                        canAnswer = true
+                    )
+                    if (!_uiState.value.gameEnded) startQuestionTimer()
+                }
+            )
+        }
+    }
+
+    private fun showFeedbackAndLoadNext() {
+        feedbackJob?.cancel()
+        feedbackJob = viewModelScope.launch {
+            delay(3000) // <<< 3 segundos de feedback
+
+            requestNextQuestionOnce()
+
+            // Preparar UI para nueva pregunta
+            _uiState.value = _uiState.value.copy(
+                selectedOption = null,
+                showFeedback = false,
+                isLastAnswerCorrect = null,
+                canAnswer = true
+            )
+
+            if (!_uiState.value.gameEnded) {
+                startQuestionTimer()
+            }
+        }
+    }
+
+    private suspend fun requestNextQuestionOnce() {
+        val gid = _uiState.value.gameId ?: return
+        try {
+            // Usamos el flujo del repository con intervalMs = 0 (one-shot)
+            val update = observeSoloGameUpdatesUseCase(gid, intervalMs = 0L).firstOrNull()
+            update?.let { processGameUpdate(it) }
+        } catch (e: Exception) {
+            android.util.Log.e("HistoryGameViewModel", "❌ Error al obtener siguiente pregunta: ${e.message}", e)
+        }
     }
 }

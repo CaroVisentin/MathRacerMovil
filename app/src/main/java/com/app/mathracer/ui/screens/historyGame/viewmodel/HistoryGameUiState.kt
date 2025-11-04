@@ -24,6 +24,10 @@ data class HistoryGameUiState(
     val fireExtinguisherActive: Boolean = false,
     val fireExtinguisherCount: Int = 1,
     val livesRemaining: Int = 3,
-    val totalQuestions: Int = 10
+    val timePerEquation: Int = 10,
+    val totalQuestions: Int = 10,
+    val timeLeft: Int = 10,
+    val canAnswer: Boolean = true,
+    val isWaitingNext: Boolean = false
 )
 
