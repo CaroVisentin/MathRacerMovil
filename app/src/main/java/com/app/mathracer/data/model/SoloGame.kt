@@ -81,34 +81,41 @@ data class SoloGameUpdateResponse(
     @SerializedName("gameId")
     val gameId: Int,
 
-    @SerializedName("playerId")
-    val playerId: Int,
+    @SerializedName("status")
+    val status: String,
 
-    @SerializedName("playerScore")
-    val playerScore: Int,
+    @SerializedName("playerPosition")
+    val playerPosition: Int,
 
-    @SerializedName("machineScore")
-    val machineScore: Int,
+    @SerializedName("machinePosition")
+    val machinePosition: Int,
 
     @SerializedName("livesRemaining")
     val livesRemaining: Int,
 
+    @SerializedName("correctAnswers")
+    val correctAnswers: Int,
+
     @SerializedName("currentQuestion")
     val currentQuestion: SoloQuestion?,
 
-    @SerializedName("gameStatus")
-    val gameStatus: String, // "InProgress", "Finished"
+    @SerializedName("currentQuestionIndex")
+    val currentQuestionIndex: Int,
 
-    @SerializedName("winner")
-    val winner: String?, // "Player" o "Machine" o null
+    @SerializedName("totalQuestions")
+    val totalQuestions: Int,
 
-    @SerializedName("expectedResult")
-    val expectedResult: String?
-)
+    @SerializedName("timePerEquation")
+    val timePerEquation: Int,
 
-data class SoloAnswerRequest(
-    @SerializedName("answer")
-    val answer: Int
+    @SerializedName("gameStartedAt")
+    val gameStartedAt: String,
+
+    @SerializedName("gameFinishedAt")
+    val gameFinishedAt: String,
+
+    @SerializedName("elapsedTime")
+    val elapsedTime: Float,
 )
 
 data class SoloAnswerResponse(

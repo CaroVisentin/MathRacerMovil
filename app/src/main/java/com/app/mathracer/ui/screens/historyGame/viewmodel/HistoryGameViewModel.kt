@@ -75,7 +75,7 @@ class HistoryGameViewModel @Inject constructor(
     }
     
     private fun processGameUpdate(update: SoloGameUpdateResponse) {
-        android.util.Log.d("HistoryGameViewModel", "🎮 GameUpdate received - Game ID: ${update.gameId}, Status: ${update.gameStatus}")
+        android.util.Log.d("HistoryGameViewModel", "🎮 GameUpdate received - Game ID: ${update.gameId}, Status: ${update.status}")
         
         val currentState = _uiState.value
         
@@ -92,15 +92,17 @@ class HistoryGameViewModel @Inject constructor(
             android.util.Log.d("HistoryGameViewModel", "🆕 New question detected: '$newQuestion'")
         }
         
-        val playerPosition = minOf(update.playerScore, currentState.totalQuestions)
-        val machinePosition = minOf(update.machineScore, currentState.totalQuestions)
+        val playerPosition = minOf(update.playerPosition, currentState.totalQuestions)
+        val machinePosition = minOf(update.machinePosition, currentState.totalQuestions)
         
-        val gameFinished = update.gameStatus == "Finished" || playerPosition >= currentState.totalQuestions || machinePosition >= currentState.totalQuestions
+        val gameFinished = update.status == "Finished" || playerPosition >= currentState.totalQuestions || machinePosition >= currentState.totalQuestions
         val winner = when {
             gameFinished -> {
                 when {
-                    update.winner == "Player" || playerPosition >= currentState.totalQuestions -> "¡Ganaste!"
-                    update.winner == "Machine" || machinePosition >= currentState.totalQuestions -> "Perdiste"
+                    playerPosition >= currentState.totalQuestions -> "¡Ganaste!"
+                    machinePosition >= currentState.totalQuestions -> "Perdiste"
+                    //update.winner == "Player" || playerPosition >= currentState.totalQuestions -> "¡Ganaste!"
+                    //update.winner == "Machine" || machinePosition >= currentState.totalQuestions -> "Perdiste"
                     else -> null
                 }
             }
@@ -111,8 +113,8 @@ class HistoryGameViewModel @Inject constructor(
         
         _uiState.value = currentState.copy(
             isLoading = false,
-            playerScore = update.playerScore,
-            machineScore = update.machineScore,
+            playerScore = update.playerPosition,
+            machineScore = update.machinePosition,
             currentQuestion = update.currentQuestion?.equation ?: "",
             options = update.currentQuestion?.options ?: emptyList(),
             correctAnswer = currentState.correctAnswer, // Mantener la respuesta correcta anterior hasta recibir nueva
@@ -121,7 +123,7 @@ class HistoryGameViewModel @Inject constructor(
             livesRemaining = update.livesRemaining,
             gameEnded = gameFinished || currentState.gameEnded,
             winner = winner ?: currentState.winner,
-            expectedResult = update.expectedResult ?: "",
+         //   expectedResult = update. ?: "",
             showFeedback = if (hasNewQuestion) false else currentState.showFeedback,
             selectedOption = if (hasNewQuestion) null else currentState.selectedOption,
             isLastAnswerCorrect = if (hasNewQuestion) null else currentState.isLastAnswerCorrect,

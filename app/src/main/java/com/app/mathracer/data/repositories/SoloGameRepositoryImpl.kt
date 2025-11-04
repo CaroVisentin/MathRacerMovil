@@ -1,6 +1,5 @@
 package com.app.mathracer.data.repositories
 
-import com.app.mathracer.data.model.SoloAnswerRequest
 import com.app.mathracer.data.model.SoloAnswerResponse
 import com.app.mathracer.data.model.SoloGameStartResponse
 import com.app.mathracer.data.model.SoloGameUpdateResponse
