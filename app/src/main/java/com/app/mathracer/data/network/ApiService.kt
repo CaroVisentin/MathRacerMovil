@@ -51,6 +51,6 @@ interface ApiService {
     suspend fun submitSoloAnswer(
         @Header("Authorization") authorization: String?,
         @Path("gameId") gameId: Int,
-        @Body answer: SoloAnswerRequest
+        @Body answer: Int
     ): Response<SoloAnswerResponse>
 }

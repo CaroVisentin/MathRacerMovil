@@ -67,7 +67,7 @@ class SoloGameRepositoryImpl : SoloGameRepository {
             val token = UserRemoteRepository.getIdToken()
             val header = token?.let { "Bearer $it" }
             
-            val response = api.submitSoloAnswer(header, gameId, SoloAnswerRequest(answer))
+            val response = api.submitSoloAnswer(header, gameId, answer)
             
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!)
