@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.mathracer.R
+import com.app.mathracer.ui.screens.game.OptionButton
 import com.app.mathracer.ui.screens.game.OptionButtonState
 import com.app.mathracer.ui.screens.game.PowerUpChip
 import com.app.mathracer.ui.screens.game.TopBar
@@ -272,97 +273,199 @@ fun GamePlayScreen(
             Spacer(Modifier.height(60.dp))
 
             // ====== OPCIONES (2 x 2) ======
-//            Column(
-//                verticalArrangement = Arrangement.spacedBy(12.dp),
-//                modifier = Modifier.fillMaxWidth()
-//            ) {
-//                Row(
-//                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-//                    modifier = Modifier.fillMaxWidth()
-//                ) {
-//                    OptionButton(
-//                        text = (options.getOrNull(0) ?: "").toString(),
-//                        modifier = Modifier.weight(1f),
-//                        state = getOptionButtonState(
-//                            option = options.getOrNull(0),
-//                            lastAnswerGiven = lastAnswerGiven,
-//                            lastAnswerWasCorrect = lastAnswerWasCorrect,
-//                            showAnswerFeedback = showAnswerFeedback,
-//                            isWaitingForAnswer = isWaitingForAnswer,
-//                            isPenalized = isPenalized
-//                        ),
-//                        hasShadow = optionsHaveShadows,
-//                        onClick = { onOptionClick(0, options.getOrNull(0)) }
-//                    )
-//                    OptionButton(
-//                        text = (options.getOrNull(1) ?: "").toString(),
-//                        modifier = Modifier.weight(1f),
-//                        state = getOptionButtonState(
-//                            option = options.getOrNull(1),
-//                            lastAnswerGiven = lastAnswerGiven,
-//                            lastAnswerWasCorrect = lastAnswerWasCorrect,
-//                            showAnswerFeedback = showAnswerFeedback,
-//                            isWaitingForAnswer = isWaitingForAnswer,
-//                            isPenalized = isPenalized
-//                        ),
-//                        hasShadow = optionsHaveShadows,
-//                        onClick = { onOptionClick(1, options.getOrNull(1)) }
-//                    )
-//                }
-//                Row(
-//                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-//                    modifier = Modifier.fillMaxWidth()
-//                ) {
-//                    OptionButton(
-//                        text = (options.getOrNull(2) ?: "").toString(),
-//                        modifier = Modifier.weight(1f),
-//                        state = getOptionButtonState(
-//                            option = options.getOrNull(2),
-//                            lastAnswerGiven = lastAnswerGiven,
-//                            lastAnswerWasCorrect = lastAnswerWasCorrect,
-//                            showAnswerFeedback = showAnswerFeedback,
-//                            isWaitingForAnswer = isWaitingForAnswer,
-//                            isPenalized = isPenalized
-//                        ),
-//                        hasShadow = optionsHaveShadows,
-//                        onClick = { onOptionClick(2, options.getOrNull(2)) }
-//                    )
-//                    OptionButton(
-//                        text = (options.getOrNull(3) ?: "").toString(),
-//                        modifier = Modifier.weight(1f),
-//                        state = getOptionButtonState(
-//                            option = options.getOrNull(3),
-//                            lastAnswerGiven = lastAnswerGiven,
-//                            lastAnswerWasCorrect = lastAnswerWasCorrect,
-//                            showAnswerFeedback = showAnswerFeedback,
-//                            isWaitingForAnswer = isWaitingForAnswer,
-//                            isPenalized = isPenalized
-//                        ),
-//                        hasShadow = optionsHaveShadows,
-//                        onClick = { onOptionClick(3, options.getOrNull(3)) }
-//                    )
-//                }
-//            }
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                options.forEachIndexed { i, option ->
-                    OptionButton(
-                        text = option.toString(),
-                        modifier = Modifier.fillMaxWidth(),
-                        state = getOptionButtonState(
-                            option = option?.toInt(),
-                            lastAnswerGiven = lastAnswerGiven,
-                            lastAnswerWasCorrect = lastAnswerWasCorrect,
-                            showAnswerFeedback = showAnswerFeedback,
-                            isWaitingForAnswer = isWaitingForAnswer,
-                            isPenalized = isPenalized
-                        ),
-                        totalOptions = options.size,
-                        hasShadow = optionsHaveShadows,
-                        onClick = { onOptionClick(i, option) }
-                    )
+                when (options.size) {
+                    2 -> Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            OptionButton(
+                                text = (options.getOrNull(0) ?: "").toString(),
+                                modifier = Modifier.weight(1f),
+                                state = getOptionButtonState(
+                                    option = options.getOrNull(0),
+                                    lastAnswerGiven = lastAnswerGiven,
+                                    lastAnswerWasCorrect = lastAnswerWasCorrect,
+                                    showAnswerFeedback = showAnswerFeedback,
+                                    isWaitingForAnswer = isWaitingForAnswer,
+                                    isPenalized = isPenalized
+                                ),
+                                hasShadow = optionsHaveShadows,
+                                onClick = { onOptionClick(0, options.getOrNull(0)) }
+                            )
+                            OptionButton(
+                                text = (options.getOrNull(1) ?: "").toString(),
+                                modifier = Modifier.weight(1f),
+                                state = getOptionButtonState(
+                                    option = options.getOrNull(1),
+                                    lastAnswerGiven = lastAnswerGiven,
+                                    lastAnswerWasCorrect = lastAnswerWasCorrect,
+                                    showAnswerFeedback = showAnswerFeedback,
+                                    isWaitingForAnswer = isWaitingForAnswer,
+                                    isPenalized = isPenalized
+                                ),
+                                hasShadow = optionsHaveShadows,
+                                onClick = { onOptionClick(1, options.getOrNull(1)) }
+                            )
+                        }
+                    }
+
+                    3 -> Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            OptionButton(
+                                text = (options.getOrNull(0) ?: "").toString(),
+                                modifier = Modifier.weight(1f),
+                                state = getOptionButtonState(
+                                    option = options.getOrNull(0),
+                                    lastAnswerGiven = lastAnswerGiven,
+                                    lastAnswerWasCorrect = lastAnswerWasCorrect,
+                                    showAnswerFeedback = showAnswerFeedback,
+                                    isWaitingForAnswer = isWaitingForAnswer,
+                                    isPenalized = isPenalized
+                                ),
+                                hasShadow = optionsHaveShadows,
+                                onClick = { onOptionClick(0, options.getOrNull(0)) }
+                            )
+                            OptionButton(
+                                text = (options.getOrNull(1) ?: "").toString(),
+                                modifier = Modifier.weight(1f),
+                                state = getOptionButtonState(
+                                    option = options.getOrNull(1),
+                                    lastAnswerGiven = lastAnswerGiven,
+                                    lastAnswerWasCorrect = lastAnswerWasCorrect,
+                                    showAnswerFeedback = showAnswerFeedback,
+                                    isWaitingForAnswer = isWaitingForAnswer,
+                                    isPenalized = isPenalized
+                                ),
+                                hasShadow = optionsHaveShadows,
+                                onClick = { onOptionClick(1, options.getOrNull(1)) }
+                            )
+                        }
+                        Row(
+                            horizontalArrangement =  Arrangement.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            OptionButton(
+                                text = (options.getOrNull(2) ?: "").toString(),
+                                modifier = Modifier.width(180.dp),
+                                state = getOptionButtonState(
+                                    option = options.getOrNull(2),
+                                    lastAnswerGiven = lastAnswerGiven,
+                                    lastAnswerWasCorrect = lastAnswerWasCorrect,
+                                    showAnswerFeedback = showAnswerFeedback,
+                                    isWaitingForAnswer = isWaitingForAnswer,
+                                    isPenalized = isPenalized
+                                ),
+                                hasShadow = optionsHaveShadows,
+                                onClick = { onOptionClick(2, options.getOrNull(2)) }
+                            )
+                        }
+                    }
+
+                    4 -> Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            OptionButton(
+                                text = (options.getOrNull(0) ?: "").toString(),
+                                modifier = Modifier.weight(1f),
+                                state = getOptionButtonState(
+                                    option = options.getOrNull(0),
+                                    lastAnswerGiven = lastAnswerGiven,
+                                    lastAnswerWasCorrect = lastAnswerWasCorrect,
+                                    showAnswerFeedback = showAnswerFeedback,
+                                    isWaitingForAnswer = isWaitingForAnswer,
+                                    isPenalized = isPenalized
+                                ),
+                                hasShadow = optionsHaveShadows,
+                                onClick = { onOptionClick(0, options.getOrNull(0)) }
+                            )
+                            OptionButton(
+                                text = (options.getOrNull(1) ?: "").toString(),
+                                modifier = Modifier.weight(1f),
+                                state = getOptionButtonState(
+                                    option = options.getOrNull(1),
+                                    lastAnswerGiven = lastAnswerGiven,
+                                    lastAnswerWasCorrect = lastAnswerWasCorrect,
+                                    showAnswerFeedback = showAnswerFeedback,
+                                    isWaitingForAnswer = isWaitingForAnswer,
+                                    isPenalized = isPenalized
+                                ),
+                                hasShadow = optionsHaveShadows,
+                                onClick = { onOptionClick(1, options.getOrNull(1)) }
+                            )
+                        }
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            OptionButton(
+                                text = (options.getOrNull(2) ?: "").toString(),
+                                modifier = Modifier.weight(1f),
+                                state = getOptionButtonState(
+                                    option = options.getOrNull(2),
+                                    lastAnswerGiven = lastAnswerGiven,
+                                    lastAnswerWasCorrect = lastAnswerWasCorrect,
+                                    showAnswerFeedback = showAnswerFeedback,
+                                    isWaitingForAnswer = isWaitingForAnswer,
+                                    isPenalized = isPenalized
+                                ),
+                                hasShadow = optionsHaveShadows,
+                                onClick = { onOptionClick(2, options.getOrNull(2)) }
+                            )
+                            OptionButton(
+                                text = (options.getOrNull(3) ?: "").toString(),
+                                modifier = Modifier.weight(1f),
+                                state = getOptionButtonState(
+                                    option = options.getOrNull(3),
+                                    lastAnswerGiven = lastAnswerGiven,
+                                    lastAnswerWasCorrect = lastAnswerWasCorrect,
+                                    showAnswerFeedback = showAnswerFeedback,
+                                    isWaitingForAnswer = isWaitingForAnswer,
+                                    isPenalized = isPenalized
+                                ),
+                                hasShadow = optionsHaveShadows,
+                                onClick = { onOptionClick(3, options.getOrNull(3)) }
+                            )
+                        }
+                    }
+
+                    else -> {
+                        // Por si acaso (opciones distintas)
+                        options.forEachIndexed { i, option ->
+                            OptionButton(
+                                text = option.toString(),
+                                modifier = Modifier.fillMaxWidth(),
+                                state = getOptionButtonState(
+                                    option = option?.toInt(),
+                                    lastAnswerGiven = lastAnswerGiven,
+                                    lastAnswerWasCorrect = lastAnswerWasCorrect,
+                                    showAnswerFeedback = showAnswerFeedback,
+                                    isWaitingForAnswer = isWaitingForAnswer,
+                                    isPenalized = isPenalized
+                                ),
+                                hasShadow = optionsHaveShadows,
+                                onClick = { onOptionClick(i, option) }
+                            )
+                        }
+                    }
                 }
             }
             Spacer(Modifier.height(24.dp))
@@ -399,7 +502,6 @@ fun OptionsColumn(
                     isWaitingForAnswer = isWaitingForAnswer,
                     isPenalized = isPenalized
                 ),
-                totalOptions = options.size,
                 hasShadow = optionsHaveShadows,
                 onClick = { onOptionClick(i, option.toString()) }
             )
@@ -425,12 +527,12 @@ private fun getOptionButtonState(
     }
 }
 
+
 @Composable
 fun OptionButton(
     text: String,
     modifier: Modifier = Modifier,
     state: OptionButtonState = OptionButtonState.NORMAL,
-    totalOptions: Int,
     hasShadow: Boolean = true,
     onClick: () -> Unit
 ) {
