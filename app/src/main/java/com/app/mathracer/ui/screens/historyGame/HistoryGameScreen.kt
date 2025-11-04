@@ -58,7 +58,6 @@ import kotlinx.coroutines.delay
 import androidx.compose.runtime.*
 import com.app.mathracer.ui.screens.historyGame.viewmodel.HistoryGameUiState
 
-
 private val BgDark        = Color(0xFF222224)
 private val CardDark      = Color(0xFF2C2C2C)
 private val LabelBlue     = Color(0xFF51B7FF)
@@ -311,7 +310,9 @@ fun GamePlayScreen(
                                     lastAnswerWasCorrect = lastAnswerWasCorrect,
                                     showAnswerFeedback = showAnswerFeedback,
                                     isWaitingForAnswer = isWaitingForAnswer,
-                                    isPenalized = isPenalized
+                                    isPenalized = isPenalized,
+                                    canAnswer = uiState.canAnswer,
+                                    correctAnswer = uiState.correctAnswer
                                 ),
                                 hasShadow = optionsHaveShadows,
                                 onClick = { onOptionClick(0, options.getOrNull(0)) }
@@ -325,7 +326,9 @@ fun GamePlayScreen(
                                     lastAnswerWasCorrect = lastAnswerWasCorrect,
                                     showAnswerFeedback = showAnswerFeedback,
                                     isWaitingForAnswer = isWaitingForAnswer,
-                                    isPenalized = isPenalized
+                                    isPenalized = isPenalized,
+                                    canAnswer = uiState.canAnswer,
+                                    correctAnswer = uiState.correctAnswer
                                 ),
                                 hasShadow = optionsHaveShadows,
                                 onClick = { onOptionClick(1, options.getOrNull(1)) }
@@ -350,7 +353,9 @@ fun GamePlayScreen(
                                     lastAnswerWasCorrect = lastAnswerWasCorrect,
                                     showAnswerFeedback = showAnswerFeedback,
                                     isWaitingForAnswer = isWaitingForAnswer,
-                                    isPenalized = isPenalized
+                                    isPenalized = isPenalized,
+                                    canAnswer = uiState.canAnswer,
+                                    correctAnswer = uiState.correctAnswer
                                 ),
                                 hasShadow = optionsHaveShadows,
                                 onClick = { onOptionClick(0, options.getOrNull(0)) }
@@ -364,7 +369,9 @@ fun GamePlayScreen(
                                     lastAnswerWasCorrect = lastAnswerWasCorrect,
                                     showAnswerFeedback = showAnswerFeedback,
                                     isWaitingForAnswer = isWaitingForAnswer,
-                                    isPenalized = isPenalized
+                                    isPenalized = isPenalized,
+                                    canAnswer = uiState.canAnswer,
+                                    correctAnswer = uiState.correctAnswer
                                 ),
                                 hasShadow = optionsHaveShadows,
                                 onClick = { onOptionClick(1, options.getOrNull(1)) }
@@ -383,7 +390,9 @@ fun GamePlayScreen(
                                     lastAnswerWasCorrect = lastAnswerWasCorrect,
                                     showAnswerFeedback = showAnswerFeedback,
                                     isWaitingForAnswer = isWaitingForAnswer,
-                                    isPenalized = isPenalized
+                                    isPenalized = isPenalized,
+                                    canAnswer = uiState.canAnswer,
+                                    correctAnswer = uiState.correctAnswer
                                 ),
                                 hasShadow = optionsHaveShadows,
                                 onClick = { onOptionClick(2, options.getOrNull(2)) }
@@ -408,7 +417,9 @@ fun GamePlayScreen(
                                     lastAnswerWasCorrect = lastAnswerWasCorrect,
                                     showAnswerFeedback = showAnswerFeedback,
                                     isWaitingForAnswer = isWaitingForAnswer,
-                                    isPenalized = isPenalized
+                                    isPenalized = isPenalized,
+                                    canAnswer = uiState.canAnswer,
+                                    correctAnswer = uiState.correctAnswer
                                 ),
                                 hasShadow = optionsHaveShadows,
                                 onClick = { onOptionClick(0, options.getOrNull(0)) }
@@ -422,7 +433,9 @@ fun GamePlayScreen(
                                     lastAnswerWasCorrect = lastAnswerWasCorrect,
                                     showAnswerFeedback = showAnswerFeedback,
                                     isWaitingForAnswer = isWaitingForAnswer,
-                                    isPenalized = isPenalized
+                                    isPenalized = isPenalized,
+                                    canAnswer = uiState.canAnswer,
+                                    correctAnswer = uiState.correctAnswer
                                 ),
                                 hasShadow = optionsHaveShadows,
                                 onClick = { onOptionClick(1, options.getOrNull(1)) }
@@ -441,7 +454,9 @@ fun GamePlayScreen(
                                     lastAnswerWasCorrect = lastAnswerWasCorrect,
                                     showAnswerFeedback = showAnswerFeedback,
                                     isWaitingForAnswer = isWaitingForAnswer,
-                                    isPenalized = isPenalized
+                                    isPenalized = isPenalized,
+                                    canAnswer = uiState.canAnswer,
+                                    correctAnswer = uiState.correctAnswer
                                 ),
                                 hasShadow = optionsHaveShadows,
                                 onClick = { onOptionClick(2, options.getOrNull(2)) }
@@ -455,7 +470,9 @@ fun GamePlayScreen(
                                     lastAnswerWasCorrect = lastAnswerWasCorrect,
                                     showAnswerFeedback = showAnswerFeedback,
                                     isWaitingForAnswer = isWaitingForAnswer,
-                                    isPenalized = isPenalized
+                                    isPenalized = isPenalized,
+                                    canAnswer = uiState.canAnswer,
+                                    correctAnswer = uiState.correctAnswer
                                 ),
                                 hasShadow = optionsHaveShadows,
                                 onClick = { onOptionClick(3, options.getOrNull(3)) }
@@ -475,7 +492,9 @@ fun GamePlayScreen(
                                     lastAnswerWasCorrect = lastAnswerWasCorrect,
                                     showAnswerFeedback = showAnswerFeedback,
                                     isWaitingForAnswer = isWaitingForAnswer,
-                                    isPenalized = isPenalized
+                                    isPenalized = isPenalized,
+                                    canAnswer = uiState.canAnswer,
+                                    correctAnswer = uiState.correctAnswer
                                 ),
                                 hasShadow = optionsHaveShadows,
                                 onClick = { onOptionClick(i, option) }
@@ -524,8 +543,27 @@ fun OptionsColumn(
         }
     }
 }
+private fun getOptionButtonState(
+    option: Int?,
+    lastAnswerGiven: Int?,
+    lastAnswerWasCorrect: Boolean?,
+    showAnswerFeedback: Boolean,
+    isWaitingForAnswer: Boolean,
+    isPenalized: Boolean = false,
+    canAnswer: Boolean = true,
+    correctAnswer: Int? = null
+): OptionButtonState {
+    return when {
+        !canAnswer -> OptionButtonState.DISABLED
+        isPenalized -> OptionButtonState.DISABLED
+        showAnswerFeedback && option == correctAnswer -> OptionButtonState.CORRECT // ✅ marca la correcta
+        showAnswerFeedback && option == lastAnswerGiven && lastAnswerWasCorrect == false -> OptionButtonState.INCORRECT
+        isWaitingForAnswer && option == lastAnswerGiven -> OptionButtonState.SELECTED
+        else -> OptionButtonState.NORMAL
+    }
+}
 
-
+/*
 private fun getOptionButtonState(
     option: Int?,
     lastAnswerGiven: Int?,
@@ -542,7 +580,7 @@ private fun getOptionButtonState(
         else -> OptionButtonState.NORMAL
     }
 }
-
+*/
 
 @Composable
 fun OptionButton(

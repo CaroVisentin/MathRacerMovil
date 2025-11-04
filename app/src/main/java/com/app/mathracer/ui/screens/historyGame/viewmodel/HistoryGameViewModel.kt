@@ -181,7 +181,8 @@ class HistoryGameViewModel @Inject constructor(
             _uiState.value = currentState.copy(
                 selectedOption = selectedOption,
                 showFeedback = false,
-                isLastAnswerCorrect = null
+                isLastAnswerCorrect = null,
+                canAnswer = false
             )
 
             if (selectedOption == null) {
@@ -253,7 +254,8 @@ class HistoryGameViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(
                         selectedOption = null,
                         showFeedback = false,
-                        isLastAnswerCorrect = null
+                        isLastAnswerCorrect = null,
+                        canAnswer = true
                     )
                 },
                 onFailure = { exception ->
