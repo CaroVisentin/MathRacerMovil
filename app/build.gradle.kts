@@ -114,4 +114,6 @@ dependencies {
     implementation(libs.ui)
     implementation(libs.androidx.foundation)
     implementation(libs.androidx.animation)
+    
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
 }
