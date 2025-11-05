@@ -31,10 +31,10 @@ data class SoloGameStartResponse(
     val currentQuestion: SoloQuestion?,
 
     @SerializedName("playerProducts")
-    val playerProducts: List<Product>,
+    val playerProducts: List<ProductPlayerGame>,
 
     @SerializedName("machineProducts")
-    val machineProducts: List<Product>
+    val machineProducts: List<ProductPlayerGame>
 )
 
 data class SoloQuestion(
@@ -51,7 +51,7 @@ data class SoloQuestion(
     val startedAt: String
 )
 
-data class Product(
+data class ProductPlayerGame(
     @SerializedName("productId")
     val productId: Int,
 
