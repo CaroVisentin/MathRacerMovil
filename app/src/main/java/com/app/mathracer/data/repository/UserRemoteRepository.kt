@@ -40,9 +40,11 @@ object UserRemoteRepository {
         val header = token?.let { "Bearer $it" }
         return api.loginUser(header, user)
     }
+/*
     suspend fun getUserByUid(uid: String): Response<User> {
         val token = try { getIdToken() } catch (e: Exception) { null }
         val header = token?.let { "Bearer $it" }
         return api.getUserByUid(header, uid)
     }
+    */
 }

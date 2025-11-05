@@ -22,7 +22,10 @@ interface ApiService {
     ): Response<User>
 
     @POST("player/login")
-    suspend fun loginUser(@Header("Authorization") authorization: String?, @Body user: UserLogin): Response<User>
+    suspend fun loginUser(
+        @Header("Authorization") authorization: String?,
+        @Body user: UserLogin
+    ): Response<User>
 
     @GET("/api/Worlds")
     suspend fun getWorlds(@Header("Authorization") authorization: String?): Response<Worlds>
@@ -49,29 +52,4 @@ interface ApiService {
         @Path("gameId") gameId: Int,
         @Body answer: Int
     ): Response<SoloAnswerResponse>
-
-    @GET("player/uid/{uid}")
-    suspend fun getUserByUid(@Header("Authorization") authorization: String?, @Path("uid") uid: String): Response<User>
-    
-    @GET("Friendship/{playerId}/friends")
-    suspend fun getFriends(@Header("Authorization") authorization: String?, @Path("playerId") playerId: Int): Response<List<com.app.mathracer.data.model.Friend>>
-
-    @GET("Friendship/{playerId}/pending")
-    suspend fun getPending(@Header("Authorization") authorization: String?, @Path("playerId") playerId: Int): Response<List<com.app.mathracer.data.model.Friend>>
-
-    @POST("Friendship/request")
-    suspend fun sendFriendRequest(@Header("Authorization") authorization: String?, @Body body: com.app.mathracer.data.model.FriendshipActionRequest): Response<Unit>
-
-    @POST("Friendship/accept")
-    suspend fun acceptFriendRequest(@Header("Authorization") authorization: String?, @Body body: com.app.mathracer.data.model.FriendshipActionRequest): Response<Unit>
-
-    @POST("Friendship/reject")
-    suspend fun rejectFriendRequest(@Header("Authorization") authorization: String?, @Body body: com.app.mathracer.data.model.FriendshipActionRequest): Response<Unit>
-
-    @POST("Friendship/delete")
-    suspend fun deleteFriend(@Header("Authorization") authorization: String?, @Body body: com.app.mathracer.data.model.FriendshipActionRequest): Response<Unit>
-
-    @POST("Chest/complete-tutorial")
-    suspend fun completeTutorial(@Header("Authorization") authorization: String?): Response<com.app.mathracer.data.model.ChestResponse>
-
 }
