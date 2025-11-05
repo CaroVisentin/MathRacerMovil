@@ -118,6 +118,9 @@ class HistoryGameViewModel @Inject constructor(
         }
         
         android.util.Log.d("HistoryGameViewModel", "🏁 Positions - Player: $playerPosition/${currentState.totalQuestions}, Machine: $machinePosition/${currentState.totalQuestions}, GameFinished: $gameFinished")
+
+        val finalPlayerProgress = maxOf(currentState.playerProgress, playerPosition)
+        val finalMachineProgress = maxOf(currentState.machineProgress, machinePosition)
         
         _uiState.value = currentState.copy(
             isLoading = false,
@@ -126,8 +129,9 @@ class HistoryGameViewModel @Inject constructor(
             currentQuestion = update.currentQuestion?.equation ?: "",
             options = update.currentQuestion?.options ?: emptyList(),
             correctAnswer = currentState.correctAnswer, // Mantener la respuesta correcta anterior hasta recibir nueva
-            playerProgress = playerPosition,
-            machineProgress = machinePosition,
+            // Solo actualizar si es mayor o igual (nunca retroceder)
+            playerProgress = finalPlayerProgress,
+            machineProgress = finalMachineProgress,
             livesRemaining = update.livesRemaining,
             timePerEquation = update.timePerEquation,
             gameEnded = gameFinished || currentState.gameEnded,
@@ -212,13 +216,17 @@ class HistoryGameViewModel @Inject constructor(
                     val reachedEnd = newPlayerScore >= before.totalQuestions
 
                     // Actualizar feedback y progreso con la respuesta del server
+                    val newPlayerProgress = maxOf(before.playerProgress, minOf(newPlayerScore, before.totalQuestions))
+                    val newMachineProgress = maxOf(before.machineProgress, minOf(newMachineScore, before.totalQuestions))
+
                     _uiState.value = before.copy(
                         isLastAnswerCorrect = actuallyCorrect,
                         showFeedback = true,
                         playerScore = newPlayerScore,
                         machineScore = newMachineScore,
-                        playerProgress = minOf(newPlayerScore, before.totalQuestions),
-                        machineProgress = minOf(newMachineScore, before.totalQuestions),
+                        // Solo actualizar progreso si es mayor o igual al actual (nunca retroceder)
+                        playerProgress = newPlayerProgress,
+                        machineProgress = newMachineProgress,
                         gameEnded = reachedEnd || before.gameEnded,
                         winner = if (reachedEnd) "¡Ganaste!" else before.winner,
                         correctAnswer = answerResult.correctAnswer,
