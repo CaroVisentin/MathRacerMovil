@@ -549,22 +549,27 @@ fun OptionButton(
         .shadow(6.dp, RoundedCornerShape(12.dp))
     else modifier.height(56.dp)
 
+    val isClickable = state == OptionButtonState.NORMAL || state == OptionButtonState.SELECTED
+
     Button(
-        onClick = onClick,
+        onClick = { if (isClickable) onClick() },
         modifier = btnModifier,
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = backgroundColor,
-            contentColor = Color.White
+            contentColor = Color.White,
+            disabledContainerColor = backgroundColor,
+            disabledContentColor = Color.White
         ),
         border = BorderStroke(2.dp, borderColor),
-        enabled = state == OptionButtonState.NORMAL || state == OptionButtonState.SELECTED
+        enabled = true
     ) {
         Text(
-            text = text, // 💡 siempre muestra el número original
+            text = text,
             fontSize = 32.sp,
             fontWeight = FontWeight.ExtraBold,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            color = Color.White
         )
     }
 }
