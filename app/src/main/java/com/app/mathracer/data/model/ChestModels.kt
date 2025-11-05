@@ -3,7 +3,7 @@ package com.app.mathracer.data.model
 data class ChestResponse(
     val items: List<ChestItem>
 )
-
+//comentario para pushear a dev
 data class ChestItem(
     val type: String,
     val quantity: Int,
