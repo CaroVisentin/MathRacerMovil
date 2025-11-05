@@ -95,7 +95,7 @@ fun LevelsScreen(
                         .padding(horizontal = 16.dp, vertical = 12.dp)
                 ) {
                     Text(
-                        text = "descripcion q no llega del back",// uiState.worldDescription,
+                        text = "Sumas y restas",// uiState.worldDescription,
                         color = Color.Cyan,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium

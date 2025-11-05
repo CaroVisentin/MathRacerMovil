@@ -87,8 +87,7 @@ class HistoryGameViewModel @Inject constructor(
         android.util.Log.d("HistoryGameViewModel", "🎮 GameUpdate received - Game ID: ${update.gameId}, Status: ${update.status}")
         
         val currentState = _uiState.value
-        
-        // Verificar que el gameId coincide
+
         if (update.gameId != currentState.gameId) {
             android.util.Log.d("HistoryGameViewModel", "🎮 ❌ Game ID mismatch - skipping update")
             return
@@ -128,15 +127,13 @@ class HistoryGameViewModel @Inject constructor(
             machineScore = update.machinePosition,
             currentQuestion = update.currentQuestion?.equation ?: "",
             options = update.currentQuestion?.options ?: emptyList(),
-            correctAnswer = currentState.correctAnswer, // Mantener la respuesta correcta anterior hasta recibir nueva
-            // Solo actualizar si es mayor o igual (nunca retroceder)
+            correctAnswer = currentState.correctAnswer,
             playerProgress = finalPlayerProgress,
             machineProgress = finalMachineProgress,
             livesRemaining = update.livesRemaining,
             timePerEquation = update.timePerEquation,
             gameEnded = gameFinished || currentState.gameEnded,
             winner = winner ?: currentState.winner,
-         //   expectedResult = update. ?: "",
             isLastAnswerCorrect = if (hasNewQuestion) null else currentState.isLastAnswerCorrect,
             isPenalized = currentState.isPenalized,
             showFeedback = if (hasNewQuestion) false else currentState.showFeedback,

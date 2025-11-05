@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.app.mathracer.data.CurrentUser
 import com.app.mathracer.data.model.WorldDto
 import com.app.mathracer.ui.screens.worlds.viewmodel.WorldsViewModel
 
@@ -92,17 +93,18 @@ fun WorldsScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxSize()
         ) {
-            TopBar(energy = 10)
+            // Espacio superior extra
+            Spacer(modifier = Modifier.height(32.dp))
+
+            //TopBar(energy = 3)
 
             Text(
                 text = "Mundos",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Cyan,
-                modifier = Modifier.padding(8.dp)
+                modifier = Modifier.padding(bottom = 8.dp)
             )
-
-            Spacer(modifier = Modifier.height(8.dp))
 
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
@@ -121,6 +123,7 @@ fun WorldsScreen(
         }
     }
 }
+
 
 @Composable
 fun ZigZagWorldItem(
@@ -228,7 +231,7 @@ fun WorldCard(
                                 .size(12.dp, 24.dp)
                                 .padding(horizontal = 1.dp)
                                 .background(
-                                    if (world.id <= lastAvailableWorldId) Color.Yellow else Color.DarkGray, //me tengo q traer los niveles y setearlo con eso
+                                   if (world.id < lastAvailableWorldId) Color.Yellow else Color.DarkGray, //me tengo q traer los niveles y setearlo con eso
                                     RoundedCornerShape(2.dp)
                                 )
                         )

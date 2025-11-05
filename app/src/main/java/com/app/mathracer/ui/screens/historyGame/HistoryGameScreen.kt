@@ -569,25 +569,6 @@ private fun getOptionButtonState(
     }
 }
 
-/*
-private fun getOptionButtonState(
-    option: Int?,
-    lastAnswerGiven: Int?,
-    lastAnswerWasCorrect: Boolean?,
-    showAnswerFeedback: Boolean,
-    isWaitingForAnswer: Boolean,
-    isPenalized: Boolean = false
-): OptionButtonState {
-    return when {
-        isPenalized -> OptionButtonState.DISABLED
-        showAnswerFeedback && option == lastAnswerGiven && lastAnswerWasCorrect == true -> OptionButtonState.CORRECT
-        showAnswerFeedback && option == lastAnswerGiven && lastAnswerWasCorrect == false -> OptionButtonState.INCORRECT
-        isWaitingForAnswer && option == lastAnswerGiven -> OptionButtonState.SELECTED
-        else -> OptionButtonState.NORMAL
-    }
-}
-*/
-
 @Composable
 fun OptionButton(
     text: String,
