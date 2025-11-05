@@ -529,22 +529,21 @@ private fun getOptionButtonState(
 }
 
 @Composable
-public fun OptionButton(
+fun OptionButton(
     text: String,
     modifier: Modifier = Modifier,
     state: OptionButtonState = OptionButtonState.NORMAL,
     hasShadow: Boolean = true,
     onClick: () -> Unit
 ) {
-    val (backgroundColor, borderColor, emoji) = when (state) {
-        OptionButtonState.NORMAL -> Triple(OptionTeal, Color.White, "")
-        OptionButtonState.SELECTED -> Triple(Color(0xFF1976D2), Color(0xFF64B5F6), "⏳")
-        OptionButtonState.CORRECT -> Triple(Color(0xFF4CAF50), Color(0xFF81C784), text)
-        OptionButtonState.INCORRECT -> Triple(Color(0xFFF44336), Color(0xFFEF5350), text)
-        OptionButtonState.DISABLED -> Triple(Color(0xFF666666), Color(0xFF999999), "⏱️")
+    val (backgroundColor, borderColor) = when (state) {
+        OptionButtonState.NORMAL -> Pair(OptionTeal, Color.White)
+        OptionButtonState.SELECTED -> Pair(Color(0xFF1976D2), Color(0xFF64B5F6))
+        OptionButtonState.CORRECT -> Pair(Color(0xFF4CAF50), Color(0xFF81C784))
+        OptionButtonState.INCORRECT -> Pair(Color(0xFFF44336), Color(0xFFEF5350))
+        OptionButtonState.DISABLED -> Pair(Color(0xFF666666), Color(0xFF999999))
     }
 
-    // aplicar sombra solo si hasShadow == true
     val btnModifier = if (hasShadow) modifier
         .height(56.dp)
         .shadow(6.dp, RoundedCornerShape(12.dp))
@@ -561,23 +560,12 @@ public fun OptionButton(
         border = BorderStroke(2.dp, borderColor),
         enabled = state == OptionButtonState.NORMAL || state == OptionButtonState.SELECTED
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = text,
-                fontSize = 32.sp,
-                fontWeight = FontWeight.ExtraBold
-            )
-            if (emoji.isNotEmpty()) {
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = emoji,
-                    fontSize = 18.sp
-                )
-            }
-        }
+        Text(
+            text = text, // 💡 siempre muestra el número original
+            fontSize = 32.sp,
+            fontWeight = FontWeight.ExtraBold,
+            textAlign = TextAlign.Center
+        )
     }
 }
 

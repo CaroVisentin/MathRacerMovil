@@ -543,6 +543,7 @@ fun OptionsColumn(
         }
     }
 }
+
 private fun getOptionButtonState(
     option: Int?,
     lastAnswerGiven: Int?,
@@ -554,11 +555,16 @@ private fun getOptionButtonState(
     correctAnswer: Int? = null
 ): OptionButtonState {
     return when {
-        !canAnswer -> OptionButtonState.DISABLED
-        isPenalized -> OptionButtonState.DISABLED
-        showAnswerFeedback && option == correctAnswer -> OptionButtonState.CORRECT // ✅ marca la correcta
-        showAnswerFeedback && option == lastAnswerGiven && lastAnswerWasCorrect == false -> OptionButtonState.INCORRECT
-        isWaitingForAnswer && option == lastAnswerGiven -> OptionButtonState.SELECTED
+        // ✅ Correcta → verde
+        !canAnswer && option == correctAnswer -> OptionButtonState.CORRECT
+
+        // ❌ Incorrecta elegida → roja
+        !canAnswer && option == lastAnswerGiven && lastAnswerWasCorrect == false -> OptionButtonState.INCORRECT
+
+        // 🕐 Durante feedback, las demás → grises
+        !canAnswer && (option != correctAnswer || option == lastAnswerGiven && lastAnswerWasCorrect == false) -> OptionButtonState.DISABLED
+
+        // 🔘 Normal
         else -> OptionButtonState.NORMAL
     }
 }
