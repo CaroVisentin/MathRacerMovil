@@ -263,7 +263,7 @@ fun GamePlayScreen(
 }
 
 @Composable
-private fun TopBar(timeLabel: String, coins: Int, onBack: () -> Unit) {
+public fun TopBar(timeLabel: String, coins: Int, onBack: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -319,7 +319,7 @@ private fun TopBar(timeLabel: String, coins: Int, onBack: () -> Unit) {
 }
 
 @Composable
-private fun TrackCard(
+public fun TrackCard(
     title: String,
     titleColor: Color,
     trackRes: Int,
@@ -468,7 +468,7 @@ fun ScrollingTrack(
 
 
 @Composable
-private fun PowerUpChip(
+public fun PowerUpChip(
     iconRes: Int,
     count: Int,
     tint: Color,
@@ -529,55 +529,48 @@ private fun getOptionButtonState(
 }
 
 @Composable
-private fun OptionButton(
+fun OptionButton(
     text: String,
     modifier: Modifier = Modifier,
     state: OptionButtonState = OptionButtonState.NORMAL,
     hasShadow: Boolean = true,
     onClick: () -> Unit
 ) {
-    val (backgroundColor, borderColor, emoji) = when (state) {
-        OptionButtonState.NORMAL -> Triple(OptionTeal, Color.White, "")
-        OptionButtonState.SELECTED -> Triple(Color(0xFF1976D2), Color(0xFF64B5F6), "⏳")
-        OptionButtonState.CORRECT -> Triple(Color(0xFF4CAF50), Color(0xFF81C784), text)
-        OptionButtonState.INCORRECT -> Triple(Color(0xFFF44336), Color(0xFFEF5350), text)
-        OptionButtonState.DISABLED -> Triple(Color(0xFF666666), Color(0xFF999999), "⏱️")
+    val (backgroundColor, borderColor) = when (state) {
+        OptionButtonState.NORMAL -> Pair(OptionTeal, Color.White)
+        OptionButtonState.SELECTED -> Pair(Color(0xFF1976D2), Color(0xFF64B5F6))
+        OptionButtonState.CORRECT -> Pair(Color(0xFF4CAF50), Color(0xFF81C784))
+        OptionButtonState.INCORRECT -> Pair(Color(0xFFF44336), Color(0xFFEF5350))
+        OptionButtonState.DISABLED -> Pair(Color(0xFF666666), Color(0xFF999999))
     }
 
-    // aplicar sombra solo si hasShadow == true
     val btnModifier = if (hasShadow) modifier
         .height(56.dp)
         .shadow(6.dp, RoundedCornerShape(12.dp))
     else modifier.height(56.dp)
 
+    val isClickable = state == OptionButtonState.NORMAL || state == OptionButtonState.SELECTED
+
     Button(
-        onClick = onClick,
+        onClick = { if (isClickable) onClick() },
         modifier = btnModifier,
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = backgroundColor,
-            contentColor = Color.White
+            contentColor = Color.White,
+            disabledContainerColor = backgroundColor,
+            disabledContentColor = Color.White
         ),
         border = BorderStroke(2.dp, borderColor),
-        enabled = state == OptionButtonState.NORMAL || state == OptionButtonState.SELECTED
+        enabled = true
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = text,
-                fontSize = 32.sp,
-                fontWeight = FontWeight.ExtraBold
-            )
-            if (emoji.isNotEmpty()) {
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = emoji,
-                    fontSize = 18.sp
-                )
-            }
-        }
+        Text(
+            text = text,
+            fontSize = 32.sp,
+            fontWeight = FontWeight.ExtraBold,
+            textAlign = TextAlign.Center,
+            color = Color.White
+        )
     }
 }
 

@@ -13,7 +13,7 @@ object UserRemoteRepository {
     private val api = RetrofitClient.api
     private val auth = FirebaseAuth.getInstance()
 
-    private suspend fun getIdToken(): String? = suspendCancellableCoroutine { cont ->
+    public suspend fun getIdToken(): String? = suspendCancellableCoroutine { cont ->
         val user = auth.currentUser
         if (user == null) {
             cont.resume(null)

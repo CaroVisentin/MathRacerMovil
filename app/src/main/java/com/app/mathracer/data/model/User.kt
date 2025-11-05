@@ -1,7 +1,7 @@
 package com.app.mathracer.data.model
 
 import com.google.gson.annotations.SerializedName
-
+//comentario para commitear a dev
 data class User(
     @SerializedName("uid") val uid: String,
     @SerializedName("email") val email: String? = null,
