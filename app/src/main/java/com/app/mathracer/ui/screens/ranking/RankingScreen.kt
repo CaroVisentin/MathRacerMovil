@@ -74,6 +74,21 @@ fun RankingScreen(viewModel: RankingViewModel) {
                         RankingItem(player)
                     }
                 }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+
+                val positionText = uiState.userPosition?.toString() ?: "–"
+                Text(
+                    text = "Tu posición actual: $positionText",
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    maxLines = 1
+                )
             }
         }
     }
