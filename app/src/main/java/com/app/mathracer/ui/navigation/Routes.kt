@@ -2,7 +2,6 @@ package com.app.mathracer.ui.navigation
 
 object Routes {
     const val HOME = "home"
-    const val SPLASH = "splash"
     // Build a HOME route with optional userName and userEmail query params
     fun homeWithUser(userName: String?, userEmail: String?): String {
         val name = java.net.URLEncoder.encode(userName ?: "", "utf-8")
@@ -23,8 +22,9 @@ object Routes {
     const val WORLDS = "worlds"
     const val LEVELS = "levels"
     const val RANKING = "ranking"
-    const val CHEST = "chest"
+    const val HISTORY_GAME = "history_game"
 
     // Rutas con argumentos
     fun gameWithIdAndPlayer(gameId: String, playerName: String) = "game/$gameId/$playerName"
+    fun historyGameWithLevelId(levelId: Int, resultType: String) = "history_game/$levelId/$resultType"
 }

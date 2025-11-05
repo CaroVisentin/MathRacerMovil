@@ -9,11 +9,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.collectAsState
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -39,10 +35,7 @@ import com.app.mathracer.ui.screens.ranking.viewmodel.RankingViewModel
 import com.app.mathracer.ui.screens.worlds.WorldsScreen
 import com.app.mathracer.ui.screens.worlds.WorldsScreenRoute
 import com.app.mathracer.ui.rules.RulesScreen
-import com.app.mathracer.data.model.User
-import android.util.Log
-import com.google.firebase.auth.FirebaseAuth
-
+import com.app.mathracer.ui.screens.historyGame.HistoryGameScreen
 
 @Composable
 fun MathRacerNavGraph(
@@ -83,12 +76,49 @@ fun MathRacerNavGraph(
                     onStatsClick = {
                         navController.navigate(Routes.RANKING)
                     },
-                    onProfileClick = { navController.navigate(Routes.PROFILE) },
-                    onTutorialComplete = { navController.navigate(Routes.CHEST) }
+                    onProfileClick = { navController.navigate(Routes.PROFILE) }
                 )
             }
 
-            
+            composable(
+                route = "home?userName={userName}&userEmail={userEmail}",
+                arguments = listOf(
+                    navArgument("userName") { type = NavType.StringType; defaultValue = "" },
+                    navArgument("userEmail") { type = NavType.StringType; defaultValue = "" }
+                )
+            ) { backStackEntry ->
+                HandleBackNavigation(
+                    navController = navController,
+                    currentRoute = currentRoute
+                )
+
+                val userName = backStackEntry.arguments?.getString("username")?.let { java.net.URLDecoder.decode(it, "utf-8") } ?: ""
+                val userEmail = backStackEntry.arguments?.getString("userEmail")?.let { java.net.URLDecoder.decode(it, "utf-8") } ?: ""
+
+                HomeScreen(
+                    userName = if (userName.isNotBlank()) userName else null,
+                    userEmail = if (userEmail.isNotBlank()) userEmail else null,
+                    onMultiplayerClick = {
+                        navController.navigate(Routes.MULTIPLAYER_OPTIONS)
+                    },
+                    onStoryModeClick = {
+                        navController.navigate(Routes.WORLDS)
+                    },
+                    onFreePracticeClick = {
+                        // TODO: Implementar navegación a práctica libre
+                    },
+                    onShopClick = {
+                        // TODO: Implementar navegación a tienda
+                    },
+                    onGarageClick = {
+                        // TODO: Implementar navegación a garage
+                    },
+                    onStatsClick = {
+                        navController.navigate(Routes.RANKING)
+                    },
+                    onProfileClick = { navController.navigate(Routes.PROFILE) }
+                )
+            }
         
         composable(Routes.WAITING_OPPONENT) {
             HandleBackNavigation(
@@ -109,20 +139,6 @@ fun MathRacerNavGraph(
                     navController.navigateUp()
                 }
             )
-        }
-
-        composable(Routes.CHEST) {
-            HandleBackNavigation(
-                navController = navController,
-                currentRoute = currentRoute,
-                onBackPressed = { navController.navigateUp() }
-            )
-
-            com.app.mathracer.ui.screens.chest.ChestScreen(onContinue = {
-                navController.navigate(Routes.HOME) {
-                    popUpTo(Routes.HOME) { inclusive = true }
-                }
-            })
         }
 
         composable(Routes.MULTIPLAYER_OPTIONS) {
@@ -159,16 +175,7 @@ fun MathRacerNavGraph(
                 onBackPressed = { navController.navigateUp() }
             )
 
-            val profileViewModel: com.app.mathracer.ui.screens.profile.viewmodel.ProfileViewModel = hiltViewModel()
-            val profileState by profileViewModel.uiState.collectAsState()
-
-             
-            val inviteList = profileState.friends.mapIndexed { index, f ->
-                com.app.mathracer.ui.screens.multiplayer.FriendItem(id = "${index}", name = f.name, points = f.score.toIntOrNull() ?: 0)
-            }
-
             InviteFriendsScreen(
-                friends = inviteList,
                 onInvite = { friendId, difficulty, resultType ->
                     navController.navigateUp()
                 },
@@ -286,11 +293,13 @@ fun MathRacerNavGraph(
                 onLoginWithGoogle = { launcher.launch(googleSignInClient.signInIntent) },
                 onRegisterClick = { navController.navigate(Routes.REGISTER) },
                 onLoginSuccess = {
-                    val firebaseUser = FirebaseAuth.getInstance().currentUser
+                    val prefs = context.getSharedPreferences("app_prefs", MODE_PRIVATE)
+                    prefs.edit().putBoolean("show_tutorial_on_next_launch", false).apply()
+                    val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
                     val displayName = firebaseUser?.displayName ?: ""
                     val email = firebaseUser?.email ?: ""
                     navController.navigate(Routes.homeWithUser(displayName, email)) {
-                        popUpTo(Routes.LOGIN) { inclusive = true }
+                        popUpTo(Routes.HOME) { inclusive = true }
                     }
                 },
                 viewModel = loginViewModel
@@ -369,7 +378,7 @@ fun MathRacerNavGraph(
                         .putBoolean("show_tutorial_on_next_launch", true)
                         .apply()
 
-                    val firebaseUser = FirebaseAuth.getInstance().currentUser
+                    val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
                     val displayName = firebaseUser?.displayName ?: ""
                     val email = firebaseUser?.email ?: ""
 
@@ -388,23 +397,16 @@ fun MathRacerNavGraph(
                 onBackPressed = { navController.navigateUp() }
             )
 
-            val context = LocalContext.current
-
             ProfileScreen(
-                onHelpClick = { navController.navigate(Routes.RULES) },
-                onLogout = {
-                    FirebaseAuth.getInstance().signOut()
-                    navController.navigate(Routes.LOGIN) {
-                        popUpTo(Routes.HOME) { inclusive = true }
-                    }
-                }
+               // onNavigateBack = { navController.navigateUp() }
+               onHelpClick = { navController.navigate(Routes.RULES) }
             )
         }
 
         composable(Routes.WORLDS) {
             WorldsScreenRoute(
                 onWorldClick = { world ->
-                    navController.navigate("levels/${world.id}/${world.title}")
+                    navController.navigate("levels/${world.id}/${world.name}")
                 }
             )
         }
@@ -427,6 +429,12 @@ fun MathRacerNavGraph(
                 navArgument("worldName") { type = NavType.StringType }
             )
         ) { backStackEntry ->
+            HandleBackNavigation(
+                navController = navController,
+                currentRoute = currentRoute,
+                onBackPressed = { navController.navigateUp() }
+            )
+            
             val viewModel: LevelsViewModel = hiltViewModel()
             val worldId = backStackEntry.arguments?.getInt("worldId") ?: 0
             val worldName = backStackEntry.arguments?.getString("worldName") ?: ""
@@ -434,7 +442,12 @@ fun MathRacerNavGraph(
             // Cargar datos del mundo seleccionado
             viewModel.loadLevelsForWorld(worldId, worldName)
 
-            LevelsScreen(viewModel = viewModel)
+            LevelsScreen(
+                viewModel = viewModel,
+                onLevelClick = { levelId, resultType ->
+                    navController.navigate(Routes.historyGameWithLevelId(levelId, resultType))
+                }
+            )
         }
 
 
@@ -486,6 +499,42 @@ fun MathRacerNavGraph(
             )
             
 
+        }
+        
+        composable(
+            route = "history_game/{levelId}/{resultType}",
+            arguments = listOf(
+                navArgument("levelId") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            HandleBackNavigation(
+                navController = navController,
+                currentRoute = currentRoute,
+                onBackPressed = {
+                    navController.navigateUp()
+                }
+            )
+
+            val levelId = backStackEntry.arguments?.getInt("levelId") ?: 0
+            val resultType = backStackEntry.arguments?.getString("resultType") ?: ""
+
+            // Obtener el nombre del jugador desde Firebase si está disponible
+            val playerName = com.google.firebase.auth.FirebaseAuth.getInstance()
+                .currentUser?.displayName ?: "Jugador"
+            
+            HistoryGameScreen(
+                levelId = levelId,
+                playerName = playerName,
+                resultType = resultType,
+                onNavigateBack = {
+                    navController.navigateUp()
+                },
+                onPlayAgain = {
+                    navController.navigate(Routes.historyGameWithLevelId(levelId, resultType)) {
+                        popUpTo(Routes.HOME)
+                    }
+                }
+            )
         }
     }
 }

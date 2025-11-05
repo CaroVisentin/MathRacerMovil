@@ -13,7 +13,7 @@ object UserRemoteRepository {
     private val api = RetrofitClient.api
     private val auth = FirebaseAuth.getInstance()
 
-    private suspend fun getIdToken(): String? = suspendCancellableCoroutine { cont ->
+    public suspend fun getIdToken(): String? = suspendCancellableCoroutine { cont ->
         val user = auth.currentUser
         if (user == null) {
             cont.resume(null)
@@ -40,9 +40,11 @@ object UserRemoteRepository {
         val header = token?.let { "Bearer $it" }
         return api.loginUser(header, user)
     }
+/*
     suspend fun getUserByUid(uid: String): Response<User> {
         val token = try { getIdToken() } catch (e: Exception) { null }
         val header = token?.let { "Bearer $it" }
         return api.getUserByUid(header, uid)
     }
+    */
 }

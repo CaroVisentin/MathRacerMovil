@@ -1,9 +1,10 @@
 package com.app.mathracer.ui.screens.worlds.viewmodel
 
-import com.app.mathracer.ui.screens.worlds.World
+import com.app.mathracer.data.model.WorldDto
 
 data class WorldsUiState(
-    val worlds: List<World> = emptyList(),
     val isLoading: Boolean = false,
+    val worlds: List<WorldDto>? = emptyList(),
+    val lastAvailableWorldId: Int = 0,
     val errorMessage: String? = null
 )
