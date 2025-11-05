@@ -22,7 +22,7 @@ data class HistoryGameUiState(
     val error: String? = null,
     val expectedResult: String = "",
     val fireExtinguisherActive: Boolean = false,
-    val fireExtinguisherCount: Int = 1,
+    val fireExtinguisherCount: Int = 0,
     val livesRemaining: Int = 3,
     val timePerEquation: Int = 10,
     val totalQuestions: Int = 10,

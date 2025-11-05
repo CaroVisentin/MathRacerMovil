@@ -107,7 +107,9 @@ fun HistoryGameScreen(
         livesRemaining = uiState.livesRemaining,
         timePerEquation = uiState.timePerEquation,
         powerUps = listOf(
-            PowerUp(R.drawable.ic_shield, uiState.fireExtinguisherCount, Color(0xFFFF6B6B))
+            PowerUp(R.drawable.ic_shield, uiState.fireExtinguisherCount, Color(0xFFFF6B6B)),
+            PowerUp(R.drawable.ic_shuffle, 0, Color.White),
+            PowerUp(R.drawable.ic_bolt, 0, Color(0xFF76E4FF))
         ),
         expression = uiState.currentQuestion.ifEmpty { 
             when {
