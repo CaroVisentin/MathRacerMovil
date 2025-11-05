@@ -5,9 +5,23 @@ import com.app.mathracer.data.model.UserLogin
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Query
 import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.Path
+
+
+data class RankingPlayerDto(
+    val position: Int,
+    val playerId: Int,
+    val name: String,
+    val points: Int
+)
+
+data class RankingResponseDto(
+    val top10: List<RankingPlayerDto> = emptyList(),
+    val currentPlayerPosition: Int? = null
+)
 
 interface ApiService {
     @POST("player/register")
@@ -40,4 +54,10 @@ interface ApiService {
 
     @POST("Chest/complete-tutorial")
     suspend fun completeTutorial(@Header("Authorization") authorization: String?): Response<com.app.mathracer.data.model.ChestResponse>
+
+
+    @GET("ranking")
+    suspend fun getRanking(
+        @Query("playerId") playerId: Int? = null
+    ): Response<RankingResponseDto>
 }
