@@ -68,7 +68,7 @@ fun RulesScreen() {
             Text(
                 text = "Mathi Racer es un juego de carreras donde para avanzar en la pista deberás resolver ecuaciones correctamente. Cada respuesta acertada hace que tu auto avance y te acerque a la meta.\n\nSi respondes mal, verás la respuesta correcta y recibirás otra ecuación para continuar con el juego.",
                 color = Color.White,
-                fontSize = 16.sp,
+                fontSize = 20.sp,
                 lineHeight = 22.sp,
                 textAlign = TextAlign.Center
             )
@@ -79,7 +79,7 @@ fun RulesScreen() {
                 text = "TIPOS DE DESAFÍOS:",
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
+                fontSize = 22.sp,
                 textAlign = TextAlign.Center
             )
 
@@ -115,7 +115,7 @@ fun RulesScreen() {
                 text = "MODOS DE JUEGO:",
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
+                fontSize = 22.sp,
                 textAlign = TextAlign.Center
             )
 
@@ -140,7 +140,7 @@ fun RulesScreen() {
                 text = "VIDAS:",
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
+                fontSize = 22.sp,
                 textAlign = TextAlign.Center
             )
 
@@ -155,7 +155,7 @@ fun RulesScreen() {
                     append(".\nLas mismas se recargarán con tiempo o canjeándolas por monedas.")
                 },
                 color = Color.White,
-                fontSize = 16.sp,
+                fontSize = 20.sp,
                 lineHeight = 22.sp,
                 textAlign = TextAlign.Start
             )
@@ -177,7 +177,7 @@ fun ChallengeItem(textParts: List<String>) {
                 }
             }
         },
-        fontSize = 16.sp,
+        fontSize = 20.sp,
         color = Color.White,
         lineHeight = 22.sp
     )
@@ -204,7 +204,7 @@ fun GameModeItem(
             append(suffix)
         },
         color = Color.White,
-        fontSize = 16.sp,
+        fontSize = 20.sp,
         lineHeight = 22.sp
     )
 }

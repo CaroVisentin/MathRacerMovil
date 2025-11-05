@@ -3,7 +3,6 @@ package com.app.mathracer.ui.screens.profile.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.mathracer.data.CurrentUser
-import com.app.mathracer.data.model.Friend
 import com.app.mathracer.data.repository.FriendRepository
 import com.app.mathracer.ui.screens.profile.components.Friend as FriendUi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,6 +17,11 @@ class ProfileViewModel : ViewModel() {
 
     init {
         refreshAll()
+        _uiState.update { it.copy(
+            userName = CurrentUser.user?.name ?: "",
+            userEmail = CurrentUser.user?.email,
+            points = CurrentUser.user?.points?.toDouble() ?: 0.0
+            ) }
     }
 
     fun refreshAll() {

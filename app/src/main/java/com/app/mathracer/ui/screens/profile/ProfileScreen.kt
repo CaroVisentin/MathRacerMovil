@@ -84,7 +84,7 @@ fun ProfileScreen(
                     userName = uiState.userName,
                     gamesPlayed = uiState.gamesPlayed,
                     points = uiState.points,
-                    userEmail = uiState.userEmail
+                    userEmail = uiState.userEmail.toString()
                 )
 
                 "Amigos" -> {
@@ -216,7 +216,7 @@ fun TopBarProfile(
         Text(
             text = "Perfil",
             color = if (selectedTab == "Perfil") Color.Magenta else Color.Cyan,
-            fontSize = 18.sp,
+            fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.clickable { onTabSelected("Perfil") }
         )
@@ -224,7 +224,7 @@ fun TopBarProfile(
         Text(
             text = "Amigos",
             color = if (selectedTab == "Amigos") Color.Magenta else Color.Cyan,
-            fontSize = 18.sp,
+            fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.clickable { onTabSelected("Amigos") }
         )
@@ -232,7 +232,7 @@ fun TopBarProfile(
         Text(
             text = "Ajustes",
             color = if (selectedTab == "Ajustes") Color.Magenta else Color.Cyan,
-            fontSize = 18.sp,
+            fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.clickable { onTabSelected("Ajustes") }
         )

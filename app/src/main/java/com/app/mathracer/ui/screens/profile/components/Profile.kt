@@ -31,7 +31,7 @@ fun Profile(
     userName: String,
     gamesPlayed: Int,
     points: Double,
-    userEmail: String
+    userEmail: String?
 ){
     Column(
         modifier = Modifier
@@ -52,7 +52,7 @@ fun Profile(
         Text(
             text = userName,
             color = Color.White,
-            fontSize = 16.sp,
+            fontSize = 20.sp,
             fontWeight = FontWeight.Bold
         )
 
@@ -65,7 +65,7 @@ fun Profile(
         ) {
             DataCardProfile(title = "Partidas jugadas", value = gamesPlayed.toString())
             DataCardProfile(title = "Puntuación", value = points.toString())
-            DataCardProfile(title = "Email registrado", value = userEmail)
+            DataCardProfile(title = "Email registrado", value = userEmail ?: "example@mail.com")
         }
 
     }
@@ -91,13 +91,13 @@ fun DataCardProfile(title: String, value: String) {
             Text(
                 text = title,
                 color = Color.Cyan,
-                fontSize = 16.sp
+                fontSize = 20.sp
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = value,
                 color = Color.White,
-                fontSize = 18.sp,
+                fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
             )
         }

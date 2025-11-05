@@ -47,7 +47,7 @@ fun Settings(
             Text(
                 text = "Sonido",
                 color = Color.White,
-                fontSize = 18.sp,
+                fontSize = 20.sp,
                 modifier = Modifier.padding(vertical = 8.dp)
             )
 
@@ -78,7 +78,7 @@ fun Settings(
             Text(
                 text = "Música",
                 color = Color.White,
-                fontSize = 18.sp,
+                fontSize = 20.sp,
                 modifier = Modifier.padding(vertical = 8.dp)
             )
 
@@ -128,7 +128,7 @@ fun Settings(
                     .fillMaxWidth()
                     .height(50.dp)
             ) {
-                Text("Cerrar sesión", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text("Cerrar sesión", fontWeight = FontWeight.Bold, fontSize = 20.sp)
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -145,7 +145,7 @@ fun Settings(
                     .fillMaxWidth()
                     .height(50.dp)
             ) {
-                Text("Eliminar cuenta", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text("Eliminar cuenta", fontWeight = FontWeight.Bold, fontSize = 20.sp)
             }
         }
 

@@ -92,7 +92,7 @@ fun ChestScreen(
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(text = "¡Felicidades!", fontSize = 28.sp, color = Color.White)
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "Acá está tu recompensa por terminar el tutorial", fontSize = 14.sp, color = Color.White.copy(alpha = 0.9f))
+            Text(text = "Acá está tu recompensa por terminar el tutorial", fontSize = 20.sp, color = Color.White.copy(alpha = 0.9f))
             Spacer(modifier = Modifier.height(20.dp))
 
             
@@ -170,7 +170,7 @@ fun ChestScreen(
                                     "Coins" -> "Monedas"
                                     "Wildcard" -> it.wildcard?.name ?: "Comodín"
                                     else -> it.type
-                                }, color = androidx.compose.ui.graphics.Color.White, fontSize = 14.sp)
+                                }, color = androidx.compose.ui.graphics.Color.White, fontSize = 18.sp)
 
                                 Spacer(modifier = Modifier.height(6.dp))
 

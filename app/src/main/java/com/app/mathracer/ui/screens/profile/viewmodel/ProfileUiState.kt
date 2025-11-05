@@ -10,7 +10,7 @@ data class ProfileUiState(
     val userName: String = "Usuario",
     val gamesPlayed: Int = 27,
     val points: Double = 11512.0,
-    val userEmail: String = "jugador3309@gmail.com",
+    val userEmail: String? = "jugador3309@gmail.com",
     val friends: List<Friend> = emptyList(),
     val pending: List<RemoteFriend> = emptyList(),
     val remoteFriends: List<RemoteFriend> = emptyList()

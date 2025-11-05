@@ -51,7 +51,7 @@ fun LevelsScreen(
                 Text(
                     text = uiState.worldName,
                     color = Color.Cyan,
-                    fontSize = 26.sp,
+                    fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 24.dp)
                 )
@@ -97,7 +97,7 @@ fun LevelsScreen(
                     Text(
                         text = "Sumas y restas",// uiState.worldDescription,
                         color = Color.Cyan,
-                        fontSize = 14.sp,
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.Medium
                     )
                 }
@@ -159,7 +159,7 @@ fun LevelCard(
             ) {
                 Text(
                     text = iconCard,
-                    fontSize = 16.sp
+                    fontSize = 20.sp
                 )
             }
 
@@ -181,7 +181,7 @@ fun LevelCard(
                 Text(
                     text = "BLOQUEADO",
                     color = Color.Gray.copy(alpha = 0.7f),
-                    fontSize = 10.sp,
+                    fontSize = 18.sp,
                     modifier = Modifier.padding(bottom = 2.dp)
                 )
             } else {

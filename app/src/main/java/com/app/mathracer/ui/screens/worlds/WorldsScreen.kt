@@ -192,14 +192,14 @@ fun WorldCard(
             Text(
                 text = world.name,
                 color = titleColor,
-                fontSize = 18.sp,
+                fontSize = 24.sp,
                 fontWeight = FontWeight.Bold
             )
 
             Text(
                 text = world.difficulty,
                 color = textColor,
-                fontSize = 14.sp
+                fontSize = 20.sp
             )
 
             // Barra de progreso
@@ -217,7 +217,7 @@ fun WorldCard(
                 Text(
                     text = "BLOQUEADO",
                     color = Color.Gray,
-                    fontSize = 12.sp,
+                    fontSize = 18.sp,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             } else {

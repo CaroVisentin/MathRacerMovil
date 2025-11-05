@@ -354,7 +354,7 @@ public fun TrackCard(
                 Text(
                     text = "$title ($progress/10)",
                     color = titleColor,
-                    fontSize = 12.sp,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                 )
@@ -502,7 +502,7 @@ public fun PowerUpChip(
             text = count.toString(),
             color = tint,
             fontWeight = FontWeight.Bold,
-            fontSize = 16.sp
+            fontSize = 20.sp
         )
     }
 }

@@ -61,7 +61,7 @@ fun Friends(
             Text(
                 text = "Aún no tenés amigos agregados",
                 color = Color.Gray,
-                fontSize = 16.sp,
+                fontSize = 20.sp,
                 modifier = Modifier.padding(top = 16.dp)
             )
         } else {
@@ -127,7 +127,7 @@ fun FriendCard(friend: Friend, onDelete: () -> Unit) {
                 text = friend.name,
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
+                fontSize = 20.sp
             )
         }
 
@@ -142,7 +142,7 @@ fun FriendCard(friend: Friend, onDelete: () -> Unit) {
                 text = friend.score,
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
+                fontSize = 20.sp
             )
             Spacer(modifier = Modifier.width(8.dp))
             IconButton(onClick = onDelete) {

@@ -128,7 +128,7 @@ fun HomeScreen(
                                 modifier = Modifier.width(150.dp)
                             )
                             Spacer(modifier = Modifier.weight(1f))
-                            
+
                             Column(
                                 horizontalAlignment = Alignment.End,
                             ) {
@@ -137,22 +137,23 @@ fun HomeScreen(
                                     contentDescription = null,
                                     modifier = Modifier.width(60.dp)
                                 )
+                                Box(modifier = Modifier.width(24.dp))
                                 Row {
                                     Image(
                                         painter = painterResource(id = R.drawable.coin),
                                         contentDescription = null,
                                         modifier = Modifier.width(25.dp)
                                     )
-                                    Box(modifier = Modifier.width(8.dp))
+                                    Spacer(modifier = Modifier.width(5.dp))
                                     Text(
                                         text = "${CurrentUser.user?.coins ?: 0}",
                                         color = Color.White,
-                                        fontSize = 20.sp,
+                                        fontSize = 24.sp,
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
                             }
-                            
+
                             Box(modifier = Modifier.width(24.dp))
 
                             // --- Avatar + nombre de usuario ---
@@ -173,7 +174,7 @@ fun HomeScreen(
                                 Text(
                                     text = CurrentUser.user?.name ?: "",
                                     color = Color.White,
-                                    fontSize = 16.sp,
+                                    fontSize = 24.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     textAlign = TextAlign.Center,
                                     modifier = Modifier.padding(top = 4.dp)

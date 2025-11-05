@@ -80,7 +80,7 @@ fun LoginScreen(
             ) {
                 Image(
                     painter = painterResource(R.drawable.logo),
-                    contentDescription = "Math Racer",
+                    contentDescription = "Mathi Racer",
                     modifier = Modifier.width(200.dp),
                     contentScale = ContentScale.Fit
                 )
@@ -89,7 +89,7 @@ fun LoginScreen(
             OutlinedTextField(
                 value = uiState.user,
                 onValueChange = { viewModel.onUserChange(it) },
-                placeholder = { Text("Usuario", color = Color.White.copy(alpha = 0.6f)) },
+                placeholder = { Text("Usuario", color = Color.White.copy(alpha = 0.6f), fontSize = 20.sp) },
                 singleLine = true,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -108,7 +108,7 @@ fun LoginScreen(
             OutlinedTextField(
                 value = uiState.pass,
                 onValueChange = { viewModel.onPassChange(it) },
-                placeholder = { Text("Contraseña", color = Color.White.copy(alpha = 0.6f)) },
+                placeholder = { Text("Contraseña", color = Color.White.copy(alpha = 0.6f), fontSize = 20.sp) },
                 singleLine = true,
                 visualTransformation = if (uiState.showPass) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
@@ -150,7 +150,7 @@ fun LoginScreen(
                         modifier = Modifier.size(22.dp)
                     )
                 else
-                    Text("Iniciar sesión", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text("Iniciar sesión", fontWeight = FontWeight.Bold, fontSize = 22.sp)
             }
 
             Spacer(Modifier.height(16.dp))
@@ -171,7 +171,7 @@ fun LoginScreen(
                     Image(
                         painter = painterResource(R.drawable.ic_google),
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(22.dp)
                     )
                     Spacer(Modifier.width(8.dp))
                     Text("Continuar con Google")
@@ -183,11 +183,13 @@ fun LoginScreen(
             Row {
                 Text(
                     text = "¿No tenés cuenta? ",
+                    fontSize = 20.sp,
                     color = Color.White
                 )
                 Text(
                     text = "Registrate acá",
                     color = Color(0xFF7FD7FF),
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.clickable { onRegisterClick() }
                 )

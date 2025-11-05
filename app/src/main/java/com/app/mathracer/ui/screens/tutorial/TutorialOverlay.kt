@@ -160,7 +160,7 @@ fun TutorialOverlay(
                     Spacer(Modifier.height(8.dp))
                     Image(painter = painterResource(id = com.app.mathracer.R.drawable.mathi), contentDescription = "mascota", modifier = Modifier.size(140.dp))
                     Spacer(Modifier.height(12.dp))
-                    Text(text = "Hola, ¡Soy Mathi! Y te voy a enseñar cómo jugar a mi juego", color = Color.White, fontSize = 16.sp)
+                    Text(text = "Hola, ¡Soy Mathi! Y te voy a enseñar cómo jugar a mi juego", color = Color.White, fontSize = 20.sp)
                     Spacer(Modifier.height(12.dp))
                     Button(
                         onClick = { step = 0 },
@@ -223,9 +223,9 @@ fun TutorialOverlay(
                     else -> ""
                 }
 
-                Text(text = titleText, color = Color.White, fontSize = 20.sp)
+                Text(text = titleText, color = Color.White, fontSize = 24.sp)
                 Spacer(Modifier.height(8.dp))
-                Text(text = summaryText, color = Color.White.copy(alpha = 0.95f), fontSize = 14.sp)
+                Text(text = summaryText, color = Color.White.copy(alpha = 0.95f), fontSize = 20.sp)
                 Spacer(Modifier.height(10.dp))
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

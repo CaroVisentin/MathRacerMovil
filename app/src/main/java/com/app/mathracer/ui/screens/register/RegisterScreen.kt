@@ -82,18 +82,24 @@ fun RegisterScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Image(
-                painter = painterResource(R.drawable.logo),
-                contentDescription = "Math Racer",
+            Box(
                 modifier = Modifier
-                    .width(200.dp)
-                    .padding(bottom = 32.dp)
-            )
+                    .padding(bottom = 28.dp)
+                    .background(Color.Black.copy(alpha = 0.8f), RoundedCornerShape(12.dp))
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.logo),
+                    contentDescription = "Mathi Racer",
+                    modifier = Modifier.width(200.dp),
+                    contentScale = ContentScale.Fit
+                )
+            }
 
             OutlinedTextField(
                 value = uiState.email,
                 onValueChange = viewModel::onEmailChange,
-                placeholder = { Text("Email", color = Color.White.copy(alpha = 0.6f)) },
+                placeholder = { Text("Email", color = Color.White.copy(alpha = 0.6f),fontSize = 20.sp,) },
                 modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
                     .background(Color(0xCC1F1F1F)),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -108,7 +114,7 @@ fun RegisterScreen(
             OutlinedTextField(
                 value = uiState.user,
                 onValueChange = viewModel::onUserChange,
-                placeholder = { Text("Usuario", color = Color.White.copy(alpha = 0.6f)) },
+                placeholder = { Text("Usuario", color = Color.White.copy(alpha = 0.6f), fontSize = 20.sp,) },
                 modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
                     .background(Color(0xCC1F1F1F)),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -124,7 +130,7 @@ fun RegisterScreen(
             OutlinedTextField(
                 value = uiState.password,
                 onValueChange = viewModel::onPasswordChange,
-                placeholder = { Text("Contraseña", color = Color.White.copy(alpha = 0.6f)) },
+                placeholder = { Text("Contraseña", color = Color.White.copy(alpha = 0.6f), fontSize = 20.sp,) },
                 visualTransformation = if (showPass) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
                     IconButton(onClick = { showPass = !showPass }) {
@@ -150,7 +156,7 @@ fun RegisterScreen(
             OutlinedTextField(
                 value = uiState.repeatPassword,
                 onValueChange = viewModel::onRepeatPasswordChange,
-                placeholder = { Text("Repetir contraseña", color = Color.White.copy(alpha = 0.6f)) },
+                placeholder = { Text("Repetir contraseña", color = Color.White.copy(alpha = 0.6f), fontSize = 20.sp,) },
                 visualTransformation = if (showRePass) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
                     IconButton(onClick = { showRePass = !showRePass }) {
@@ -190,7 +196,7 @@ fun RegisterScreen(
                         modifier = Modifier.size(22.dp)
                     )
                 else
-                    Text("Registrarse", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text("Registrarse", fontWeight = FontWeight.Bold, fontSize = 20.sp)
             }
 
             Spacer(Modifier.height(12.dp))
@@ -198,10 +204,11 @@ fun RegisterScreen(
 
             Spacer(Modifier.height(16.dp))
             Row {
-                Text("¿Ya tenés cuenta? ", color = Color.White)
+                Text("¿Ya tenés cuenta? ", color = Color.White, fontSize = 20.sp,)
                 Text(
                     "Iniciá sesión acá",
                     color = Color(0xFF7FD7FF),
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.clickable { onNavigateToLogin() }
                 )

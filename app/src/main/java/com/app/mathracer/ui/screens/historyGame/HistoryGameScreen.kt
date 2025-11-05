@@ -76,7 +76,6 @@ fun HistoryGameScreen(
     viewModel: HistoryGameViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    Log.d("resultType", resultType)
     // Inicializar el juego
     LaunchedEffect(levelId, playerName) {
         viewModel.initializeGame(levelId, playerName)
@@ -676,7 +675,7 @@ fun TopBar(
                 }
                 Icon(Icons.Default.AccessTime, "Temporizador", tint = tint, modifier = Modifier.size(24.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("$timeLeft s", fontWeight = FontWeight.Bold, color = tint)
+                Text("$timeLeft s", fontWeight = FontWeight.Bold, color = tint, fontSize = 24.sp)
             }
         }
 
