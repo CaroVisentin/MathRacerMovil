@@ -29,7 +29,7 @@ import com.app.mathracer.R
 @Composable
 fun Profile(
     userName: String,
-    gamesPlayed: Int,
+    lastLevelId: Int,
     points: Double,
     userEmail: String?
 ){
@@ -63,7 +63,7 @@ fun Profile(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            DataCardProfile(title = "Partidas jugadas", value = gamesPlayed.toString())
+            DataCardProfile(title = "Niveles superados", value = lastLevelId.toString())
             DataCardProfile(title = "Puntuación", value = points.toString())
             DataCardProfile(title = "Email registrado", value = userEmail ?: "example@mail.com")
         }

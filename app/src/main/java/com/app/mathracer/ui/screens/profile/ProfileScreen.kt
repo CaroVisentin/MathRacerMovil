@@ -82,7 +82,7 @@ fun ProfileScreen(
             when (uiState.selectedTab) {
                 "Perfil" -> Profile(
                     userName = uiState.userName,
-                    gamesPlayed = uiState.gamesPlayed,
+                    lastLevelId = uiState.lastLevelId,
                     points = uiState.points,
                     userEmail = uiState.userEmail.toString()
                 )
