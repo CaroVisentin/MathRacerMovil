@@ -13,6 +13,7 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 
 
@@ -26,6 +27,24 @@ data class RankingPlayerDto(
 data class RankingResponseDto(
     val top10: List<RankingPlayerDto> = emptyList(),
     val currentPlayerPosition: Int? = null
+)
+
+data class GarageItemDto(
+    val id: Int = 0,
+    val productId: Int = 0,
+    val name: String = "",
+    val description: String? = null,
+    val price: Int = 0,
+    val productType: String? = null,
+    val rarity: String? = null,
+    val isOwned: Boolean = false,
+    val isActive: Boolean = false
+)
+
+data class GarageResponseDto(
+    val items: List<GarageItemDto> = emptyList(),
+    val activeItem: GarageItemDto? = null,
+    val itemType: String? = null
 )
 
 interface ApiService {
@@ -93,4 +112,21 @@ interface ApiService {
     suspend fun getRanking(
         @Query("playerId") playerId: Int? = null
     ): Response<RankingResponseDto>
+
+   
+    @GET("Garage/cars/{playerId}")
+    suspend fun getCars(@Path("playerId") playerId: Int): Response<GarageResponseDto>
+
+    @GET("Garage/characters/{playerId}")
+    suspend fun getCharacters(@Path("playerId") playerId: Int): Response<GarageResponseDto>
+
+    @GET("Garage/backgrounds/{playerId}")
+    suspend fun getBackgrounds(@Path("playerId") playerId: Int): Response<GarageResponseDto>
+
+    @PUT("Garage/players/{playerId}/items/{productId}/activate")
+    suspend fun activateItem(
+        @Path("playerId") playerId: Int,
+        @Path("productId") productId: Int,
+        @Query("productType") productType: String? = null
+    ): Response<com.app.mathracer.data.model.GenericResponse>
 }
