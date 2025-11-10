@@ -39,7 +39,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.LaunchedEffect
@@ -51,14 +50,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import android.content.Context
 import android.util.Log
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.style.TextAlign
 import com.app.mathracer.ui.screens.tutorial.TutorialOverlay
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.mathracer.R
 import com.app.mathracer.data.CurrentUser
 import com.app.mathracer.ui.theme.CyanMR
-import com.app.mathracer.ui.theme.TypographyJersey10
-import com.app.mathracer.ui.theme.customFontFamily
 
 @Composable
 fun HomeScreen(
@@ -78,10 +77,11 @@ fun HomeScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val _context = LocalContext.current
     var showTutorial by remember { mutableStateOf(false) }
+    Log.d("energy", uiState.energy.toString())
+    //  Carga inicial de energía al entrar
     LaunchedEffect(Unit) {
+        viewModel.onEnterHome()
         try {
-            Log.d("userlogin", "userName=$userName userEmail=$userEmail")
-            Log.d("userlogin", "CurrentUser=${CurrentUser.user}")
             val prefs = _context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
             showTutorial = prefs.getBoolean("show_tutorial_on_next_launch", false)
         } catch (_: Throwable) {
@@ -89,14 +89,26 @@ fun HomeScreen(
         }
     }
 
-    // Observar cuando se debe navegar
+    //  Refrescar al volver al foco
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                viewModel.onResume()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    // Navegación a waiting cuando VM lo pida
     LaunchedEffect(uiState.navigateToWaiting) {
         if (uiState.navigateToWaiting) {
             viewModel.clearNavigation()
             onMultiplayerClick()
         }
     }
-    
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -129,58 +141,48 @@ fun HomeScreen(
                             )
                             Spacer(modifier = Modifier.weight(1f))
 
-                            Column(
-                                horizontalAlignment = Alignment.End,
+                            // Panel HUD (energía + avatar)
+                            Row(
+                                modifier = Modifier
+                                    .background(Color.Black.copy(alpha = 0.8f), RoundedCornerShape(12.dp))
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(24.dp)
                             ) {
-                                Image(
-                                    painter = painterResource(id = R.drawable.battery),
-                                    contentDescription = null,
-                                    modifier = Modifier.width(60.dp)
-                                )
-                                Box(modifier = Modifier.width(24.dp))
-                                Row {
-                                    Image(
-                                        painter = painterResource(id = R.drawable.coin),
-                                        contentDescription = null,
-                                        modifier = Modifier.width(25.dp)
+                                // --- Lado izquierdo: batería / energía desde VM ---
+                                Column(horizontalAlignment = Alignment.End) {
+                                    RechargeStatus(
+                                        secondsUntilNextRecharge = uiState.energy.secondsLeft,
+                                        currentAmount = uiState.energy.currentAmount,
+                                        maxAmount = uiState.energy.maxAmount,
+                                        batteryBoltRes = R.drawable.ic_battery_bolt,
+                                        cellFilledRes = R.drawable.ic_cell_filled,
+                                        cellEmptyRes = R.drawable.ic_cell_empty
                                     )
-                                    Spacer(modifier = Modifier.width(5.dp))
+                                }
+
+                                // --- Lado derecho: avatar + nombre ---
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Image(
+                                        painter = painterResource(R.drawable.avatar),
+                                        contentDescription = "avatar",
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier
+                                            .size(60.dp)
+                                            .clip(CircleShape)
+                                            .clickable { onProfileClick() }
+                                    )
+
                                     Text(
-                                        text = "${CurrentUser.user?.coins ?: 0}",
+                                        text = CurrentUser.user?.name ?: "",
                                         color = Color.White,
                                         fontSize = 24.sp,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.SemiBold,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.padding(top = 4.dp)
                                     )
                                 }
                             }
-
-                            Box(modifier = Modifier.width(24.dp))
-
-                            // --- Avatar + nombre de usuario ---
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Image(
-                                    painter = painterResource(R.drawable.avatar),
-                                    contentDescription = "avatar",
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier
-                                        .size(60.dp)
-                                        .clip(CircleShape)
-                                        .clickable { onProfileClick() }
-                                )
-
-                                // Texto con el nombre del usuario debajo del avatar
-                                Text(
-                                    text = CurrentUser.user?.name ?: "",
-                                    color = Color.White,
-                                    fontSize = 24.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier.padding(top = 4.dp)
-                                )
-                            }
-
                         }
                     }
                 ) { innerPadding ->
@@ -195,7 +197,7 @@ fun HomeScreen(
                             contentDescription = null,
                             modifier = Modifier.padding(innerPadding)
                         )
-                        
+
                         Column(
                             verticalArrangement = Arrangement.spacedBy(16.dp),
                             modifier = Modifier
@@ -203,9 +205,7 @@ fun HomeScreen(
                                 .padding(top = 32.dp, start = 64.dp, end = 64.dp)
                         ) {
                             TextButton(
-                                onClick = {
-                                    viewModel.navigateToMultiplayer()
-                                },
+                                onClick = { viewModel.navigateToMultiplayer() },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .border(width = 2.dp, color = CyanMR, shape = RoundedCornerShape(8.dp))
@@ -218,7 +218,7 @@ fun HomeScreen(
                                     color = CyanMR,
                                 )
                             }
-                            
+
                             TextButton(
                                 onClick = onStoryModeClick,
                                 modifier = Modifier
@@ -233,7 +233,7 @@ fun HomeScreen(
                                     color = CyanMR,
                                 )
                             }
-                            
+
                             TextButton(
                                 onClick = onFreePracticeClick,
                                 enabled = false,
@@ -250,9 +250,10 @@ fun HomeScreen(
                                 )
                             }
                         }
-                        
+
                         Box(modifier = Modifier.height(32.dp))
-                        
+
+                        // Botonera inferior
                         Row(
                             horizontalArrangement = Arrangement.Center,
                             modifier = Modifier
@@ -263,11 +264,7 @@ fun HomeScreen(
                                 onClick = onShopClick,
                                 modifier = Modifier
                                     .shadow(4.dp, RoundedCornerShape(16.dp))
-                                    .border(
-                                        width = 2.dp,
-                                        color = CyanMR,
-                                        shape = RoundedCornerShape(16.dp)
-                                    )
+                                    .border(2.dp, CyanMR, RoundedCornerShape(16.dp))
                                     .background(Color.Gray.copy(alpha = 0.6f), shape = RoundedCornerShape(8.dp))
                                     .size(64.dp)
                             ) {
@@ -278,18 +275,14 @@ fun HomeScreen(
                                     modifier = Modifier.size(32.dp)
                                 )
                             }
-                            
+
                             Spacer(modifier = Modifier.width(32.dp))
-                            
+
                             IconButton(
                                 onClick = onGarageClick,
                                 modifier = Modifier
                                     .shadow(4.dp, RoundedCornerShape(16.dp))
-                                    .border(
-                                        width = 2.dp,
-                                        color = CyanMR,
-                                        shape = RoundedCornerShape(16.dp)
-                                    )
+                                    .border(2.dp, CyanMR, RoundedCornerShape(16.dp))
                                     .background(Color.Gray.copy(alpha = 0.6f), shape = RoundedCornerShape(8.dp))
                                     .size(64.dp)
                             ) {
@@ -300,18 +293,14 @@ fun HomeScreen(
                                     modifier = Modifier.size(32.dp)
                                 )
                             }
-                            
+
                             Spacer(modifier = Modifier.width(32.dp))
-                            
+
                             IconButton(
                                 onClick = onStatsClick,
                                 modifier = Modifier
                                     .shadow(4.dp, RoundedCornerShape(16.dp))
-                                    .border(
-                                        width = 2.dp,
-                                        color = CyanMR,
-                                        shape = RoundedCornerShape(16.dp)
-                                    )
+                                    .border(2.dp, CyanMR, RoundedCornerShape(16.dp))
                                     .background(Color.Black.copy(alpha = 0.6f), shape = RoundedCornerShape(8.dp))
                                     .size(64.dp)
                             ) {
@@ -326,8 +315,8 @@ fun HomeScreen(
                     }
                 }
             }
-            
-                 
+
+            // Snackbars
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -337,20 +326,82 @@ fun HomeScreen(
                 SnackbarHost(hostState = snackbarHostState)
             }
 
-                
-                if (showTutorial) {
-                    TutorialOverlay(onFinish = {
-                        showTutorial = false
-                        onTutorialComplete()
-                    })
-                }
+            if (showTutorial) {
+                TutorialOverlay(onFinish = {
+                    showTutorial = false
+                    onTutorialComplete()
+                })
+            }
         }
     }
 }
-/*
-@Preview(showBackground = true)
+
+
 @Composable
-fun HomeScreenPreview() {
-    HomeScreen()
+fun RechargeStatus(
+    secondsUntilNextRecharge: Int,
+    currentAmount: Int,
+    maxAmount: Int,
+    modifier: Modifier = Modifier,
+    batteryBoltRes: Int,
+    cellFilledRes: Int,
+    cellEmptyRes: Int,
+    tintCells: Color? = Color(0xFFF7E400) // pasá null si tus PNG ya son amarillos
+) {
+    val yellow = Color(0xFFF7E400)
+    val white  = Color.White
+    Log.d("energy", "secondsUntilNextRecharge: $secondsUntilNextRecharge, currentAmount: $currentAmount, maxAmount: $maxAmount")
+    val total  = maxAmount.coerceAtLeast(0)
+    val filled = currentAmount.coerceIn(0, total)
+    Log.d("energy", "total: $total, filled: $filled")
+
+    // si está lleno o no hay contador, no muestres “0:00”
+    val showTimer = secondsUntilNextRecharge > 0 && filled < total
+
+    fun formatMMSS(total: Int): String {
+        val m = total / 60
+        val s = total % 60
+        return "%d:%02d".format(m, s)
+    }
+
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Ícono batería + timer (timer solo cuando corresponde)
+        Column(horizontalAlignment = Alignment.Start) {
+            Image(
+                painter = painterResource(id = batteryBoltRes),
+                contentDescription = "Recarga",
+                modifier = Modifier.size(24.dp),
+                colorFilter = ColorFilter.tint(yellow) // quitá si tu asset ya es amarillo
+            )
+            if (showTimer) {
+                Text(
+                    text = formatMMSS(secondsUntilNextRecharge),
+                    color = white,
+                    fontWeight = FontWeight.Black,
+                    fontSize = 14.sp
+                )
+            }
+        }
+
+        // Celdas
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            repeat(total) { i ->
+                Image(
+                    painter = painterResource(id = if (i < filled) cellFilledRes else cellEmptyRes),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .height(28.dp)
+                        .width(18.dp),
+                    colorFilter = tintCells?.let { ColorFilter.tint(it) } // aplica sólo si querés tinte
+                )
+            }
+        }
+    }
 }
-*/
