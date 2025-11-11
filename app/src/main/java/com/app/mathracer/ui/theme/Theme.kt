@@ -52,7 +52,7 @@ fun MathRacerTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = TypographyJersey10,
         content = content
     )
 }
