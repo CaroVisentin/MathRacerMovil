@@ -2,6 +2,7 @@ package com.app.mathracer.data.repository
 
 import com.app.mathracer.data.model.User
 import com.app.mathracer.data.model.UserLogin
+import com.app.mathracer.data.network.EnergyDto
 import com.app.mathracer.data.network.RetrofitClient
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -40,9 +41,16 @@ object UserRemoteRepository {
         val header = token?.let { "Bearer $it" }
         return api.loginUser(header, user)
     }
+
     suspend fun getUserByUid(uid: String): Response<User> {
         val token = try { getIdToken() } catch (e: Exception) { null }
         val header = token?.let { "Bearer $it" }
         return api.getUserByUid(header, uid)
+    }
+
+    suspend fun getEnergy(): Response<EnergyDto> {
+        val token = try { getIdToken() } catch (e: Exception) { null }
+        val header = token?.let { "Bearer $it" }
+        return api.getEnergy(header)
     }
 }

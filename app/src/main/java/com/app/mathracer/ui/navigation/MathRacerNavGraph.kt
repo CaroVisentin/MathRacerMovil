@@ -38,7 +38,7 @@ import com.app.mathracer.ui.screens.ranking.RankingScreen
 import com.app.mathracer.ui.screens.ranking.viewmodel.RankingViewModel
 import com.app.mathracer.ui.screens.worlds.WorldsScreen
 import com.app.mathracer.ui.screens.worlds.WorldsScreenRoute
-import com.app.mathracer.ui.rules.RulesScreen
+import com.app.mathracer.ui.screens.rules.RulesScreen
 import com.app.mathracer.ui.screens.historyGame.HistoryGameScreen
 import com.app.mathracer.data.model.User
 import android.util.Log
