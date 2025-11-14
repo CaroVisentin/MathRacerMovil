@@ -79,7 +79,7 @@ fun MathRacerNavGraph(
                         // TODO: Implementar navegación a tienda
                     },
                     onGarageClick = {
-                        // TODO: Implementar navegación a garage
+                        navController.navigate(Routes.GARAGE)
                     },
                     onStatsClick = {
                         navController.navigate(Routes.RANKING)
@@ -186,6 +186,17 @@ fun MathRacerNavGraph(
 
             val viewModel: RankingViewModel = hiltViewModel()
             RankingScreen(viewModel = viewModel)
+        }
+
+        composable(Routes.GARAGE) {
+            HandleBackNavigation(
+                navController = navController,
+                currentRoute = currentRoute,
+                onBackPressed = { navController.navigateUp() }
+            )
+
+            val viewModel: com.app.mathracer.ui.screens.garage.GarageViewModel = hiltViewModel()
+            com.app.mathracer.ui.screens.garage.GarageScreen(viewModel = viewModel, onBack = { navController.navigateUp() })
         }
 
 

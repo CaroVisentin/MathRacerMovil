@@ -2,6 +2,7 @@ package com.app.mathracer.ui.navigation
 
 object Routes {
     const val HOME = "home"
+    const val GARAGE = "garage"
     const val SPLASH = "splash"
     // Build a HOME route with optional userName and userEmail query params
     fun homeWithUser(userName: String?, userEmail: String?): String {
