@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -45,6 +46,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.mathracer.ui.screens.profile.viewmodel.ProfileViewModel
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.draw.clip
 import com.app.mathracer.ui.screens.profile.components.Friends
 import com.app.mathracer.ui.screens.profile.components.Profile
 import com.app.mathracer.ui.screens.profile.components.Settings
@@ -207,35 +209,37 @@ fun TopBarProfile(
     selectedTab: String,
     onTabSelected: (String) -> Unit
 ) {
+    val tabs = listOf("Perfil", "Amigos", "Ajustes")
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 16.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly
+            .padding(vertical = 16.dp, horizontal = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(
-            text = "Perfil",
-            color = if (selectedTab == "Perfil") Color.Magenta else Color.Cyan,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.clickable { onTabSelected("Perfil") }
-        )
-
-        Text(
-            text = "Amigos",
-            color = if (selectedTab == "Amigos") Color.Magenta else Color.Cyan,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.clickable { onTabSelected("Amigos") }
-        )
-
-        Text(
-            text = "Ajustes",
-            color = if (selectedTab == "Ajustes") Color.Magenta else Color.Cyan,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.clickable { onTabSelected("Ajustes") }
-        )
+        tabs.forEach { label ->
+            val selected = selectedTab == label
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = 48.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(
+                        if (selected) Color.Magenta.copy(alpha = 0.15f)
+                        else Color.Cyan.copy(alpha = 0.15f)
+                    )
+                    .clickable { onTabSelected(label) }
+                    .padding(vertical = 8.dp, horizontal = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = label,
+                    color = if (selected) Color.Magenta else Color.Cyan,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
     }
 }
 
