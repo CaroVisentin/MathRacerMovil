@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.app.mathracer.data.model.Levels
 import com.app.mathracer.data.model.Worlds
 import com.app.mathracer.data.repository.LevelsRemoteRepository
+import com.app.mathracer.data.repository.UserRemoteRepository
 import com.app.mathracer.data.repository.WorldsRemoteRepository
 import com.app.mathracer.ui.screens.worlds.viewmodel.WorldsUiState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,6 +45,28 @@ class LevelsViewModel : ViewModel() {
             }
         }
     }
+
+    fun checkEnergyBeforePlay(
+        onHasEnergy: () -> Unit,
+        onNoEnergy: () -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val resp = UserRemoteRepository.getEnergy()
+                if (resp.isSuccessful) {
+                    val dto = resp.body()
+                    val energy = dto?.currentAmount ?: 0
+
+                    if (energy > 0) onHasEnergy()
+                    else onNoEnergy()
+                }
+            } catch (e: Exception) {
+                    onNoEnergy() // fallback seguro
+                }
+            }
+        }
+
+
 
     /*
 
