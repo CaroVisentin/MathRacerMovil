@@ -58,6 +58,8 @@ import kotlinx.coroutines.delay
 import androidx.compose.runtime.*
 import com.app.mathracer.ui.screens.historyGame.components.HistoryGameResultModal
 import com.app.mathracer.ui.screens.historyGame.viewmodel.HistoryGameUiState
+import com.app.mathracer.data.repository.UserRemoteRepository
+import kotlinx.coroutines.launch
 
 private val BgDark        = Color(0xFF222224)
 private val CardDark      = Color(0xFF2C2C2C)
@@ -74,9 +76,11 @@ fun HistoryGameScreen(
     resultType: String,
     onNavigateBack: () -> Unit = {},
     onPlayAgain: (Int) -> Unit = {},
+    onNoEnergy: () -> Unit = {},
     viewModel: HistoryGameViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val coroutineScope = rememberCoroutineScope()
     // Inicializar el juego
     LaunchedEffect(levelId, playerName) {
         viewModel.initializeGame(levelId, playerName)
@@ -159,12 +163,28 @@ fun HistoryGameScreen(
                 // Cerrar modal (sin acción adicional)
             },
             onNext = {
-                // Si ganó, ir al siguiente nivel; si perdió, repetir el mismo nivel
-                if (uiState.winner?.contains("Ganaste") == true) {
-                    onPlayAgain(levelId + 1)
-                } else {
-                    onPlayAgain(levelId)
-                }
+                    // Si ganó, ir al siguiente nivel; si perdió, repetir el mismo nivel
+                    if (uiState.winner?.contains("Ganaste") == true) {
+                        onPlayAgain(levelId + 1)
+                    } else {
+                        // Antes de volver a jugar, validar energía disponible (reusar lógica similar a LevelsScreen)
+                        coroutineScope.launch {
+                            try {
+                                val resp = UserRemoteRepository.getEnergy()
+                                if (resp.isSuccessful) {
+                                    val dto = resp.body()
+                                    val energy = dto?.currentAmount ?: 0
+                                    if (energy > 0) onPlayAgain(levelId) else onNoEnergy()
+                                } else {
+                                    // En caso de error al consultar energía, prevenir y mostrar pantalla de energy insuficiente
+                                    onNoEnergy()
+                                }
+                            } catch (e: Exception) {
+                                // Fallback: dirigir a pantalla de energy insuficiente
+                                onNoEnergy()
+                            }
+                        }
+                    }
             }
         )
     }

@@ -483,7 +483,13 @@ fun MathRacerNavGraph(
 
         composable("insufficient_energy") {
             InsufficientEnergyScreen(
-                onBackToLevels = { navController.navigateUp() }
+                onBackToLevels = {
+                    // Ir siempre a la pantalla de mundos/niveles en vez de volver a la pantalla anterior (ej. juego)
+                    navController.navigate(Routes.WORLDS) {
+                        // Limpiar pila hasta HOME para evitar volver al juego al pulsar atrás
+                        popUpTo(Routes.HOME)
+                    }
+                }
             )
         }
 
@@ -570,6 +576,10 @@ fun MathRacerNavGraph(
                     navController.navigate(Routes.historyGameWithLevelId(newLevelId, resultType)) {
                         popUpTo(Routes.HOME)
                     }
+                }
+                ,
+                onNoEnergy = {
+                    navController.navigate(Routes.INSUFFICIENT_ENERGY)
                 }
             )
         }
