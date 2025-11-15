@@ -3,7 +3,6 @@ package com.app.mathracer.ui.screens.home
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,9 +49,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import android.content.Context
 import android.util.Log
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.text.style.TextAlign
 import com.app.mathracer.ui.screens.tutorial.TutorialOverlay
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.mathracer.R
@@ -127,189 +126,286 @@ fun HomeScreen(
                     contentColor = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.fillMaxWidth(),
                     topBar = {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(
-                                horizontal = 16.dp,
-                                vertical = 60.dp
-                            )
+                        Column(
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 16.dp)
                         ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.logo),
-                                contentDescription = null,
-                                modifier = Modifier.width(150.dp)
-                            )
-                            Spacer(modifier = Modifier.weight(1f))
-
-                            // Panel HUD (energía + avatar)
                             Row(
-                                modifier = Modifier
-                                    .background(Color.Black.copy(alpha = 0.8f), RoundedCornerShape(12.dp))
-                                    .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(24.dp)
+                                horizontalArrangement = Arrangement.spacedBy(24.dp),
+                                modifier = Modifier.padding(
+                                    horizontal = 16.dp,
+                                    vertical = 40.dp
+                                )
                             ) {
-                                // --- Lado izquierdo: batería / energía desde VM ---
-                                Column(horizontalAlignment = Alignment.End) {
-                                    RechargeStatus(
-                                        secondsUntilNextRecharge = uiState.energy.secondsLeft,
-                                        currentAmount = uiState.energy.currentAmount,
-                                        maxAmount = uiState.energy.maxAmount,
-                                        batteryBoltRes = R.drawable.ic_battery_bolt,
-                                        cellFilledRes = R.drawable.ic_cell_filled,
-                                        cellEmptyRes = R.drawable.ic_cell_empty
+                                Image(
+                                    painter = painterResource(id = R.drawable.logo),
+                                    contentDescription = null,
+                                    modifier = Modifier.width(150.dp)
+                                )
+                                Spacer(modifier = Modifier.weight(1f))
+
+                                //                            // Panel HUD (energía + avatar)
+                                //                            Row(
+                                //                                modifier = Modifier
+                                //                                    .background(Color.Black.copy(alpha = 0.8f), RoundedCornerShape(12.dp))
+                                //                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                //                                verticalAlignment = Alignment.CenterVertically,
+                                //                                horizontalArrangement = Arrangement.spacedBy(24.dp)
+                                //                            ) {
+                                //                                // --- Lado izquierdo: batería / energía desde VM ---
+                                //                                Column(horizontalAlignment = Alignment.End) {
+                                //                                    RechargeStatus(
+                                //                                        secondsUntilNextRecharge = uiState.energy.secondsLeft,
+                                //                                        currentAmount = uiState.energy.currentAmount,
+                                //                                        maxAmount = uiState.energy.maxAmount,
+                                //                                        batteryBoltRes = R.drawable.ic_battery_bolt,
+                                //                                        cellFilledRes = R.drawable.ic_cell_filled,
+                                //                                        cellEmptyRes = R.drawable.ic_cell_empty
+                                //                                    )
+                                //                                }
+                                //
+                                //                                // --- Lado derecho: avatar + nombre ---
+                                //                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                //                                    Image(
+                                //                                        painter = painterResource(R.drawable.avatar),
+                                //                                        contentDescription = "avatar",
+                                //                                        contentScale = ContentScale.Crop,
+                                //                                        modifier = Modifier
+                                //                                            .size(60.dp)
+                                //                                            .clip(CircleShape)
+                                //                                            .clickable { onProfileClick() }
+                                //                                    )
+                                //
+                                //                                    Text(
+                                //                                        text = CurrentUser.user?.name ?: "",
+                                //                                        color = Color.White,
+                                //                                        fontSize = 24.sp,
+                                //                                        fontWeight = FontWeight.SemiBold,
+                                //                                        textAlign = TextAlign.Center,
+                                //                                        modifier = Modifier.padding(top = 4.dp)
+                                //                                    )
+                                //                                }
+                                // ---- HUD tipo mockup: monedas, tickets, energía ----
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    // Monedas
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Image(
+                                            painter = painterResource(id = R.drawable.coin), // poné tu asset
+                                            contentDescription = "Monedas",
+                                            modifier = Modifier.size(22.dp)
+                                        )
+                                        Spacer(Modifier.width(4.dp))
+                                        Text(
+                                            text = "${CurrentUser.user?.coins ?: '0'}",
+                                            color = Color.Yellow,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 18.sp
+                                        )
+                                    }
+
+                                    // Energía estilo iconitos
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        RechargeStatus(
+                                            secondsUntilNextRecharge = uiState.energy.secondsLeft,
+                                            currentAmount = uiState.energy.currentAmount,
+                                            maxAmount = uiState.energy.maxAmount,
+                                            batteryBoltRes = R.drawable.ic_battery_bolt,
+                                            cellFilledRes = R.drawable.ic_cell_filled,
+                                            cellEmptyRes = R.drawable.ic_cell_empty
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.width(12.dp))
+
+                                // Engranaje (configuración / perfil)
+                                IconButton(
+                                    onClick = onProfileClick,
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Settings,
+                                        contentDescription = "Configuración",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(32.dp)
                                     )
                                 }
 
-                                // --- Lado derecho: avatar + nombre ---
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Image(
-                                        painter = painterResource(R.drawable.avatar),
-                                        contentDescription = "avatar",
-                                        contentScale = ContentScale.Crop,
-                                        modifier = Modifier
-                                            .size(60.dp)
-                                            .clip(CircleShape)
-                                            .clickable { onProfileClick() }
-                                    )
-
-                                    Text(
-                                        text = CurrentUser.user?.name ?: "",
-                                        color = Color.White,
-                                        fontSize = 24.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        textAlign = TextAlign.Center,
-                                        modifier = Modifier.padding(top = 4.dp)
-                                    )
-                                }
                             }
+                            PlayerSummaryCard(
+                                playerName = CurrentUser.user?.name ?: "Jugador",
+                                rankText = "#${CurrentUser.user?.points} - Nivel ${CurrentUser.user?.lastLevelId}",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                            )
                         }
                     }
                 ) { innerPadding ->
-                    Column(
-                        verticalArrangement = Arrangement.Center,
+                    Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(16.dp)
+                            .padding(innerPadding)
                     ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.car),
-                            contentDescription = null,
-                            modifier = Modifier.padding(innerPadding)
-                        )
-
                         Column(
-                            verticalArrangement = Arrangement.spacedBy(16.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(top = 32.dp, start = 64.dp, end = 64.dp)
+                                .align(Alignment.BottomCenter)
+                                .padding(start = 16.dp, end = 16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            TextButton(
-                                onClick = { viewModel.navigateToMultiplayer() },
+                            // Espacio antes del auto grande y botones
+                            Spacer(modifier = Modifier.height(60.dp))
+
+
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(16.dp),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .border(width = 2.dp, color = CyanMR, shape = RoundedCornerShape(8.dp))
-                                    .background(Color.Black.copy(alpha = 0.6f), shape = RoundedCornerShape(8.dp))
+                                    .padding(top = 32.dp, start = 64.dp, end = 64.dp)
                             ) {
-                                Text(
-                                    text = "Multijugador",
-                                    fontSize = 30.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = CyanMR,
-                                )
+                                TextButton(
+                                    onClick = { viewModel.navigateToMultiplayer() },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .border(
+                                            width = 2.dp,
+                                            color = CyanMR,
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                        .background(
+                                            Color.Black.copy(alpha = 0.6f),
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                ) {
+                                    Text(
+                                        text = "Multijugador",
+                                        fontSize = 30.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = CyanMR,
+                                    )
+                                }
+
+                                TextButton(
+                                    onClick = onStoryModeClick,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .border(
+                                            width = 2.dp,
+                                            color = CyanMR,
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                        .background(
+                                            Color.Black.copy(alpha = 0.6f),
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                ) {
+                                    Text(
+                                        text = "Modo Historia",
+                                        fontSize = 30.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = CyanMR,
+                                    )
+                                }
+
+                                TextButton(
+                                    onClick = onFreePracticeClick,
+                                    enabled = false,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .border(
+                                            width = 2.dp,
+                                            color = CyanMR,
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                        .background(
+                                            Color.Gray.copy(alpha = 0.6f),
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                ) {
+                                    Text(
+                                        text = "Práctica libre",
+                                        fontSize = 30.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = CyanMR,
+                                    )
+                                }
                             }
 
-                            TextButton(
-                                onClick = onStoryModeClick,
+                            Box(modifier = Modifier.height(32.dp))
+
+                            // Botonera inferior
+                            Row(
+                                horizontalArrangement = Arrangement.Center,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .border(width = 2.dp, color = CyanMR, shape = RoundedCornerShape(8.dp))
-                                    .background(Color.Black.copy(alpha = 0.6f), shape = RoundedCornerShape(8.dp))
+                                    .padding(top = 16.dp)
                             ) {
-                                Text(
-                                    text = "Modo Historia",
-                                    fontSize = 30.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = CyanMR,
-                                )
-                            }
+                                IconButton(
+                                    onClick = onShopClick,
+                                    modifier = Modifier
+                                        .shadow(4.dp, RoundedCornerShape(16.dp))
+                                        .border(2.dp, CyanMR, RoundedCornerShape(16.dp))
+                                        .background(
+                                            Color.Gray.copy(alpha = 0.6f),
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                        .size(64.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.ShoppingCart,
+                                        contentDescription = "Tienda",
+                                        tint = CyanMR,
+                                        modifier = Modifier.size(32.dp)
+                                    )
+                                }
 
-                            TextButton(
-                                onClick = onFreePracticeClick,
-                                enabled = false,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .border(width = 2.dp, color = CyanMR, shape = RoundedCornerShape(8.dp))
-                                    .background(Color.Gray.copy(alpha = 0.6f), shape = RoundedCornerShape(8.dp))
-                            ) {
-                                Text(
-                                    text = "Práctica libre",
-                                    fontSize = 30.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = CyanMR,
-                                )
-                            }
-                        }
+                                Spacer(modifier = Modifier.width(32.dp))
 
-                        Box(modifier = Modifier.height(32.dp))
+                                IconButton(
+                                    onClick = onGarageClick,
+                                    modifier = Modifier
+                                        .shadow(4.dp, RoundedCornerShape(16.dp))
+                                        .border(2.dp, CyanMR, RoundedCornerShape(16.dp))
+                                        .background(
+                                            Color.Gray.copy(alpha = 0.6f),
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                        .size(64.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Home,
+                                        contentDescription = "Garage",
+                                        tint = CyanMR,
+                                        modifier = Modifier.size(32.dp)
+                                    )
+                                }
 
-                        // Botonera inferior
-                        Row(
-                            horizontalArrangement = Arrangement.Center,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 16.dp)
-                        ) {
-                            IconButton(
-                                onClick = onShopClick,
-                                modifier = Modifier
-                                    .shadow(4.dp, RoundedCornerShape(16.dp))
-                                    .border(2.dp, CyanMR, RoundedCornerShape(16.dp))
-                                    .background(Color.Gray.copy(alpha = 0.6f), shape = RoundedCornerShape(8.dp))
-                                    .size(64.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.ShoppingCart,
-                                    contentDescription = "Tienda",
-                                    tint = CyanMR,
-                                    modifier = Modifier.size(32.dp)
-                                )
-                            }
+                                Spacer(modifier = Modifier.width(32.dp))
 
-                            Spacer(modifier = Modifier.width(32.dp))
-
-                            IconButton(
-                                onClick = onGarageClick,
-                                modifier = Modifier
-                                    .shadow(4.dp, RoundedCornerShape(16.dp))
-                                    .border(2.dp, CyanMR, RoundedCornerShape(16.dp))
-                                    .background(Color.Gray.copy(alpha = 0.6f), shape = RoundedCornerShape(8.dp))
-                                    .size(64.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Home,
-                                    contentDescription = "Garage",
-                                    tint = CyanMR,
-                                    modifier = Modifier.size(32.dp)
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.width(32.dp))
-
-                            IconButton(
-                                onClick = onStatsClick,
-                                modifier = Modifier
-                                    .shadow(4.dp, RoundedCornerShape(16.dp))
-                                    .border(2.dp, CyanMR, RoundedCornerShape(16.dp))
-                                    .background(Color.Black.copy(alpha = 0.6f), shape = RoundedCornerShape(8.dp))
-                                    .size(64.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Star,
-                                    contentDescription = "Estadísticas",
-                                    tint = CyanMR,
-                                    modifier = Modifier.size(32.dp)
-                                )
+                                IconButton(
+                                    onClick = onStatsClick,
+                                    modifier = Modifier
+                                        .shadow(4.dp, RoundedCornerShape(16.dp))
+                                        .border(2.dp, CyanMR, RoundedCornerShape(16.dp))
+                                        .background(
+                                            Color.Black.copy(alpha = 0.6f),
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                        .size(64.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Star,
+                                        contentDescription = "Estadísticas",
+                                        tint = CyanMR,
+                                        modifier = Modifier.size(32.dp)
+                                    )
+                                }
                             }
                         }
                     }
@@ -336,6 +432,72 @@ fun HomeScreen(
     }
 }
 
+// ======= CARD DE JUGADOR TIPO MOCKUP =======
+@Composable
+fun PlayerSummaryCard(
+    playerName: String,
+    rankText: String,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .background(
+                Color.Black.copy(alpha = 0.7f),
+                shape = RoundedCornerShape(16.dp)
+            )
+            .border(
+                width = 2.dp,
+                color = CyanMR,
+                shape = RoundedCornerShape(16.dp)
+            )
+            .padding(12.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = playerName,
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_trophy), // asset de trofeo
+                        contentDescription = "Ranking",
+                        tint = Color.Yellow,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = rankText,
+                        color = Color.LightGray,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            // Auto a la derecha
+            Image(
+                painter = painterResource(id = R.drawable.car_game), // un auto más chico estilo card
+                contentDescription = "Auto del jugador",
+                modifier = Modifier
+                    .height(64.dp)
+                    .clip(RoundedCornerShape(12.dp)),
+                contentScale = ContentScale.Fit
+            )
+        }
+    }
+}
 
 @Composable
 fun RechargeStatus(
@@ -374,7 +536,7 @@ fun RechargeStatus(
             Image(
                 painter = painterResource(id = batteryBoltRes),
                 contentDescription = "Recarga",
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(18.dp),
                 colorFilter = ColorFilter.tint(yellow) // quitá si tu asset ya es amarillo
             )
             if (showTimer) {
@@ -382,7 +544,7 @@ fun RechargeStatus(
                     text = formatMMSS(secondsUntilNextRecharge),
                     color = white,
                     fontWeight = FontWeight.Black,
-                    fontSize = 14.sp
+                    fontSize = 18.sp
                 )
             }
         }

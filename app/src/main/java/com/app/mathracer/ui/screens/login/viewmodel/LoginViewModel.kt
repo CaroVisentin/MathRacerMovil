@@ -15,6 +15,7 @@ import com.app.mathracer.data.repository.UserRemoteRepository
 import com.app.mathracer.data.CurrentUser
 import com.app.mathracer.data.model.User
 import androidx.lifecycle.viewModelScope
+import com.app.mathracer.data.model.UserGoogle
 import com.app.mathracer.data.model.UserLogin
 import kotlinx.coroutines.launch
 
@@ -108,9 +109,15 @@ class LoginViewModel : ViewModel() {
                                 email = firebaseUser.email,
                                 username = firebaseUser.displayName //_uiState.value.use
                             )
+                            val createdUserGoogle = UserGoogle(
+                                idToken = firebaseUser.uid,
+                                email = firebaseUser.email,
+                                username = firebaseUser.displayName
+                            )
                             viewModelScope.launch {
                                 try {
-                                    val resp = UserRemoteRepository.createUser(createdUser)
+                                    val resp = UserRemoteRepository.google(createdUserGoogle)
+                                    Log.d("Firebase",  "Usuario Firebase:${firebaseUser} ${authResult}")
                                     if (resp.isSuccessful) CurrentUser.user = resp.body() else CurrentUser.user = createdUser
                                 } catch (e: Exception) {
                                     android.util.Log.e("Register", "Error creando usuario en backend", e)

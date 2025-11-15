@@ -1,6 +1,7 @@
 package com.app.mathracer.data.repository
 
 import com.app.mathracer.data.model.User
+import com.app.mathracer.data.model.UserGoogle
 import com.app.mathracer.data.model.UserLogin
 import com.app.mathracer.data.network.EnergyDto
 import com.app.mathracer.data.network.RetrofitClient
@@ -30,6 +31,12 @@ object UserRemoteRepository {
         val token = try { getIdToken() } catch (e: Exception) { null }
         val header = token?.let { "Bearer $it" }
         return api.createUser(header, user)
+    }
+
+    suspend fun google(user: UserGoogle): Response<User> {
+        val token = try { getIdToken() } catch (e: Exception) { null }
+        val header = token?.let { "Bearer $it" }
+        return api.google(header, user)
     }
 
     suspend fun loginUser(user: UserLogin): Response<User> {

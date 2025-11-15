@@ -12,3 +12,9 @@ data class User(
     @SerializedName("points") val points: Int? = 0,
     @SerializedName("coins") val coins: Int = 0,
 )
+
+data class UserGoogle(
+    @SerializedName("idToken") val idToken: String,
+    @SerializedName("email") val email: String? = null,
+    @SerializedName("username") val username: String? = null,
+)

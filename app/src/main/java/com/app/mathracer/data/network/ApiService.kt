@@ -5,6 +5,7 @@ import com.app.mathracer.data.model.SoloAnswerResponse
 import com.app.mathracer.data.model.SoloGameStartResponse
 import com.app.mathracer.data.model.SoloGameUpdateResponse
 import com.app.mathracer.data.model.User
+import com.app.mathracer.data.model.UserGoogle
 import com.app.mathracer.data.model.UserLogin
 import com.app.mathracer.data.model.Worlds
 import retrofit2.Response
@@ -58,6 +59,12 @@ interface ApiService {
     suspend fun createUser(
         @Header("Authorization") authorization: String?,
         @Body user: User
+    ): Response<User>
+
+    @POST("player/google")
+    suspend fun google(
+        @Header("Authorization") authorization: String?,
+        @Body user: UserGoogle
     ): Response<User>
 
     @POST("player/login")
