@@ -45,6 +45,8 @@ data class GarageResponseDto(
     val items: List<GarageItemDto> = emptyList(),
     val activeItem: GarageItemDto? = null,
     val itemType: String? = null
+)
+
 data class EnergyDto(
     val secondsUntilNextRecharge: Int,
     val currentAmount: Int,
@@ -132,7 +134,6 @@ interface ApiService {
         @Path("productId") productId: Int,
         @Query("productType") productType: String? = null
     ): Response<com.app.mathracer.data.model.GenericResponse>
-    suspend fun getRanking(@Query("playerId") playerId: Int? = null): Response<RankingResponseDto>
 
     @GET("energy")
     suspend fun getEnergy(@Header("Authorization") authorization: String?): Response<EnergyDto>
