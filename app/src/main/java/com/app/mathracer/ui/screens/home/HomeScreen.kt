@@ -30,7 +30,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.layout.ContentScale
@@ -47,9 +46,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import android.content.Context
 import android.util.Log
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import com.app.mathracer.ui.screens.tutorial.TutorialOverlay
@@ -129,13 +131,13 @@ fun HomeScreen(
                         Column(
                             Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 16.dp)
+                                .padding( vertical = 16.dp)
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(24.dp),
                                 modifier = Modifier.padding(
-                                    horizontal = 16.dp,
+                                    horizontal = 8.dp,
                                     vertical = 40.dp
                                 )
                             ) {
@@ -146,48 +148,6 @@ fun HomeScreen(
                                 )
                                 Spacer(modifier = Modifier.weight(1f))
 
-                                //                            // Panel HUD (energía + avatar)
-                                //                            Row(
-                                //                                modifier = Modifier
-                                //                                    .background(Color.Black.copy(alpha = 0.8f), RoundedCornerShape(12.dp))
-                                //                                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                                //                                verticalAlignment = Alignment.CenterVertically,
-                                //                                horizontalArrangement = Arrangement.spacedBy(24.dp)
-                                //                            ) {
-                                //                                // --- Lado izquierdo: batería / energía desde VM ---
-                                //                                Column(horizontalAlignment = Alignment.End) {
-                                //                                    RechargeStatus(
-                                //                                        secondsUntilNextRecharge = uiState.energy.secondsLeft,
-                                //                                        currentAmount = uiState.energy.currentAmount,
-                                //                                        maxAmount = uiState.energy.maxAmount,
-                                //                                        batteryBoltRes = R.drawable.ic_battery_bolt,
-                                //                                        cellFilledRes = R.drawable.ic_cell_filled,
-                                //                                        cellEmptyRes = R.drawable.ic_cell_empty
-                                //                                    )
-                                //                                }
-                                //
-                                //                                // --- Lado derecho: avatar + nombre ---
-                                //                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                //                                    Image(
-                                //                                        painter = painterResource(R.drawable.avatar),
-                                //                                        contentDescription = "avatar",
-                                //                                        contentScale = ContentScale.Crop,
-                                //                                        modifier = Modifier
-                                //                                            .size(60.dp)
-                                //                                            .clip(CircleShape)
-                                //                                            .clickable { onProfileClick() }
-                                //                                    )
-                                //
-                                //                                    Text(
-                                //                                        text = CurrentUser.user?.name ?: "",
-                                //                                        color = Color.White,
-                                //                                        fontSize = 24.sp,
-                                //                                        fontWeight = FontWeight.SemiBold,
-                                //                                        textAlign = TextAlign.Center,
-                                //                                        modifier = Modifier.padding(top = 4.dp)
-                                //                                    )
-                                //                                }
-                                // ---- HUD tipo mockup: monedas, tickets, energía ----
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -208,7 +168,6 @@ fun HomeScreen(
                                         )
                                     }
 
-                                    // Energía estilo iconitos
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         RechargeStatus(
                                             secondsUntilNextRecharge = uiState.energy.secondsLeft,
@@ -220,14 +179,14 @@ fun HomeScreen(
                                         )
                                     }
                                 }
-
-                                Spacer(modifier = Modifier.width(12.dp))
-
-                                // Engranaje (configuración / perfil)
-                                IconButton(
-                                    onClick = onProfileClick,
+                                Box(
                                     modifier = Modifier
                                         .size(32.dp)
+                                        .padding(start = 4.dp)
+                                        .clip(CircleShape)
+                                        .clickable { onProfileClick() },
+
+                                    contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         imageVector = Icons.Filled.Settings,
@@ -243,6 +202,8 @@ fun HomeScreen(
                                 rankText = "#${CurrentUser.user?.points} - Nivel ${CurrentUser.user?.lastLevelId}",
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .padding( horizontal = 8.dp)
+
                             )
                         }
                     }
@@ -536,17 +497,18 @@ fun RechargeStatus(
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(3.dp)
     ) {
         // Ícono batería + timer (timer solo cuando corresponde)
         Column(horizontalAlignment = Alignment.Start) {
-            Image(
-                painter = painterResource(id = batteryBoltRes),
-                contentDescription = "Recarga",
-                modifier = Modifier.size(18.dp),
-                colorFilter = ColorFilter.tint(yellow) // quitá si tu asset ya es amarillo
-            )
             if (showTimer) {
+                Image(
+                    painter = painterResource(id = batteryBoltRes),
+                    contentDescription = "Recarga",
+                    modifier = Modifier.size(18.dp),
+                    colorFilter = ColorFilter.tint(yellow) // quitá si tu asset ya es amarillo
+                )
+
                 Text(
                     text = formatMMSS(secondsUntilNextRecharge),
                     color = white,
@@ -566,8 +528,8 @@ fun RechargeStatus(
                     painter = painterResource(id = if (i < filled) cellFilledRes else cellEmptyRes),
                     contentDescription = null,
                     modifier = Modifier
-                        .height(28.dp)
-                        .width(18.dp),
+                        .height(20.dp)
+                        .width(12.dp),
                     colorFilter = tintCells?.let { ColorFilter.tint(it) } // aplica sólo si querés tinte
                 )
             }
