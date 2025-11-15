@@ -56,6 +56,7 @@ import com.app.mathracer.ui.screens.game.components.GameResultModal
 import com.app.mathracer.ui.screens.historyGame.viewmodel.HistoryGameViewModel
 import kotlinx.coroutines.delay
 import androidx.compose.runtime.*
+import com.app.mathracer.ui.screens.historyGame.components.HistoryGameResultModal
 import com.app.mathracer.ui.screens.historyGame.viewmodel.HistoryGameUiState
 
 private val BgDark        = Color(0xFF222224)
@@ -146,18 +147,20 @@ fun HistoryGameScreen(
 
     // Modal de resultado del juego
     if (uiState.gameEnded) {
-        GameResultModal(
+        HistoryGameResultModal(
             isWinner = uiState.winner?.contains("Ganaste") == true,
-            userName = uiState.playerName,
-            userNameRival = uiState.machineName,
-            onDismiss = { 
-                // No necesitamos método específico, el estado ya está manejado
-            },
-            onPlayAgain = {
-                onPlayAgain()
-            },
-            onBackToHome = {
+            reward = uiState.playerScore,
+            levelNumber = levelId,
+            onBack = {
+                // Regresar a la pantalla anterior
                 onNavigateBack()
+            },
+            onDismiss = {
+                // Cerrar modal (sin acción adicional)
+            },
+            onNext = {
+                // Jugar de nuevo / siguiente nivel
+                onPlayAgain()
             }
         )
     }

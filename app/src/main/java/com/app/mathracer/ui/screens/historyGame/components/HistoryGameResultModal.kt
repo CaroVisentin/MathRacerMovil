@@ -36,7 +36,7 @@ import com.app.mathracer.R
 @Composable
 fun HistoryGameResultModal(
     isWinner: Boolean,
-    reward: Int = 0, // cantidad de monedas a mostrar si ganó
+    reward: Int = 0,
     levelNumber: Int,
     onDismiss: () -> Unit,
     onBack: () -> Unit,
@@ -64,7 +64,6 @@ fun HistoryGameResultModal(
 
                 Spacer(Modifier.height(6.dp))
 
-                // Ganó o perdió
                 Text(
                     text = if (isWinner) "¡GANASTE!" else "PERDISTE",
                     color = if (isWinner) Color(0xFF3CFF4D) else Color.Red,
@@ -74,9 +73,8 @@ fun HistoryGameResultModal(
 
                 Spacer(Modifier.height(16.dp))
 
-                // Imagen auto centrada
                 Image(
-                    painter = painterResource(R.drawable.car),
+                    painter = if(isWinner) painterResource(R.drawable.mathi) else painterResource(R.drawable.mathi_sad),
                     contentDescription = null,
                     modifier = Modifier.size(110.dp),
                     contentScale = ContentScale.Fit
@@ -84,7 +82,6 @@ fun HistoryGameResultModal(
 
                 Spacer(Modifier.height(16.dp))
 
-                // --- RECOMPENSA (solo si ganó) ---
                 if (isWinner) {
                     Text(
                         text = "Recompensa obtenida",
@@ -111,11 +108,9 @@ fun HistoryGameResultModal(
                     Spacer(Modifier.height(20.dp))
                 }
 
-                // Divider
                 Divider(thickness = 1.dp, color = Color.White.copy(alpha = 0.15f))
                 Spacer(Modifier.height(20.dp))
 
-                // Botones
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
