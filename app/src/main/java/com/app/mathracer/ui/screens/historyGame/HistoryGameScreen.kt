@@ -73,7 +73,7 @@ fun HistoryGameScreen(
     playerName: String = "Jugador",
     resultType: String,
     onNavigateBack: () -> Unit = {},
-    onPlayAgain: () -> Unit = {},
+    onPlayAgain: (Int) -> Unit = {},
     viewModel: HistoryGameViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -159,8 +159,12 @@ fun HistoryGameScreen(
                 // Cerrar modal (sin acción adicional)
             },
             onNext = {
-                // Jugar de nuevo / siguiente nivel
-                onPlayAgain()
+                // Si ganó, ir al siguiente nivel; si perdió, repetir el mismo nivel
+                if (uiState.winner?.contains("Ganaste") == true) {
+                    onPlayAgain(levelId + 1)
+                } else {
+                    onPlayAgain(levelId)
+                }
             }
         )
     }

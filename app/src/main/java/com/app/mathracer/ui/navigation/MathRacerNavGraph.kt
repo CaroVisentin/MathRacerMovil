@@ -566,8 +566,8 @@ fun MathRacerNavGraph(
                 onNavigateBack = {
                     navController.navigateUp()
                 },
-                onPlayAgain = {
-                    navController.navigate(Routes.historyGameWithLevelId(levelId, resultType)) {
+                onPlayAgain = { newLevelId ->
+                    navController.navigate(Routes.historyGameWithLevelId(newLevelId, resultType)) {
                         popUpTo(Routes.HOME)
                     }
                 }
