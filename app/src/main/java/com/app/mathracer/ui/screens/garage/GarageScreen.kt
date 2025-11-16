@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -51,6 +52,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import com.app.mathracer.ui.components.ProductImage
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -114,16 +116,14 @@ fun GarageScreen(viewModel: GarageViewModel, onBack: () -> Unit = {}) {
             Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                 
                 Box(modifier = Modifier.size(120.dp), contentAlignment = Alignment.Center) {
-                    val charRes = if (state.activeCharacter != null) R.drawable.avatar else R.drawable.avatar
-                    Image(painter = painterResource(id = charRes), contentDescription = null, modifier = Modifier.size(120.dp))
+                    ProductImage(productId = state.activeCharacter?.productId, fallbackRes = R.drawable.avatar, modifier = Modifier.size(120.dp), contentScale = ContentScale.Fit)
                 }
 
                 Spacer(modifier = Modifier.width(18.dp))
 
                  
                 Box(modifier = Modifier.size(260.dp), contentAlignment = Alignment.Center) {
-                    val carRes = if (state.activeCar != null) R.drawable.car else R.drawable.car
-                    Image(painter = painterResource(id = carRes), contentDescription = null, modifier = Modifier.size(260.dp))
+                    ProductImage(productId = state.activeCar?.productId, fallbackRes = R.drawable.car, modifier = Modifier.size(260.dp), contentScale = ContentScale.Fit)
                 }
             }
         }
@@ -224,10 +224,16 @@ private fun GarageCard(item: com.app.mathracer.data.network.GarageItemDto, selec
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF2A2A2A))
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(8.dp)) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .padding(8.dp)
+                .fillMaxHeight()
+        ) {
             val res = when (item.productType) { "Auto" -> R.drawable.car; "Personaje" -> R.drawable.avatar; else -> R.drawable.background }
             androidx.compose.foundation.layout.Box(modifier = Modifier.size(88.dp).clip(RoundedCornerShape(8.dp)).background(Color.Transparent).padding(0.dp), contentAlignment = Alignment.Center) {
-                Image(painter = painterResource(id = res), contentDescription = item.name, modifier = Modifier.size(80.dp), contentScale = ContentScale.Crop)
+                ProductImage(productId = item.productId, fallbackRes = res, modifier = Modifier.size(80.dp), contentScale = ContentScale.Fit)
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = item.name, color = Color.White, fontSize = 12.sp, maxLines = 1)
