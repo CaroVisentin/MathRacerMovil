@@ -131,3 +131,30 @@ data class SoloAnswerResponse(
     @SerializedName("machineScore")
     val machineScore: Int
 )
+
+data class WildCard(
+    @SerializedName("wildcardId")
+    val wildcardId: Int,
+
+    @SerializedName("success")
+    val success: Boolean,
+
+    @SerializedName("message")
+    val message: String,
+
+    @SerializedName("remainingQuantity")
+    val remainingQuantity: Int,
+
+    @SerializedName("modifiedOptions")
+    val modifiedOptions: List<Int>,
+
+    @SerializedName("newQuestionIndex")
+    val newQuestionIndex: Int?,
+
+    @SerializedName("newQuestion")
+    val newQuestion: SoloQuestion?,
+
+    @SerializedName("doubleProgressActive")
+    val doubleProgressActive: Boolean
+
+)

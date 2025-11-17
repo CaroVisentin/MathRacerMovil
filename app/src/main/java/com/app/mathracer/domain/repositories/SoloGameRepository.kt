@@ -26,5 +26,7 @@ interface SoloGameRepository {
      * Observe game updates via polling
      */
     fun observeSoloGameUpdates(gameId: Int, intervalMs: Long = 2000): Flow<SoloGameUpdateResponse?>
+
+    fun
 }
 
