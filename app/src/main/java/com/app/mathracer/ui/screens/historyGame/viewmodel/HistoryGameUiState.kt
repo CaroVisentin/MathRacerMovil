@@ -31,5 +31,14 @@ data class HistoryGameUiState(
     val isWaitingNext: Boolean = false
     ,
     val doubleProgressActive: Boolean = false
+    ,
+    val wildcard1Available: Boolean = true,
+    val wildcard2Available: Boolean = true,
+    val wildcard3Available: Boolean = true,
+    val wildcardsLocked: Boolean = false
+    ,
+    val wildcard1Quantity: Int = 0,
+    val wildcard2Quantity: Int = 0,
+    val wildcard3Quantity: Int = 0
 )
 

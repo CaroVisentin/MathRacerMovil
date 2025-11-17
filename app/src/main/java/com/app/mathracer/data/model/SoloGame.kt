@@ -35,6 +35,20 @@ data class SoloGameStartResponse(
 
     @SerializedName("machineProducts")
     val machineProducts: List<ProductPlayerGame>
+    ,
+    @SerializedName("availableWildcards")
+    val availableWildcards: List<AvailableWildcardDto> = emptyList()
+)
+
+data class AvailableWildcardDto(
+    @SerializedName("wildcardId")
+    val wildcardId: Int,
+    @SerializedName("name")
+    val name: String?,
+    @SerializedName("description")
+    val description: String?,
+    @SerializedName("quantity")
+    val quantity: Int
 )
 
 data class SoloQuestion(

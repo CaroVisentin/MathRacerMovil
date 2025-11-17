@@ -1,3 +1,4 @@
+// This is a noop patch
 package com.app.mathracer.ui.screens.historyGame.viewmodel
 
 import androidx.lifecycle.ViewModel
@@ -50,6 +51,11 @@ class HistoryGameViewModel @Inject constructor(
             result.fold(
                 onSuccess = { gameStart ->
                     android.util.Log.d("HistoryGameViewModel", "✅ Game started: gameId=${gameStart.gameId}, playerId=${gameStart.playerId}")
+                    // Determinar disponibilidad inicial de wildcards según lo que trae el servidor
+                    val w1 = gameStart.availableWildcards.firstOrNull { it.wildcardId == 1 }?.quantity ?: 0
+                    val w2 = gameStart.availableWildcards.firstOrNull { it.wildcardId == 2 }?.quantity ?: 0
+                    val w3 = gameStart.availableWildcards.firstOrNull { it.wildcardId == 3 }?.quantity ?: 0
+
                     _uiState.value = _uiState.value.copy(
                         gameId = gameStart.gameId,
                         playerId = gameStart.playerId,
@@ -62,6 +68,12 @@ class HistoryGameViewModel @Inject constructor(
                         options = gameStart.currentQuestion?.options ?: emptyList(),
                         correctAnswer = null,
                         timeLeft = gameStart.timePerEquation,
+                        wildcard1Available = w1 > 0,
+                        wildcard2Available = w2 > 0,
+                        wildcard3Available = w3 > 0,
+                        wildcard1Quantity = w1,
+                        wildcard2Quantity = w2,
+                        wildcard3Quantity = w3
                     )
                     startPolling(gameStart.gameId, gameStart.timePerEquation)
                     startQuestionTimer()
@@ -91,6 +103,20 @@ class HistoryGameViewModel @Inject constructor(
 
     fun useWildcard(wildcardId: Int) {
         val gid = _uiState.value.gameId ?: return
+        val current = _uiState.value
+
+        // Validar disponibilidad y lock
+        val isAvailable = when (wildcardId) {
+            1 -> current.wildcard1Available
+            2 -> current.wildcard2Available
+            3 -> current.wildcard3Available
+            else -> false
+        }
+        if (!isAvailable || current.wildcardsLocked) {
+            // No permitimos usar el wildcard: ya fue usado o está bloqueado hasta la próxima pregunta
+            _uiState.value = current.copy(error = "Comodín no disponible")
+            return
+        }
 
         viewModelScope.launch {
             try {
@@ -98,20 +124,31 @@ class HistoryGameViewModel @Inject constructor(
                 result.fold(
                     onSuccess = { wc ->
                         // Aplicar cambios provistos por el servidor: opciones modificadas o nueva pregunta
-                        val current = _uiState.value
+                        val cur = _uiState.value
                         val newOptions = when {
                             !wc.modifiedOptions.isNullOrEmpty() -> wc.modifiedOptions
                             wc.newQuestion != null -> wc.newQuestion.options
-                            else -> current.options
+                            else -> cur.options
                         }
 
-                        val newQuestionText = wc.newQuestion?.equation ?: current.currentQuestion
+                        val newQuestionText = wc.newQuestion?.equation ?: cur.currentQuestion
 
-                        _uiState.value = current.copy(
+                        // Marcar el wildcard como usado permanentemente en la partida y bloquear los demás hasta la siguiente pregunta
+                        val updated = cur.copy(
                             options = newOptions,
                             currentQuestion = newQuestionText,
-                            doubleProgressActive = wc.doubleProgressActive
+                            doubleProgressActive = wc.doubleProgressActive,
+                            wildcardsLocked = true,
+                            // actualizar cantidades y disponibilidad según respuesta del servidor
+                            wildcard1Quantity = wc.remainingQuantity.takeIf { wildcardId == 1 } ?: cur.wildcard1Quantity,
+                            wildcard2Quantity = wc.remainingQuantity.takeIf { wildcardId == 2 } ?: cur.wildcard2Quantity,
+                            wildcard3Quantity = wc.remainingQuantity.takeIf { wildcardId == 3 } ?: cur.wildcard3Quantity,
+                            wildcard1Available = if (wildcardId == 1) (wc.remainingQuantity > 0) else cur.wildcard1Available,
+                            wildcard2Available = if (wildcardId == 2) (wc.remainingQuantity > 0) else cur.wildcard2Available,
+                            wildcard3Available = if (wildcardId == 3) (wc.remainingQuantity > 0) else cur.wildcard3Available
                         )
+
+                        _uiState.value = updated
                     },
                     onFailure = { ex ->
                         android.util.Log.e("HistoryGameViewModel", "Error usando wildcard: ${ex.message}")
@@ -183,6 +220,11 @@ class HistoryGameViewModel @Inject constructor(
             canAnswer = if (hasNewQuestion) true else currentState.canAnswer
 
         )
+
+        // Si llegó una nueva pregunta, desbloqueamos la posibilidad de usar comodines (los ya usados siguen deshabilitados)
+        if (hasNewQuestion && !_uiState.value.gameEnded) {
+            _uiState.value = _uiState.value.copy(wildcardsLocked = false)
+        }
 
         if (hasNewQuestion && !_uiState.value.gameEnded) {
             startQuestionTimer() // <<< reinicia timer en pregunta nueva
