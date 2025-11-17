@@ -305,7 +305,7 @@ fun HomeScreen(
                                 horizontalArrangement = Arrangement.Center,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(top = 16.dp)
+                                    .padding(top = 16.dp, bottom = 32.dp)
                             ) {
                                 IconButton(
                                     onClick = onShopClick,
@@ -334,7 +334,7 @@ fun HomeScreen(
                                         .shadow(4.dp, RoundedCornerShape(16.dp))
                                         .border(2.dp, CyanMR, RoundedCornerShape(16.dp))
                                         .background(
-                                            Color.Gray.copy(alpha = 0.6f),
+                                            Color.Black.copy(alpha = 0.6f),
                                             shape = RoundedCornerShape(8.dp)
                                         )
                                         .size(64.dp)
@@ -433,10 +433,14 @@ fun PlayerSummaryCard(
                     text = playerName,
                     color = Color.White,
                     fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.background(Color.Black.copy(alpha = 0.8f), RoundedCornerShape(4.dp))
                 )
                 Spacer(modifier = Modifier.height(40.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.background(Color.Black.copy(alpha = 0.8f), RoundedCornerShape(4.dp))
+                    ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_trophy),
                         contentDescription = "Ranking",

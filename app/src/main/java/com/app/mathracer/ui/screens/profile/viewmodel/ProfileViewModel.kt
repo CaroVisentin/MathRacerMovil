@@ -20,7 +20,8 @@ class ProfileViewModel : ViewModel() {
         _uiState.update { it.copy(
             userName = CurrentUser.user?.name ?: "",
             userEmail = CurrentUser.user?.email,
-            points = CurrentUser.user?.points?.toDouble() ?: 0.0
+            points = CurrentUser.user?.points ?: 0,
+            actualLevel = CurrentUser.user?.lastLevelId ?: 0
             ) }
     }
 
