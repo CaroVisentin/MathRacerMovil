@@ -6,6 +6,7 @@ import com.app.mathracer.data.model.SoloGameUpdateResponse
 import com.app.mathracer.domain.usecases.ObserveSoloGameUpdatesUseCase
 import com.app.mathracer.domain.usecases.StartSoloGameUseCase
 import com.app.mathracer.domain.usecases.SubmitSoloAnswerUseCase
+import com.app.mathracer.domain.usecases.SubmitSoloWildcardUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -23,6 +24,8 @@ class HistoryGameViewModel @Inject constructor(
     private val startSoloGameUseCase: StartSoloGameUseCase,
     private val observeSoloGameUpdatesUseCase: ObserveSoloGameUpdatesUseCase,
     private val submitSoloAnswerUseCase: SubmitSoloAnswerUseCase
+    ,
+    private val submitSoloWildcardUseCase: SubmitSoloWildcardUseCase
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(HistoryGameUiState())
@@ -77,8 +80,49 @@ class HistoryGameViewModel @Inject constructor(
     private fun startPolling(gameId: Int, timePerEquation: Int) {
         pollingJob?.cancel()
         pollingJob = viewModelScope.launch {
-            observeSoloGameUpdatesUseCase(gameId, intervalMs = timePerEquation*1000L.toLong()).collect { update ->
+            observeSoloGameUpdatesUseCase(
+                gameId,
+                intervalMs = timePerEquation * 1000L.toLong()
+            ).collect { update ->
                 update?.let { processGameUpdate(it) }
+            }
+        }
+    }
+
+    fun useWildcard(wildcardId: Int) {
+        val gid = _uiState.value.gameId ?: return
+
+        viewModelScope.launch {
+            try {
+                val result = submitSoloWildcardUseCase(gid, wildcardId)
+                result.fold(
+                    onSuccess = { wc ->
+                        // Aplicar cambios provistos por el servidor: opciones modificadas o nueva pregunta
+                        val current = _uiState.value
+                        val newOptions = when {
+                            !wc.modifiedOptions.isNullOrEmpty() -> wc.modifiedOptions
+                            wc.newQuestion != null -> wc.newQuestion.options
+                            else -> current.options
+                        }
+
+                        val newQuestionText = wc.newQuestion?.equation ?: current.currentQuestion
+
+                        _uiState.value = current.copy(
+                            options = newOptions,
+                            currentQuestion = newQuestionText,
+                            // actualizar cantidad restante de comodines si aplica (no hay campo en UiState actualmente)
+                            // si el servidor devuelve progreso doble, lo manejamos actualizando playerProgress si corresponde
+                            // por ahora mantenemos otros campos igual
+                        )
+                    },
+                    onFailure = { ex ->
+                        android.util.Log.e("HistoryGameViewModel", "Error usando wildcard: ${ex.message}")
+                        _uiState.value = _uiState.value.copy(error = "Error al usar comodín: ${ex.message}")
+                    }
+                )
+            } catch (e: Exception) {
+                android.util.Log.e("HistoryGameViewModel", "Exception usando wildcard: ${e.message}")
+                _uiState.value = _uiState.value.copy(error = "Error al usar comodín: ${e.message}")
             }
         }
     }
