@@ -26,6 +26,7 @@ object Routes {
     const val RANKING = "ranking"
     const val HISTORY_GAME = "history_game"
     const val CHEST = "chest"
+    const val INSUFFICIENT_ENERGY = "insufficient_energy"
 
     // Rutas con argumentos
     fun gameWithIdAndPlayer(gameId: String, playerName: String) = "game/$gameId/$playerName"

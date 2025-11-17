@@ -42,6 +42,7 @@ import com.app.mathracer.ui.screens.rules.RulesScreen
 import com.app.mathracer.ui.screens.historyGame.HistoryGameScreen
 import com.app.mathracer.data.model.User
 import android.util.Log
+import com.app.mathracer.ui.screens.insufficientEnergy.InsufficientEnergyScreen
 import com.google.firebase.auth.FirebaseAuth
 
 
@@ -465,7 +466,29 @@ fun MathRacerNavGraph(
             LevelsScreen(
                 viewModel = viewModel,
                 onLevelClick = { levelId, resultType ->
-                    navController.navigate(Routes.historyGameWithLevelId(levelId, resultType))
+                    viewModel.checkEnergyBeforePlay(
+                        onHasEnergy = {
+                            navController.navigate(
+                                Routes.historyGameWithLevelId(levelId, resultType)
+                            )
+                        },
+                        onNoEnergy = {
+                            navController.navigate("insufficient_energy")
+                        }
+                    )
+                }
+            )
+
+        }
+
+        composable("insufficient_energy") {
+            InsufficientEnergyScreen(
+                onBackToLevels = {
+                    // Ir siempre a la pantalla de mundos/niveles en vez de volver a la pantalla anterior (ej. juego)
+                    navController.navigate(Routes.WORLDS) {
+                        // Limpiar pila hasta HOME para evitar volver al juego al pulsar atrás
+                        popUpTo(Routes.HOME)
+                    }
                 }
             )
         }
@@ -549,10 +572,14 @@ fun MathRacerNavGraph(
                 onNavigateBack = {
                     navController.navigateUp()
                 },
-                onPlayAgain = {
-                    navController.navigate(Routes.historyGameWithLevelId(levelId, resultType)) {
+                onPlayAgain = { newLevelId ->
+                    navController.navigate(Routes.historyGameWithLevelId(newLevelId, resultType)) {
                         popUpTo(Routes.HOME)
                     }
+                }
+                ,
+                onNoEnergy = {
+                    navController.navigate(Routes.INSUFFICIENT_ENERGY)
                 }
             )
         }
