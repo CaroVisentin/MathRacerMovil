@@ -138,7 +138,9 @@ fun HistoryGameScreen(
         onBack = onNavigateBack,
         onPowerUpClick = { index -> 
             when (index) {
-                0 -> viewModel.useFireExtinguisher()
+                0 -> viewModel.useWildcard(1)
+                1 -> viewModel.useWildcard(2)
+                2 -> viewModel.useWildcard(3)
             }
         },
         onOptionClick = { index, value ->

@@ -126,7 +126,7 @@ class SoloGameRepositoryImpl : SoloGameRepository {
             val token = UserRemoteRepository.getIdToken()
             val header = token?.let { "Bearer $it" }
 
-            val response = api.useWilcard(header, gameId, wildcardId)
+            val response = api.useWildcard(header, gameId, wildcardId)
 
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!)

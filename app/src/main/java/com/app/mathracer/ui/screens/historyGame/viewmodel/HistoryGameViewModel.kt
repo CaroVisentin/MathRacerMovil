@@ -110,9 +110,7 @@ class HistoryGameViewModel @Inject constructor(
                         _uiState.value = current.copy(
                             options = newOptions,
                             currentQuestion = newQuestionText,
-                            // actualizar cantidad restante de comodines si aplica (no hay campo en UiState actualmente)
-                            // si el servidor devuelve progreso doble, lo manejamos actualizando playerProgress si corresponde
-                            // por ahora mantenemos otros campos igual
+                            doubleProgressActive = wc.doubleProgressActive
                         )
                     },
                     onFailure = { ex ->

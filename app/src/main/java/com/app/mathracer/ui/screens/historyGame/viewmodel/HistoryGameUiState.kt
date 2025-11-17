@@ -29,5 +29,7 @@ data class HistoryGameUiState(
     val timeLeft: Int = 10,
     val canAnswer: Boolean = true,
     val isWaitingNext: Boolean = false
+    ,
+    val doubleProgressActive: Boolean = false
 )
 

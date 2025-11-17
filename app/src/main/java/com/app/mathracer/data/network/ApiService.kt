@@ -96,11 +96,11 @@ interface ApiService {
         @Body answer: Int
     ): Response<SoloAnswerResponse>
 
-    @POST("/api/solo/{gameId}/wilcard/{wilcardId}")
-    suspend fun useWilcard(
+    @POST("/api/solo/{gameId}/wildcard/{wildcardId}")
+    suspend fun useWildcard(
         @Header("Authorization") authorization: String?,
         @Path("gameId") gameId: Int,
-        @Path("wilcardId") wilcardId: Int
+        @Path("wildcardId") wildcardId: Int
     ): Response<WildCard>
 
     @GET("player/uid/{uid}")
