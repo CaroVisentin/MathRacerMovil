@@ -161,11 +161,15 @@ fun ChestScreen(
                                     else -> R.drawable.coin
                                 }
 
-                                Image(
-                                    painter = painterResource(id = imgRes),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(72.dp)
-                                )
+                                if (it.type == "Product") {
+                                    com.app.mathracer.ui.components.ProductImage(productId = it.product?.id, fallbackRes = imgRes, modifier = Modifier.size(72.dp))
+                                } else {
+                                    Image(
+                                        painter = painterResource(id = imgRes),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(72.dp)
+                                    )
+                                }
 
                                 Spacer(modifier = Modifier.height(8.dp))
 

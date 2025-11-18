@@ -133,20 +133,20 @@ fun Settings(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Button(
-                onClick = onDeleteAccount,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Transparent,
-                    contentColor = Color.Red
-                ),
-                border = BorderStroke(2.dp, Color.Red),
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
-            ) {
-                Text("Eliminar cuenta", fontWeight = FontWeight.Bold, fontSize = 20.sp)
-            }
+//            Button(
+//                onClick = onDeleteAccount,
+//                colors = ButtonDefaults.buttonColors(
+//                    containerColor = Color.Transparent,
+//                    contentColor = Color.Red
+//                ),
+//                border = BorderStroke(2.dp, Color.Red),
+//                shape = RoundedCornerShape(8.dp),
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .height(50.dp)
+//            ) {
+//                Text("Eliminar cuenta", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+//            }
         }
 
         // Help button removed from Settings — it's provided globally by ProfileScreen
