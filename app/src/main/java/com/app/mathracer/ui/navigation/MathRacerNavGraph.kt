@@ -469,7 +469,9 @@ fun MathRacerNavGraph(
             val worldName = backStackEntry.arguments?.getString("worldName") ?: ""
             val encodedOps = backStackEntry.arguments?.getString("worldOperations") ?: ""
 
-            viewModel.loadLevelsForWorld(worldId, worldName)
+            LaunchedEffect(worldId) {
+                viewModel.loadLevelsForWorld(worldId, worldName)
+            }
 
             LevelsScreen(
                 viewModel = viewModel,
