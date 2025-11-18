@@ -21,11 +21,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.mathracer.data.model.LevelDto
+import java.net.URLDecoder
+import android.util.Base64
 import com.app.mathracer.ui.screens.levels.viewmodel.LevelsViewModel
 
 @Composable
 fun LevelsScreen(
     viewModel: LevelsViewModel,
+    worldOperationsEncoded: String = "",
     onLevelClick: (Int, String) -> Unit = { _, _ -> }
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -75,7 +78,6 @@ fun LevelsScreen(
                                 level = level,
                                 lastCompletedLevelId = uiState.lastCompletedLevelId,
                                 onClick = {
-                                    // Solo permitir navegar si el nivel está desbloqueado
                                     if (level.id <= uiState.lastCompletedLevelId + 1) {
                                         onLevelClick(level.id, level.resultType)
                                     }
@@ -95,7 +97,7 @@ fun LevelsScreen(
                         .padding(horizontal = 16.dp, vertical = 12.dp)
                 ) {
                     Text(
-                        text = "Sumas y restas",// uiState.worldDescription,
+                        text = operationsEncodedToText(worldOperationsEncoded),
                         color = Color.Cyan,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Medium
@@ -117,7 +119,7 @@ fun LevelCard(
     val gold = Color(0xFFFFC107)
     val darkTransparent = Color(0xAA0A031F)
     val isUnlocked = level.id <= lastCompletedLevelId + 1
-    
+
     val colorCard = when {
         level.id == lastCompletedLevelId + 1 -> Color.Magenta
         level.id <= lastCompletedLevelId -> gold
@@ -207,4 +209,39 @@ fun StarryBackground() {
             )
         }
     }
+}
+
+fun operationsEncodedToText(encoded: String): String {
+    if (encoded.isBlank()) return ""
+    val decoded = try {
+        val bytes = Base64.decode(encoded, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
+        String(bytes, Charsets.UTF_8)
+    } catch (e: Exception) {
+        try {
+            URLDecoder.decode(encoded, "UTF-8")
+        } catch (e2: Exception) {
+            ""
+        }
+    }
+
+    if (decoded.isBlank()) return ""
+
+    val opsList = decoded.split(Regex("[,\\s]+"))
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+
+    if (opsList.isEmpty()) return ""
+
+    val seen = linkedSetOf<String>()
+    opsList.forEach { op ->
+        when (op) {
+            "+" -> seen.add("Suma")
+            "-" -> seen.add("Resta")
+            "*", "x", "X" -> seen.add("Multiplicación")
+            "/" -> seen.add("División")
+            else -> if (op.isNotBlank()) seen.add(op)
+        }
+    }
+
+    return seen.joinToString(" - ")
 }
