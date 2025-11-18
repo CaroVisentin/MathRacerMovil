@@ -177,7 +177,7 @@ fun ChestScreen(
                                     text = when (it.type) {
                                         "Product" -> it.product?.name ?: "Producto"
                                         "Coins" -> "Monedas"
-                                        "Wildcard" -> it.wildcard?.name ?: "Comodín"
+                                       // "Wildcard" -> it.wildcard?.name ?: "Comodín"
                                         else -> it.type
                                     },
                                     color = Color.White,

@@ -225,7 +225,6 @@ fun MathRacerNavGraph(
 
             JoinMatchesScreen(
                 onJoinConfirmed = { matchId, password ->
-                   //cuando se haga lo de la contraseña hay que validarla aca, ahora hice que mande directo a la partida
                     navController.navigate(Routes.WAITING_OPPONENT)
                 },
                 onBack = { navController.navigateUp() }
@@ -357,8 +356,7 @@ fun MathRacerNavGraph(
 
                             val task = com.google.android.gms.auth.api.signin.GoogleSignIn
                                 .getSignedInAccountFromIntent(result.data)
-                            
-                            // Intentar obtener la cuenta de manera síncrona para logging
+
                             try {
                                 val account = task.result
                                 android.util.Log.d("GoogleSignIn", "Cuenta obtenida: ${account.email}, ID: ${account.id}")
@@ -366,7 +364,6 @@ fun MathRacerNavGraph(
                                 android.util.Log.e("GoogleSignIn", "Error al obtener cuenta de manera síncrona", e)
                             }
 
-                            // Proceder con el manejo asíncrono en el ViewModel
                             registerViewModel.handleGoogleSignInResult(result.data)
                         } catch (e: Exception) {
                             android.util.Log.e("GoogleSignIn", "Error al procesar resultado", e)
@@ -427,12 +424,22 @@ fun MathRacerNavGraph(
         composable(Routes.WORLDS) {
             WorldsScreenRoute(
                 onWorldClick = { world ->
-                    navController.navigate("levels/${world.id}/${world.name}")
+                    try {
+                        val opsPlain = world.operations.joinToString(",")
+                        val ops = android.util.Base64.encodeToString(
+                            opsPlain.toByteArray(Charsets.UTF_8),
+                            android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING
+                        )
+                        val name = java.net.URLEncoder.encode(world.name, "UTF-8")
+                        navController.navigate("levels/${world.id}/$name/$ops")
+                    } catch (e: Exception) {
+                        val name = java.net.URLEncoder.encode(world.name, "UTF-8")
+                        navController.navigate("levels/${world.id}/$name/")
+                    }
                 }
             )
         }
 
-        // Rules screen route
         composable(Routes.RULES) {
             HandleBackNavigation(
                 navController = navController,
@@ -444,10 +451,11 @@ fun MathRacerNavGraph(
         }
 
         composable(
-            route = "levels/{worldId}/{worldName}",
+            route = "levels/{worldId}/{worldName}/{worldOperations}",
             arguments = listOf(
                 navArgument("worldId") { type = NavType.IntType },
-                navArgument("worldName") { type = NavType.StringType }
+                navArgument("worldName") { type = NavType.StringType },
+                navArgument("worldOperations") { type = NavType.StringType }
             )
         ) { backStackEntry ->
             HandleBackNavigation(
@@ -459,12 +467,15 @@ fun MathRacerNavGraph(
             val viewModel: LevelsViewModel = hiltViewModel()
             val worldId = backStackEntry.arguments?.getInt("worldId") ?: 0
             val worldName = backStackEntry.arguments?.getString("worldName") ?: ""
+            val encodedOps = backStackEntry.arguments?.getString("worldOperations") ?: ""
 
-            // Cargar datos del mundo seleccionado
-            viewModel.loadLevelsForWorld(worldId, worldName)
+            LaunchedEffect(worldId) {
+                viewModel.loadLevelsForWorld(worldId, worldName)
+            }
 
             LevelsScreen(
                 viewModel = viewModel,
+                worldOperationsEncoded = encodedOps,
                 onLevelClick = { levelId, resultType ->
                     viewModel.checkEnergyBeforePlay(
                         onHasEnergy = {
@@ -484,9 +495,7 @@ fun MathRacerNavGraph(
         composable("insufficient_energy") {
             InsufficientEnergyScreen(
                 onBackToLevels = {
-                    // Ir siempre a la pantalla de mundos/niveles en vez de volver a la pantalla anterior (ej. juego)
                     navController.navigate(Routes.WORLDS) {
-                        // Limpiar pila hasta HOME para evitar volver al juego al pulsar atrás
                         popUpTo(Routes.HOME)
                     }
                 }
@@ -561,7 +570,6 @@ fun MathRacerNavGraph(
             val levelId = backStackEntry.arguments?.getInt("levelId") ?: 0
             val resultType = backStackEntry.arguments?.getString("resultType") ?: ""
 
-            // Obtener el nombre del jugador desde Firebase si está disponible
             val playerName = com.google.firebase.auth.FirebaseAuth.getInstance()
                 .currentUser?.displayName ?: "Jugador"
             

@@ -7,6 +7,7 @@ import com.app.mathracer.data.model.SoloGameUpdateResponse
 import com.app.mathracer.data.model.User
 import com.app.mathracer.data.model.UserGoogle
 import com.app.mathracer.data.model.UserLogin
+import com.app.mathracer.data.model.WildCard
 import com.app.mathracer.data.model.Worlds
 import retrofit2.Response
 import retrofit2.http.Body
@@ -75,8 +76,7 @@ interface ApiService {
 
     @GET("/api/Levels/world/{worldId}")
     suspend fun getLevels(@Header("Authorization") authorization: String?, @Path("worldId") worldId: Int): Response<Levels>
-    
-    // Solo Game (History Mode) endpoints
+
     @POST("/api/solo/start/{levelId}")
     suspend fun startSoloGame(
         @Header("Authorization") authorization: String?,
@@ -95,6 +95,13 @@ interface ApiService {
         @Path("gameId") gameId: Int,
         @Body answer: Int
     ): Response<SoloAnswerResponse>
+
+    @POST("/api/solo/{gameId}/wildcard/{wildcardId}")
+    suspend fun useWildcard(
+        @Header("Authorization") authorization: String?,
+        @Path("gameId") gameId: Int,
+        @Path("wildcardId") wildcardId: Int
+    ): Response<WildCard>
 
     @GET("player/uid/{uid}")
     suspend fun getUserByUid(@Header("Authorization") authorization: String?, @Path("uid") uid: String): Response<User>
@@ -125,7 +132,6 @@ interface ApiService {
         @Query("playerId") playerId: Int? = null
     ): Response<RankingResponseDto>
 
-   
     @GET("Garage/cars/{playerId}")
     suspend fun getCars(@Path("playerId") playerId: Int): Response<GarageResponseDto>
 

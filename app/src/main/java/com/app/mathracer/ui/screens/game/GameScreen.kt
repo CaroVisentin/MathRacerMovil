@@ -472,16 +472,19 @@ public fun PowerUpChip(
     iconRes: Int,
     count: Int,
     tint: Color,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    enabled: Boolean = true
 ) {
+    val chipModifier = Modifier
+        .shadow(6.dp, RoundedCornerShape(10.dp), clip = true)
+        .clip(RoundedCornerShape(10.dp))
+        .background(if (enabled) BgDark else Color(0xFF6B6B6B))
+        .border(2.dp, if (enabled) Color.White else Color.DarkGray, RoundedCornerShape(10.dp))
+        .then(if (enabled) Modifier.clickable { onClick() } else Modifier)
+        .padding(horizontal = 10.dp, vertical = 6.dp)
+
     Row(
-        modifier = Modifier
-            .shadow(6.dp, RoundedCornerShape(10.dp), clip = true)
-            .clip(RoundedCornerShape(10.dp))
-            .background(BgDark)
-            .border(2.dp, Color.White, RoundedCornerShape(10.dp))
-            .clickable { onClick() }
-            .padding(horizontal = 10.dp, vertical = 6.dp),
+        modifier = chipModifier,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
@@ -500,7 +503,7 @@ public fun PowerUpChip(
         Spacer(Modifier.width(6.dp))
         Text(
             text = count.toString(),
-            color = tint,
+            color = if (enabled) tint else Color.Gray,
             fontWeight = FontWeight.Bold,
             fontSize = 20.sp
         )
