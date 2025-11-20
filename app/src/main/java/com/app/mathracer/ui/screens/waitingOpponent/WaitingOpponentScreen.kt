@@ -56,8 +56,11 @@ fun WaitingOpponentScreen(
     
     // Auto-inicializar conexión cuando se abre la pantalla
     LaunchedEffect(Unit) {
-        val playerName = "Player_${System.currentTimeMillis()}"
-        viewModel.startConnection(playerName)
+        val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+        val uid = firebaseUser?.uid ?: "anon_${System.currentTimeMillis()}"
+        val displayName = firebaseUser?.displayName ?: "Jugador"
+        // Pass both uid (for server) and displayName (for local UI comparisons)
+        viewModel.startConnection(uid, displayName)
     }
     
     // Manejar navegación al juego

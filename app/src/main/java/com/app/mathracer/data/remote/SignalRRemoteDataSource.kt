@@ -3,6 +3,8 @@ package com.app.mathracer.data.remote
 import com.app.mathracer.data.entities.GameUpdateEntity
 import com.google.gson.Gson
 import com.microsoft.signalr.*
+import com.app.mathracer.data.repository.UserRemoteRepository
+import io.reactivex.rxjava3.core.Single
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,8 +27,29 @@ class SignalRRemoteDataSource @Inject constructor() {
         return@withContext try {
             android.util.Log.d("SignalR", "Creating hub connection to: $hubUrl/gameHub")
             
+            // Configure access token provider so backend can verify Firebase token in middleware
             hubConnection = HubConnectionBuilder.create("$hubUrl/gameHub")
                 .withTransport(TransportEnum.WEBSOCKETS)
+                .withAccessTokenProvider(Single.create { emitter ->
+                    try {
+                        val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+                        val task = firebaseUser?.getIdToken(false)
+                        if (task == null) {
+                            // RxJava Single does not accept null; emit empty string when no token available
+                            emitter.onSuccess("")
+                        } else {
+                            task.addOnCompleteListener { t ->
+                                if (t.isSuccessful) {
+                                    emitter.onSuccess(t.result?.token ?: "")
+                                } else {
+                                    emitter.onError(t.exception ?: Exception("Failed to get idToken"))
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        emitter.onError(e)
+                    }
+                })
                 .shouldSkipNegotiate(false)
                 .build()
 
@@ -94,18 +117,25 @@ class SignalRRemoteDataSource @Inject constructor() {
         }
     }
     
-    suspend fun findMatch(playerName: String): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun findMatch(playerUid: String): Result<Unit> = withContext(Dispatchers.IO) {
         return@withContext try {
-            android.util.Log.d("SignalR", "Finding match for player: $playerName")
+            android.util.Log.d("SignalR", "Finding match for playerUid: $playerUid")
             android.util.Log.d("SignalR", "Connection state: ${hubConnection?.connectionState}")
             android.util.Log.d("SignalR", "isConnected(): ${isConnected()}")
-            
+
             if (!isConnected()) {
                 return@withContext Result.failure(Exception("Not connected to SignalR hub"))
             }
-            
-            hubConnection?.invoke("FindMatch", playerName)
-            android.util.Log.d("SignalR", "FindMatch invoked successfully")
+
+            // The server expects the player's Firebase UID so it can resolve the real display name
+            val future = hubConnection?.invoke("FindMatch", playerUid)
+            try {
+                (future as? java.util.concurrent.CompletableFuture<Any?>)?.get()
+                android.util.Log.d("SignalR", "FindMatch invoked successfully (uid) - completed")
+            } catch (e: Exception) {
+                android.util.Log.e("SignalR", "FindMatch invocation failed (get)", e)
+                return@withContext Result.failure(e)
+            }
             Result.success(Unit)
         } catch (e: Exception) {
             android.util.Log.e("SignalR", "Failed to find match", e)
@@ -143,6 +173,35 @@ class SignalRRemoteDataSource @Inject constructor() {
             Result.success(Unit)
         } catch (e: Exception) {
             android.util.Log.e("SignalR", "Failed to send answer", e)
+            Result.failure(e)
+        }
+    }
+
+    suspend fun joinGame(gameId: Int, password: String?): Result<Unit> = withContext(Dispatchers.IO) {
+        return@withContext try {
+            android.util.Log.d("SignalR", "Joining game via hub: gameId=$gameId, hasPassword=${password != null}")
+
+            if (!isConnected()) {
+                return@withContext Result.failure(Exception("Not connected to SignalR hub"))
+            }
+
+            // Invoke hub method JoinGame(gameId, password) and wait for completion
+            try {
+                val future = if (password != null) {
+                    hubConnection?.invoke("JoinGame", gameId, password)
+                } else {
+                    hubConnection?.invoke("JoinGame", gameId)
+                }
+
+                (future as? java.util.concurrent.CompletableFuture<Any?>)?.get()
+                android.util.Log.d("SignalR", "JoinGame invoke completed for gameId=$gameId")
+                Result.success(Unit)
+            } catch (e: Exception) {
+                android.util.Log.e("SignalR", "JoinGame invocation failed", e)
+                Result.failure(e)
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("SignalR", "Failed to join game", e)
             Result.failure(e)
         }
     }

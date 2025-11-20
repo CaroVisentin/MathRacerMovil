@@ -374,20 +374,6 @@ fun ShopItemCard(
             verticalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxSize()
         ) {
-//            Image(
-//                painter = item.imageUrl,
-//                contentDescription = null,
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .weight(1f)
-//            )
-//            AsyncImage(
-//                model = item.imageUrl,
-//                contentDescription = null,
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .weight(1f)
-//            )
             ProductImage(productId = item.id, fallbackRes = R.drawable.mathi, modifier = Modifier.size(80.dp), contentScale = ContentScale.Fit)
 
 

@@ -20,6 +20,11 @@ interface GameRepository {
      * Send answer for a specific game and player
      */
     suspend fun sendAnswer(gameId: String, playerId: String, answer: Int): Result<AnswerResult>
+
+    /**
+     * Join an existing created game (by id). Password optional for private games.
+     */
+    suspend fun joinGame(gameId: Int, password: String?): Result<Unit>
     
     /**
      * Observe game state changes

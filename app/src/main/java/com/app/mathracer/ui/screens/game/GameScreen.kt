@@ -85,7 +85,6 @@ fun GamePlayScreen(
     lastAnswerWasCorrect: Boolean? = null,
     showAnswerFeedback: Boolean = false,
     isPenalized: Boolean = false,
-    // controla si los botones de opción muestran sombra/relieve
     optionsHaveShadows: Boolean = true,
     expectedResult: String = "",
     onBack: () -> Unit,
@@ -420,27 +419,23 @@ fun ScrollingTrack(
         val containerWidth: Dp = maxWidth
         val density = LocalDensity.current
         val containerWidthPx = with(density) { maxWidth.toPx() }
-        val speedPxPerSec    = with(density) { speedDpPerSec.toPx() }
+        val speedPxPerSec = with(density) { speedDpPerSec.toPx() }
 
-        // Animación infinita: 0 -> containerWidthPx y reinicia
-        val t = rememberInfiniteTransition(label = "track-scroll")
+        val t = rememberInfiniteTransition()
         val x by t.animateFloat(
             initialValue = 0f,
-            targetValue  = containerWidthPx,
+            targetValue = containerWidthPx,
             animationSpec = infiniteRepeatable(
                 animation = tween(
                     durationMillis = ((containerWidthPx / speedPxPerSec) * 1000f).toInt(),
                     easing = LinearEasing
                 ),
                 repeatMode = RepeatMode.Restart
-            ),
-            label = "x"
+            )
         )
 
-        // Desplazamiento modular (0..width)
         val offsetPx = x % containerWidthPx
 
-        // Dos copias: una arrancando en -offset, otra a +width - offset
         Box(Modifier.fillMaxSize()) {
             Image(
                 painter = painterResource(trackRes),
@@ -465,6 +460,7 @@ fun ScrollingTrack(
         }
     }
 }
+
 
 
 @Composable

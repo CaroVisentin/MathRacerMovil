@@ -27,14 +27,15 @@ class WaitingOpponentViewModel @Inject constructor(
     private val _navigationEvent = MutableStateFlow<NavigationEvent?>(null)
     val navigationEvent: StateFlow<NavigationEvent?> = _navigationEvent.asStateFlow()
     
-    fun startConnection(playerName: String) {
+    fun startConnection(playerUid: String, displayName: String) {
         if (_uiState.value.isConnecting) return
         
-        android.util.Log.d("WaitingOpponentViewModel", "Starting connection for player: $playerName")
+        android.util.Log.d("WaitingOpponentViewModel", "Starting connection for uid: $playerUid, displayName: $displayName")
         
         _uiState.value = _uiState.value.copy(
             isConnecting = true,
-            playerName = playerName,
+            playerUid = playerUid,
+            playerName = displayName,
             error = null,
             message = "Conectando al servidor..."
         )
@@ -54,7 +55,7 @@ class WaitingOpponentViewModel @Inject constructor(
                         message = "Conectado! Buscando oponente..."
                     )
                     
-                    // Auto buscar partida después de conectar
+                    // Auto buscar partida después de conectar (send UID to server)
                     findMatch()
                 },
                 onFailure = { exception ->
@@ -69,20 +70,20 @@ class WaitingOpponentViewModel @Inject constructor(
     }
     
     private fun findMatch() {
-        val playerName = _uiState.value.playerName
-        if (playerName.isBlank()) {
-            android.util.Log.e("WaitingOpponentViewModel", "Player name is blank")
+        val playerUid = _uiState.value.playerUid
+        if (playerUid.isBlank()) {
+            android.util.Log.e("WaitingOpponentViewModel", "Player UID is blank")
             return
         }
-        
-        android.util.Log.d("WaitingOpponentViewModel", "Finding match for player: $playerName")
-        
+
+        android.util.Log.d("WaitingOpponentViewModel", "Finding match for uid: $playerUid")
+
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isSearchingMatch = true)
-            
-            findMatchUseCase(playerName).fold(
+
+            findMatchUseCase(playerUid).fold(
                 onSuccess = {
-                    android.util.Log.d("WaitingOpponentViewModel", "FindMatch request sent successfully")
+                    android.util.Log.d("WaitingOpponentViewModel", "FindMatch request sent successfully (uid)")
                     _uiState.value = _uiState.value.copy(
                         message = "Buscando oponente..."
                     )
@@ -116,11 +117,13 @@ class WaitingOpponentViewModel @Inject constructor(
         android.util.Log.d("WaitingOpponentViewModel", "Processing game update - ID: ${game.id}, Status: ${game.status}")
         when (game.status) {
             GameStatus.WAITING_FOR_PLAYERS -> {
-                // Verificar si soy parte de este juego
-                val currentPlayerName = _uiState.value.playerName
-                val isMyGame = game.playerOne.name == currentPlayerName || 
-                               game.playerTwo?.name == currentPlayerName
-                
+                // Verificar si soy parte de este juego usando UID (más fiable que nombre)
+                val currentPlayerUid = _uiState.value.playerUid
+                val isMyGame = game.playerOne.id == currentPlayerUid ||
+                               game.playerTwo?.id == currentPlayerUid
+
+                android.util.Log.d("WaitingOpponentViewModel", "WAITING_FOR_PLAYERS - isMyGame: $isMyGame, currentUid: $currentPlayerUid, playerOneId: ${game.playerOne.id}, playerTwoId: ${game.playerTwo?.id}")
+
                 if (isMyGame) {
                     _uiState.value = _uiState.value.copy(
                         isSearchingMatch = true,
@@ -131,15 +134,15 @@ class WaitingOpponentViewModel @Inject constructor(
             }
             
             GameStatus.IN_PROGRESS -> {
-                // Verificar si soy parte de este juego
-                val currentPlayerName = _uiState.value.playerName
-                val isMyGame = game.playerOne.name == currentPlayerName || 
-                               game.playerTwo?.name == currentPlayerName
-                
-                android.util.Log.d("WaitingOpponentViewModel", "IN_PROGRESS - isMyGame: $isMyGame, hasQuestion: ${game.currentQuestion != null}")
-                
+                // Verificar si soy parte de este juego usando UID
+                val currentPlayerUid = _uiState.value.playerUid
+                val isMyGame = game.playerOne.id == currentPlayerUid ||
+                               game.playerTwo?.id == currentPlayerUid
+
+                android.util.Log.d("WaitingOpponentViewModel", "IN_PROGRESS - isMyGame: $isMyGame, hasQuestion: ${game.currentQuestion != null}, currentUid: $currentPlayerUid, playerOneId: ${game.playerOne.id}, playerTwoId: ${game.playerTwo?.id}")
+
                 if (isMyGame && game.currentQuestion != null) {
-                    val opponentName = if (game.playerOne.name == currentPlayerName) {
+                    val opponentName = if (game.playerOne.id == currentPlayerUid) {
                         game.playerTwo?.name ?: "Oponente"
                     } else {
                         game.playerOne.name
@@ -158,7 +161,7 @@ class WaitingOpponentViewModel @Inject constructor(
                     android.util.Log.d("WaitingOpponentViewModel", "🚀 NAVIGATING TO GAME - ID: ${game.id}")
                     _navigationEvent.value = NavigationEvent.NavigateToGame(game.id)
                 } else {
-                    android.util.Log.d("WaitingOpponentViewModel", "NOT navigating - isMyGame: $isMyGame, currentPlayer: $currentPlayerName, playerOne: ${game.playerOne.name}, playerTwo: ${game.playerTwo?.name}")
+                    android.util.Log.d("WaitingOpponentViewModel", "NOT navigating - isMyGame: $isMyGame, currentUid: $currentPlayerUid, playerOne: ${game.playerOne.name}, playerTwo: ${game.playerTwo?.name}")
                 }
             }
             
