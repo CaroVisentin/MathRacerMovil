@@ -67,7 +67,7 @@ private val LabelBlue     = Color(0xFF51B7FF)
 private val OptionTeal    = Color(0xFF2EB7A7)
 
 data class PlayerResult(val rank: Int, val name: String, val points: Int)
-data class PowerUp(val iconRes: Int, val count: Int, val tint: Color)
+data class PowerUp(val iconRes: Int, val count: Int, val tint: Color, val enabled: Boolean = true)
 
 @Composable
 fun HistoryGameScreen(
@@ -111,10 +111,26 @@ fun HistoryGameScreen(
         youCarRes = R.drawable.car_game,
         livesRemaining = uiState.livesRemaining,
         timePerEquation = uiState.timePerEquation,
+        // Determinar si cada wildcard está disponible para mostrar el chip habilitado/deshabilitado
         powerUps = listOf(
-            PowerUp(R.drawable.ic_shield, uiState.fireExtinguisherCount, Color(0xFFFF6B6B)),
-            PowerUp(R.drawable.ic_shuffle, 0, Color.White),
-            PowerUp(R.drawable.ic_bolt, 0, Color(0xFF76E4FF))
+            PowerUp(
+                R.drawable.ic_shield,
+                uiState.wildcard1Quantity,
+                Color(0xFFFF6B6B),
+                enabled = uiState.wildcard1Available && !uiState.wildcardsLocked
+            ),
+            PowerUp(
+                R.drawable.ic_shuffle,
+                uiState.wildcard2Quantity,
+                Color.White,
+                enabled = uiState.wildcard2Available && !uiState.wildcardsLocked
+            ),
+            PowerUp(
+                R.drawable.ic_bolt,
+                uiState.wildcard3Quantity,
+                Color(0xFF76E4FF),
+                enabled = uiState.wildcard3Available && !uiState.wildcardsLocked
+            )
         ),
         expression = uiState.currentQuestion.ifEmpty { 
             when {
@@ -138,7 +154,9 @@ fun HistoryGameScreen(
         onBack = onNavigateBack,
         onPowerUpClick = { index -> 
             when (index) {
-                0 -> viewModel.useFireExtinguisher()
+                0 -> viewModel.useWildcard(1)
+                1 -> viewModel.useWildcard(2)
+                2 -> viewModel.useWildcard(3)
             }
         },
         onOptionClick = { index, value ->
@@ -268,12 +286,13 @@ fun GamePlayScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 powerUps.forEachIndexed { i, p ->
-                    PowerUpChip(
-                        iconRes = p.iconRes,
-                        count = p.count,
-                        tint = p.tint,
-                        onClick = { onPowerUpClick(i) }
-                    )
+                        PowerUpChip(
+                            iconRes = p.iconRes,
+                            count = p.count,
+                            tint = p.tint,
+                            onClick = { onPowerUpClick(i) },
+                            enabled = p.enabled
+                        )
                     Spacer(Modifier.width(12.dp))
                 }
             }

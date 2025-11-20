@@ -35,6 +35,20 @@ data class SoloGameStartResponse(
 
     @SerializedName("machineProducts")
     val machineProducts: List<ProductPlayerGame>
+    ,
+    @SerializedName("availableWildcards")
+    val availableWildcards: List<AvailableWildcardDto> = emptyList()
+)
+
+data class AvailableWildcardDto(
+    @SerializedName("wildcardId")
+    val wildcardId: Int,
+    @SerializedName("name")
+    val name: String?,
+    @SerializedName("description")
+    val description: String?,
+    @SerializedName("quantity")
+    val quantity: Int
 )
 
 data class SoloQuestion(
@@ -130,4 +144,31 @@ data class SoloAnswerResponse(
 
     @SerializedName("machineScore")
     val machineScore: Int
+)
+
+data class WildCard(
+    @SerializedName("wildcardId")
+    val wildcardId: Int,
+
+    @SerializedName("success")
+    val success: Boolean,
+
+    @SerializedName("message")
+    val message: String,
+
+    @SerializedName("remainingQuantity")
+    val remainingQuantity: Int,
+
+    @SerializedName("modifiedOptions")
+    val modifiedOptions: List<Int>,
+
+    @SerializedName("newQuestionIndex")
+    val newQuestionIndex: Int?,
+
+    @SerializedName("newQuestion")
+    val newQuestion: SoloQuestion?,
+
+    @SerializedName("doubleProgressActive")
+    val doubleProgressActive: Boolean
+
 )

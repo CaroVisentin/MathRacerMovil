@@ -6,5 +6,6 @@ data class WorldsUiState(
     val isLoading: Boolean = false,
     val worlds: List<WorldDto>? = emptyList(),
     val lastAvailableWorldId: Int = 0,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val worldProgress: Map<Int, Pair<Int, Int>> = emptyMap()
 )

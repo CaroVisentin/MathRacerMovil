@@ -120,5 +120,29 @@ class SoloGameRepositoryImpl : SoloGameRepository {
             }
         }
     }
+
+    override suspend fun useWildcard(gameId: Int, wildcardId: Int): Result<com.app.mathracer.data.model.WildCard> {
+        return try {
+            val token = UserRemoteRepository.getIdToken()
+            val header = token?.let { "Bearer $it" }
+
+            val response = api.useWildcard(header, gameId, wildcardId)
+
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(IOException("Error al usar wildcard: ${response.code()} - ${response.message()}"))
+            }
+        } catch (e: HttpException) {
+            Result.failure(IOException("Error HTTP: ${e.code()} - ${e.message()}"))
+        } catch (e: IOException) {
+            Result.failure(e)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+
+
 }
 

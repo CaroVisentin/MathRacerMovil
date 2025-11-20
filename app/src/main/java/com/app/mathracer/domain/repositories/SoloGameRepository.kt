@@ -26,5 +26,10 @@ interface SoloGameRepository {
      * Observe game updates via polling
      */
     fun observeSoloGameUpdates(gameId: Int, intervalMs: Long = 2000): Flow<SoloGameUpdateResponse?>
+    /**
+     * Use a wildcard (comodín) during a solo game. Returns a WildCard response describing
+     * modifications (new options, new question, remaining quantity, etc.)
+     */
+    suspend fun useWildcard(gameId: Int, wildcardId: Int): Result<com.app.mathracer.data.model.WildCard>
 }
 

@@ -67,4 +67,11 @@ object DomainModule {
     ): SubmitSoloAnswerUseCase {
         return SubmitSoloAnswerUseCase(soloGameRepository)
     }
+
+    @Provides
+    fun provideSubmitSoloWildcardUseCase(
+        soloGameRepository: SoloGameRepository
+    ): com.app.mathracer.domain.usecases.SubmitSoloWildcardUseCase {
+        return com.app.mathracer.domain.usecases.SubmitSoloWildcardUseCase(soloGameRepository)
+    }
 }

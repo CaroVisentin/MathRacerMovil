@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.mathracer.data.CurrentUser
@@ -44,7 +45,6 @@ fun WorldsScreenRoute(
     viewModel: WorldsViewModel = hiltViewModel(),
     onWorldClick: (WorldDto) -> Unit
 ) {
-    // Obtenemos el estado desde el ViewModel
     val uiState = viewModel.uiState.collectAsState().value
 
     when {
@@ -68,6 +68,7 @@ fun WorldsScreenRoute(
             WorldsScreen(
                 worlds = uiState.worlds,
                 lastAvailableWorldId = uiState.lastAvailableWorldId,
+                worldProgress = uiState.worldProgress,
                 onWorldClick = { world ->
                     viewModel.onWorldClicked(world, onWorldClick)
                 }
@@ -80,6 +81,7 @@ fun WorldsScreenRoute(
 fun WorldsScreen(
     worlds: List<WorldDto>?,
     lastAvailableWorldId: Int,
+    worldProgress: Map<Int, Pair<Int, Int>> = emptyMap(),
     onWorldClick: (WorldDto) -> Unit
 ) {
     Box(
@@ -93,7 +95,6 @@ fun WorldsScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxSize()
         ) {
-            // Espacio superior extra
             Spacer(modifier = Modifier.height(32.dp))
 
             //TopBar(energy = 3)
@@ -116,6 +117,7 @@ fun WorldsScreen(
                         world = world,
                         lastAvailableWorldId = lastAvailableWorldId,
                         index = index,
+                        worldProgress = worldProgress,
                         onWorldClick = onWorldClick
                     )
                 }
@@ -130,6 +132,7 @@ fun ZigZagWorldItem(
     world: WorldDto,
     lastAvailableWorldId: Int,
     index: Int,
+    worldProgress: Map<Int, Pair<Int, Int>> = emptyMap(),
     onWorldClick: (WorldDto) -> Unit
 ) {
     val isEven = index % 2 == 0
@@ -141,7 +144,12 @@ fun ZigZagWorldItem(
             .padding(horizontal = 24.dp),
         horizontalArrangement = alignment
     ) {
-        WorldCard(world = world, onClick = { onWorldClick(world) }, lastAvailableWorldId = lastAvailableWorldId)
+        WorldCard(
+            world = world,
+            onClick = { onWorldClick(world) },
+            lastAvailableWorldId = lastAvailableWorldId,
+            worldProgressMap = worldProgress
+        )
     }
 }
 
@@ -168,7 +176,8 @@ fun TopBar(energy: Int) {
 fun WorldCard(
     world: WorldDto,
     onClick: () -> Unit,
-    lastAvailableWorldId: Int
+    lastAvailableWorldId: Int,
+    worldProgressMap: Map<Int, Pair<Int, Int>> = emptyMap()
 ) {
     val borderColor = if (world.id > lastAvailableWorldId) Color.Gray else Color.Magenta
     val textColor = if (world.id > lastAvailableWorldId) Color.Gray else Color.White
@@ -197,13 +206,18 @@ fun WorldCard(
             )
 
             Text(
-                text = world.difficulty,
+                text = operationsToText(world.operations),
                 color = textColor,
-                fontSize = 20.sp
+                fontSize = 18.sp,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
             )
 
-            // Barra de progreso
-            if(world.id > lastAvailableWorldId) {
+            val progressPair = (worldProgressMap[world.id])
+            val completed = progressPair?.first ?: 0
+            val total = progressPair?.second ?: 15
+
+            if (world.id > lastAvailableWorldId) {
                 Row(
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier.fillMaxWidth()
@@ -214,24 +228,32 @@ fun WorldCard(
                         tint = Color.Gray
                     )
                 }
+                /*
                 Text(
                     text = "BLOQUEADO",
                     color = Color.Gray,
                     fontSize = 18.sp,
                     modifier = Modifier.padding(top = 4.dp)
-                )
+                )*/
+                Spacer(modifier = Modifier.height(4.dp))
             } else {
                 Row(
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    repeat(15) { index ->
+                    val segments = total.coerceAtLeast(1)
+                    repeat(segments) { index ->
+                        val segColor = when {
+                            world.id < lastAvailableWorldId -> Color.Yellow
+                            world.id == lastAvailableWorldId -> if (index < completed) Color.Yellow else Color.DarkGray
+                            else -> if (index < completed) Color.Yellow else Color.DarkGray
+                        }
                         Box(
                             modifier = Modifier
                                 .size(12.dp, 24.dp)
                                 .padding(horizontal = 1.dp)
                                 .background(
-                                   if (world.id < lastAvailableWorldId) Color.Yellow else Color.DarkGray, //me tengo q traer los niveles y setearlo con eso
+                                    segColor,
                                     RoundedCornerShape(2.dp)
                                 )
                         )
@@ -240,6 +262,21 @@ fun WorldCard(
             }
         }
     }
+}
+
+fun operationsToText(ops: List<String>?): String {
+    if (ops.isNullOrEmpty()) return ""
+    val seen = linkedSetOf<String>()
+    ops.forEach {
+        when (it.trim()) {
+            "+" -> seen.add("Suma")
+            "-" -> seen.add("Resta")
+            "*", "x", "X" -> seen.add("Multiplicación")
+            "/" -> seen.add("División")
+            else -> seen.add(it)
+        }
+    }
+    return seen.joinToString(" - ")
 }
 
 @Composable
@@ -257,26 +294,4 @@ fun StarryBackground() {
             )
         }
     }
-}
-
-// Modelo de datos
-data class World(
-    val id: Int,
-    val title: String,
-    val topic: String,
-    val completedLevels: Int,
-    val totalLevels: Int,
-    val locked: Boolean
-)
-
-@Preview(showBackground = true)
-@Composable
-fun WorldsScreenPreview() {
-    val sampleWorlds = listOf(
-        World(1, "Mundo 1", "Suma y Resta", 10, 10, false),
-        World(2, "Mundo 2", "Multiplicación", 6, 15, false),
-        World(3, "Mundo 3", "División", 0, 10, true),
-        World(4, "Mundo 4", "Operaciones Mixtas", 0, 10, true)
-    )
-//    WorldsScreen(worlds = sampleWorlds, onWorldClick = {})
 }
