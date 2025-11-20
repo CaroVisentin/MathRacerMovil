@@ -25,6 +25,10 @@ interface GameRepository {
      * Join an existing created game (by id). Password optional for private games.
      */
     suspend fun joinGame(gameId: Int, password: String?): Result<Unit>
+
+    fun getLastRequestedJoinGameId(): Int?
+
+    fun clearLastRequestedJoinGameId()
     
     /**
      * Observe game state changes

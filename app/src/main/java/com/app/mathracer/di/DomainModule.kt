@@ -45,6 +45,20 @@ object DomainModule {
     ): InitializeGameConnectionUseCase {
         return InitializeGameConnectionUseCase(gameRepository)
     }
+
+    @Provides
+    fun provideGetLastRequestedGameIdUseCase(
+        gameRepository: GameRepository
+    ): com.app.mathracer.domain.usecases.GetLastRequestedGameIdUseCase {
+        return com.app.mathracer.domain.usecases.GetLastRequestedGameIdUseCase(gameRepository)
+    }
+
+    @Provides
+    fun provideClearLastRequestedGameIdUseCase(
+        gameRepository: GameRepository
+    ): com.app.mathracer.domain.usecases.ClearLastRequestedGameIdUseCase {
+        return com.app.mathracer.domain.usecases.ClearLastRequestedGameIdUseCase(gameRepository)
+    }
     
     // Solo Game (History Mode) use cases
     @Provides

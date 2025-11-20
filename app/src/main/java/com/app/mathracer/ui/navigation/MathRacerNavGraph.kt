@@ -116,6 +116,31 @@ fun MathRacerNavGraph(
             )
         }
 
+        
+        composable("waiting_opponent/{gameId}", arguments = listOf(navArgument("gameId") { type = NavType.StringType })) { backStackEntry ->
+            HandleBackNavigation(
+                navController = navController,
+                currentRoute = currentRoute,
+                onBackPressed = { navController.navigateUp() }
+            )
+
+            val expectedGameId = backStackEntry.arguments?.getString("gameId")
+
+            WaitingOpponentScreen(
+                onNavigateToGame = { gameId, playerName ->
+                    navController.navigate(Routes.gameWithIdAndPlayer(gameId, playerName)) {
+                        popUpTo(Routes.WAITING_OPPONENT) {
+                            inclusive = true
+                        }
+                    }
+                },
+                onNavigateBack = {
+                    navController.navigateUp()
+                },
+                expectedGameId = expectedGameId
+            )
+        }
+
         composable(Routes.CHEST) {
             HandleBackNavigation(
                 navController = navController,
@@ -279,14 +304,14 @@ fun MathRacerNavGraph(
                             // Use ViewModel to join via SignalR (handles init and auth)
                             coroutineScope.launch {
                                 joinMatchesViewModel.joinGame(id, password) { result ->
-                                    result.fold(
-                                        onSuccess = {
-                                            navController.navigate(Routes.WAITING_OPPONENT)
-                                        },
+                                            result.fold(
+                                                onSuccess = {
+                                                    navController.navigate(Routes.waitingWithGame(id.toString()))
+                                                },
                                         onFailure = { err ->
                                             android.util.Log.e("JoinMatches", "Failed to join: ${err.message}")
                                             // Still navigate to waiting so UI remains consistent
-                                            navController.navigate(Routes.WAITING_OPPONENT)
+                                                    navController.navigate(Routes.waitingWithGame(id.toString()))
                                         }
                                     )
                                 }

@@ -11,6 +11,7 @@ object Routes {
         return "home?userName=$name&userEmail=$email"
     }
     const val WAITING_OPPONENT = "waiting_opponent"
+    fun waitingWithGame(gameId: String) = "waiting_opponent/$gameId"
     const val MULTIPLAYER_OPTIONS = "multiplayer_options"
     const val CREATE_MATCH = "create_match"
     const val JOIN_MATCHES = "join_matches"

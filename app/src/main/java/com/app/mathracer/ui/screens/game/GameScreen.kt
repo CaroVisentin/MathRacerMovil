@@ -183,76 +183,57 @@ fun GamePlayScreen(
 
             Spacer(Modifier.height(60.dp))
 
-            // ====== OPCIONES (2 x 2) ======
+            
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    OptionButton(
-                        text = (options.getOrNull(0) ?: "").toString(),
-                        modifier = Modifier.weight(1f),
-                        state = getOptionButtonState(
-                            option = options.getOrNull(0),
-                            lastAnswerGiven = lastAnswerGiven,
-                            lastAnswerWasCorrect = lastAnswerWasCorrect,
-                            showAnswerFeedback = showAnswerFeedback,
-                            isWaitingForAnswer = isWaitingForAnswer,
-                            isPenalized = isPenalized
-                        ),
-                        hasShadow = optionsHaveShadows,
-                        onClick = { onOptionClick(0, options.getOrNull(0)) }
-                    )
-                    OptionButton(
-                        text = (options.getOrNull(1) ?: "").toString(),
-                        modifier = Modifier.weight(1f),
-                        state = getOptionButtonState(
-                            option = options.getOrNull(1),
-                            lastAnswerGiven = lastAnswerGiven,
-                            lastAnswerWasCorrect = lastAnswerWasCorrect,
-                            showAnswerFeedback = showAnswerFeedback,
-                            isWaitingForAnswer = isWaitingForAnswer,
-                            isPenalized = isPenalized
-                        ),
-                        hasShadow = optionsHaveShadows,
-                        onClick = { onOptionClick(1, options.getOrNull(1)) }
-                    )
-                }
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    OptionButton(
-                        text = (options.getOrNull(2) ?: "").toString(),
-                        modifier = Modifier.weight(1f),
-                        state = getOptionButtonState(
-                            option = options.getOrNull(2),
-                            lastAnswerGiven = lastAnswerGiven,
-                            lastAnswerWasCorrect = lastAnswerWasCorrect,
-                            showAnswerFeedback = showAnswerFeedback,
-                            isWaitingForAnswer = isWaitingForAnswer,
-                            isPenalized = isPenalized
-                        ),
-                        hasShadow = optionsHaveShadows,
-                        onClick = { onOptionClick(2, options.getOrNull(2)) }
-                    )
-                    OptionButton(
-                        text = (options.getOrNull(3) ?: "").toString(),
-                        modifier = Modifier.weight(1f),
-                        state = getOptionButtonState(
-                            option = options.getOrNull(3),
-                            lastAnswerGiven = lastAnswerGiven,
-                            lastAnswerWasCorrect = lastAnswerWasCorrect,
-                            showAnswerFeedback = showAnswerFeedback,
-                            isWaitingForAnswer = isWaitingForAnswer,
-                            isPenalized = isPenalized
-                        ),
-                        hasShadow = optionsHaveShadows,
-                        onClick = { onOptionClick(3, options.getOrNull(3)) }
-                    )
+                val optionRows = options.chunked(2)
+                optionRows.forEachIndexed { rowIndex, rowOptions ->
+                    if (rowOptions.size == 2) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            rowOptions.forEachIndexed { i, opt ->
+                                val globalIndex = rowIndex * 2 + i
+                                OptionButton(
+                                    text = (opt ?: "").toString(),
+                                    modifier = Modifier.weight(1f),
+                                    state = getOptionButtonState(
+                                        option = opt,
+                                        lastAnswerGiven = lastAnswerGiven,
+                                        lastAnswerWasCorrect = lastAnswerWasCorrect,
+                                        showAnswerFeedback = showAnswerFeedback,
+                                        isWaitingForAnswer = isWaitingForAnswer,
+                                        isPenalized = isPenalized
+                                    ),
+                                    hasShadow = optionsHaveShadows,
+                                    onClick = { onOptionClick(globalIndex, opt) }
+                                )
+                            }
+                        }
+                    } else if (rowOptions.size == 1) {
+                        
+                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                            val opt = rowOptions[0]
+                            val globalIndex = rowIndex * 2
+                            OptionButton(
+                                text = (opt ?: "").toString(),
+                                modifier = Modifier.fillMaxWidth(0.6f),
+                                state = getOptionButtonState(
+                                    option = opt,
+                                    lastAnswerGiven = lastAnswerGiven,
+                                    lastAnswerWasCorrect = lastAnswerWasCorrect,
+                                    showAnswerFeedback = showAnswerFeedback,
+                                    isWaitingForAnswer = isWaitingForAnswer,
+                                    isPenalized = isPenalized
+                                ),
+                                hasShadow = optionsHaveShadows,
+                                onClick = { onOptionClick(globalIndex, opt) }
+                            )
+                        }
+                    }
                 }
             }
 

@@ -73,6 +73,14 @@ class GameRepositoryImpl(
         }
     }
 
+    override fun getLastRequestedJoinGameId(): Int? {
+        return signalRRemoteDataSource.lastRequestedJoinGameId
+    }
+
+    override fun clearLastRequestedJoinGameId() {
+        signalRRemoteDataSource.lastRequestedJoinGameId = null
+    }
+
     override suspend fun sendAnswer(gameId: String, playerId: String, answer: Int): Result<AnswerResult> {
         return if (signalRRemoteDataSource.isConnected()) {
             try {
