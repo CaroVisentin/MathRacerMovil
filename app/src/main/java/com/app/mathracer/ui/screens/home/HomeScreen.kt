@@ -221,7 +221,7 @@ fun HomeScreen(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             // Espacio antes del auto grande y botones
-                            Spacer(modifier = Modifier.height(60.dp))
+
 
 
                             Column(
@@ -298,7 +298,7 @@ fun HomeScreen(
                                 }
                             }
 
-                            Box(modifier = Modifier.height(32.dp))
+                            Box(modifier = Modifier.height(64.dp))
 
                             // Botonera inferior
                             Row(
@@ -368,6 +368,7 @@ fun HomeScreen(
                                     )
                                 }
                             }
+                            Spacer(modifier = Modifier.height(180.dp))
                         }
                     }
                 }
