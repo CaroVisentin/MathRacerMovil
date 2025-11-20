@@ -54,6 +54,28 @@ data class EnergyDto(
     val maxAmount: Int
 )
 
+data class ShopResponse(
+    val items: List<ItemDto> = emptyList(),
+    val totalCount: Int? = null
+)
+
+data class ItemDto(
+    val id: Int,
+    val name: String,
+    val description: String,
+    val price: Int,
+    val imageUrl: String,
+    val productTypeId: Int,
+    val productTypeName: String,
+    val rarity: String,
+    val isOwned: Boolean,
+    val currency: String
+)
+
+data class PurchaseSuccessResponseDto(
+    val remainingCoins: Int
+)
+
 interface ApiService {
     @POST("player/register")
     suspend fun createUser(
@@ -144,5 +166,23 @@ interface ApiService {
 
     @GET("energy")
     suspend fun getEnergy(@Header("Authorization") authorization: String?): Response<EnergyDto>
+
+    @GET("cars")
+    suspend fun getShopCars(@Query("playerId") playerId: Int): Response<ShopResponse>
+
+    @GET("backgrounds")
+    suspend fun getShopBackgrounds(@Query("playerId") playerId: Int): Response<ShopResponse>
+
+    @GET("characters")
+    suspend fun getShopCharacters(@Query("playerId") playerId: Int): Response<ShopResponse>
+
+    @POST("api/players/{playerId}/backgrounds/{backgroundId}")
+    suspend fun purchaseBackground(@Path("playerId") playerId: Int, @Path("backgroundId") backgroundId: Int): Response<PurchaseSuccessResponseDto>
+
+    @POST("api/players/{playerId}/characters/{charactersId}")
+    suspend fun purchaseCharacters(@Path("playerId") playerId: Int, @Path("charactersId") charactersId: Int): Response<PurchaseSuccessResponseDto>
+
+    @POST("api/players/{playerId}/cars/{carsId}")
+    suspend fun purchaseCars(@Path("playerId") playerId: Int, @Path("carsId") carsId: Int): Response<PurchaseSuccessResponseDto>
 
 }

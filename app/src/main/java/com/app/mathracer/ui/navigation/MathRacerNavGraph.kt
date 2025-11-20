@@ -43,6 +43,8 @@ import com.app.mathracer.ui.screens.historyGame.HistoryGameScreen
 import com.app.mathracer.data.model.User
 import android.util.Log
 import com.app.mathracer.ui.screens.insufficientEnergy.InsufficientEnergyScreen
+import com.app.mathracer.ui.screens.shop.ShopScreen
+import com.app.mathracer.ui.screens.shop.viewmodel.ShopViewModel
 import com.google.firebase.auth.FirebaseAuth
 
 
@@ -77,7 +79,7 @@ fun MathRacerNavGraph(
                         // TODO: Implementar navegación a práctica libre
                     },
                     onShopClick = {
-                        // TODO: Implementar navegación a tienda
+                        navController.navigate(Routes.SHOP)
                     },
                     onGarageClick = {
                         navController.navigate(Routes.GARAGE)
@@ -187,6 +189,17 @@ fun MathRacerNavGraph(
 
             val viewModel: RankingViewModel = hiltViewModel()
             RankingScreen(viewModel = viewModel)
+        }
+
+        composable(Routes.SHOP) {
+            HandleBackNavigation(
+                navController = navController,
+                currentRoute = currentRoute,
+                onBackPressed = { navController.navigateUp() }
+            )
+
+            val viewModel: ShopViewModel = hiltViewModel()
+            ShopScreen(viewModel = viewModel)
         }
 
         composable(Routes.GARAGE) {

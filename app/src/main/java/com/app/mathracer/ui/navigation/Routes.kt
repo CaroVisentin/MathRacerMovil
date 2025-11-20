@@ -24,6 +24,7 @@ object Routes {
     const val WORLDS = "worlds"
     const val LEVELS = "levels"
     const val RANKING = "ranking"
+    const val SHOP = "shop"
     const val HISTORY_GAME = "history_game"
     const val CHEST = "chest"
     const val INSUFFICIENT_ENERGY = "insufficient_energy"
