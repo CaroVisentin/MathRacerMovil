@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -26,6 +27,7 @@ import coil.compose.AsyncImage
 import com.app.mathracer.R
 import com.app.mathracer.data.CurrentUser
 import com.app.mathracer.data.network.ItemDto
+import com.app.mathracer.ui.components.ProductImage
 import com.app.mathracer.ui.screens.shop.viewmodel.ShopViewModel
 
 // ---------------------------------------------------------------------
@@ -325,12 +327,24 @@ fun textColorForBackground(bg: Color): Color {
 }
 fun rarityColor(rarity: String): Color {
     return when (rarity.lowercase()) {
-        "común", "comun" -> Color(0xFFFFFFFF)   // blanco
-        "poco común", "poco comun" -> Color(0xFF1EFF00) // verde
-        "raro" -> Color(0xFF007BFF)             // azul
-        "épico", "epico" -> Color(0xFFA335EE)   // violeta
-        "legendario" -> Color(0xFFFFA500)       // naranja
-        else -> Color(0xFF1E1E1E)               // por default
+        "común", "comun" -> {
+            Color(0xFF9C9C9C)
+        }
+        "poco común", "poco comun" -> {
+            Color(0xFF1EFF00)
+        }
+        "raro" -> {
+            Color(0xFF007BFF)
+        }
+        "épico", "epico" -> {
+            Color(0xFFA335EE)
+        }
+        "legendario" -> {
+            Color(0xFFFFA500)
+        }
+        else -> {
+            Color(0xFF1E1E1E)
+        }
     }
 }
 
@@ -367,13 +381,15 @@ fun ShopItemCard(
 //                    .fillMaxWidth()
 //                    .weight(1f)
 //            )
-            AsyncImage(
-                model = item.imageUrl,
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-            )
+//            AsyncImage(
+//                model = item.imageUrl,
+//                contentDescription = null,
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .weight(1f)
+//            )
+            ProductImage(productId = item.id, fallbackRes = R.drawable.mathi, modifier = Modifier.size(80.dp), contentScale = ContentScale.Fit)
+
 
             Spacer(modifier = Modifier.height(6.dp))
 

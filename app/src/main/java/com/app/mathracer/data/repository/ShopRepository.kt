@@ -24,6 +24,7 @@ class ShopRepository @Inject constructor() {
     suspend fun getCharacters(playerId: Int): Result<ShopResponse> {
         return try {
             val resp = RetrofitClient.api.getShopCharacters(playerId)
+            Log.d("SHOP", resp.body().toString())
             if (resp.isSuccessful) Result.success(resp.body() ?: ShopResponse())
             else Result.failure(Exception("getCharacters failed ${resp.code()}"))
         } catch (e: Exception) {
