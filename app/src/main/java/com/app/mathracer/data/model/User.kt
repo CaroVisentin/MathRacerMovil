@@ -10,7 +10,7 @@ data class User(
     @SerializedName("name") val name: String? = null,
     @SerializedName("lastLevelId") val lastLevelId: Int? = 0,
     @SerializedName("points") val points: Int? = 0,
-    @SerializedName("coins") val coins: Int = 0,
+    @SerializedName("coins") var coins: Int = 0,
 )
 
 data class UserGoogle(

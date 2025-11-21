@@ -1,9 +1,11 @@
 package com.app.mathracer.data.repository
 
 import android.util.Log
-import com.app.mathracer.data.network.PurchaseEnergyResponseDto
+import com.app.mathracer.data.network.PurchaseEnergyRequestDto
+import com.app.mathracer.data.network.PurchaseEnergyResultDto
 import com.app.mathracer.data.network.PurchaseSuccessResponseDto
-import com.app.mathracer.data.network.PurchaseWildscardResponseDto
+import com.app.mathracer.data.network.PurchaseWildscardRequestDto
+import com.app.mathracer.data.network.PurchaseWildscardResultDto
 import com.app.mathracer.data.network.RetrofitClient
 import com.app.mathracer.data.network.ShopResponse
 import com.app.mathracer.data.network.ShopResponseEnergies
@@ -78,6 +80,7 @@ class ShopRepository @Inject constructor() {
         backgroundId: Int
     ): Result<PurchaseSuccessResponseDto> {
         return try {
+            Log.d("ShopRepository", "purchaseBackground: playerId=$playerId, backgroundId=$backgroundId")
             val response = RetrofitClient.api.purchaseBackground(playerId, backgroundId)
             Log.d("SHOP", response.toString())
             if (response.isSuccessful && response.body() != null) {
@@ -97,6 +100,7 @@ class ShopRepository @Inject constructor() {
         carId: Int
     ): Result<PurchaseSuccessResponseDto> {
         return try {
+            Log.d("ShopRepository", "purchaseCar: playerId=$playerId, carId=$carId")
             val response = RetrofitClient.api.purchaseCars(playerId, carId)
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!)
@@ -115,6 +119,7 @@ class ShopRepository @Inject constructor() {
         characterId: Int
     ): Result<PurchaseSuccessResponseDto> {
         return try {
+            Log.d("ShopRepository", "purchaseCharacter: playerId=$playerId, characterId=$characterId")
             val response = RetrofitClient.api.purchaseCharacters(playerId, characterId)
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!)
@@ -128,9 +133,10 @@ class ShopRepository @Inject constructor() {
         }
     }
 
-    suspend fun purchaseEnergy(playerId: Int, quantity: Int): Result<ShopResponse> {
+    suspend fun purchaseEnergy(playerId: Int, quantity: Int): Result<PurchaseEnergyResultDto> {
         return try {
-            val body = PurchaseEnergyResponseDto(quantity = quantity)
+            Log.d("ShopRepository", "purchaseEnergy: playerId=$playerId, quantity=$quantity")
+            val body = PurchaseEnergyRequestDto(quantity = quantity)
             val response = RetrofitClient.api.purchaseEnergy(
                 playerId = playerId,
                 body = body
@@ -152,9 +158,10 @@ class ShopRepository @Inject constructor() {
         playerId: Int,
         wildcardId: Int,
         quantity: Int
-    ): Result<ShopResponse> {
+    ): Result<PurchaseWildscardResultDto> {
         return try {
-            val body = PurchaseWildscardResponseDto(
+            Log.d("ShopRepository", "purchaseWildcard: playerId=$playerId, wildcardId=$wildcardId, quantity=$quantity")
+            val body = PurchaseWildscardRequestDto(
                 wildcardId = wildcardId,
                 quantity = quantity
             )

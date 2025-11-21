@@ -92,13 +92,32 @@ data class PurchaseSuccessResponseDto(
     val remainingCoins: Int
 )
 
-data class PurchaseEnergyResponseDto(
+// Request DTO for purchasing energy
+data class PurchaseEnergyRequestDto(
     val quantity: Int
 )
 
-data class PurchaseWildscardResponseDto(
+// Response DTO for purchasing energy
+data class PurchaseEnergyResultDto(
+    val success: Boolean,
+    val message: String?,
+    val newEnergyAmount: Int?,
+    val remainingCoins: Int?,
+    val totalPrice: Int?
+)
+
+// Request DTO for purchasing wildcards
+data class PurchaseWildscardRequestDto(
     val wildcardId: Int,
     val quantity: Int
+)
+
+// Response DTO for purchasing wildcards
+data class PurchaseWildscardResultDto(
+    val success: Boolean,
+    val message: String?,
+    val newQuantity: Int?,
+    val remainingCoins: Int?
 )
 
 
@@ -225,13 +244,13 @@ interface ApiService {
     @POST("Energy/purchase/{playerId}")
     suspend fun purchaseEnergy(
         @Path("playerId") playerId: Int,
-        @Body body: PurchaseEnergyResponseDto
-    ): Response<ShopResponse>
+        @Body body: PurchaseEnergyRequestDto
+    ): Response<PurchaseEnergyResultDto>
 
     @POST("Wildcards/purchase/{playerId}")
     suspend fun purchaseWildcards(
         @Path("playerId") playerId: Int,
-        @Body body: PurchaseWildscardResponseDto
-    ): Response<ShopResponse>
+        @Body body: PurchaseWildscardRequestDto
+    ): Response<PurchaseWildscardResultDto>
 
 }
