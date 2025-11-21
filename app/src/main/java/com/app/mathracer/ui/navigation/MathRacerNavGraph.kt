@@ -46,7 +46,6 @@ import com.app.mathracer.ui.screens.insufficientEnergy.InsufficientEnergyScreen
 import com.app.mathracer.ui.screens.shop.ShopScreen
 import com.app.mathracer.ui.screens.shop.viewmodel.ShopViewModel
 import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.launch
 
 
 @Composable
@@ -113,31 +112,6 @@ fun MathRacerNavGraph(
                 onNavigateBack = {
                     navController.navigateUp()
                 }
-            )
-        }
-
-        
-        composable("waiting_opponent/{gameId}", arguments = listOf(navArgument("gameId") { type = NavType.StringType })) { backStackEntry ->
-            HandleBackNavigation(
-                navController = navController,
-                currentRoute = currentRoute,
-                onBackPressed = { navController.navigateUp() }
-            )
-
-            val expectedGameId = backStackEntry.arguments?.getString("gameId")
-
-            WaitingOpponentScreen(
-                onNavigateToGame = { gameId, playerName ->
-                    navController.navigate(Routes.gameWithIdAndPlayer(gameId, playerName)) {
-                        popUpTo(Routes.WAITING_OPPONENT) {
-                            inclusive = true
-                        }
-                    }
-                },
-                onNavigateBack = {
-                    navController.navigateUp()
-                },
-                expectedGameId = expectedGameId
             )
         }
 
@@ -247,22 +221,9 @@ fun MathRacerNavGraph(
                 onBackPressed = { navController.navigateUp() }
             )
 
-            val createMatchViewModel: com.app.mathracer.ui.screens.multiplayer.viewmodel.CreateMatchViewModel = hiltViewModel()
             CreateMatchScreen(
                 onCreateMatch = { name, privacy, difficulty, resultType ->
-                    // Call API to create game, then navigate to waiting screen
-                    createMatchViewModel.createMatch(name, privacy, difficulty, resultType) { result ->
-                        result.fold(
-                            onSuccess = {
-                                navController.navigate(Routes.WAITING_OPPONENT)
-                            },
-                            onFailure = { err ->
-                                android.util.Log.e("CreateMatch", "Failed to create match: ${err.message}")
-                                // Still navigate to waiting opponent to allow manual matching if desired
-                                navController.navigate(Routes.WAITING_OPPONENT)
-                            }
-                        )
-                    }
+                    navController.navigate(Routes.WAITING_OPPONENT)
                 },
                 onBack = { navController.navigateUp() }
             )
@@ -275,53 +236,31 @@ fun MathRacerNavGraph(
                 onBackPressed = { navController.navigateUp() }
             )
 
-            val joinMatchesViewModel: com.app.mathracer.ui.screens.multiplayer.viewmodel.JoinMatchesViewModel = hiltViewModel()
-            val gamesState by joinMatchesViewModel.games.collectAsState()
+            val joinViewModel: com.app.mathracer.ui.screens.multiplayer.viewmodel.JoinMatchesViewModel = hiltViewModel()
+            val gamesState by joinViewModel.games.collectAsState()
+            val isLoading by joinViewModel.isLoading.collectAsState()
 
-            // Fetch games when entering the screen
             LaunchedEffect(Unit) {
-                joinMatchesViewModel.fetchAvailableGames(false)
+                // Fetch available games when entering the screen
+                joinViewModel.fetchAvailableGames(publicOnly = false)
             }
 
-            val mappedMatches = gamesState.map { g ->
+            // Map API DTOs into local MatchItem for the composable
+            val matches = gamesState.map { dto ->
                 com.app.mathracer.ui.screens.multiplayer.MatchItem(
-                    id = g.gameId.toString(),
-                    name = g.gameName.ifBlank { "Partida ${g.gameId}" },
-                    difficulty = g.difficulty ?: "",
-                    privacy = if (g.isPrivate) "Privada" else "Pública",
-                    requiresPassword = g.requiresPassword
+                    id = dto.gameId.toString(),
+                    name = dto.gameName,
+                    difficulty = dto.difficulty ?: "",
+                    privacy = if (dto.isPrivate) "Privada" else "Pública",
+                    requiresPassword = dto.requiresPassword
                 )
             }
 
-            val coroutineScope = rememberCoroutineScope()
-
             JoinMatchesScreen(
-                matches = mappedMatches,
+                matches = matches,
                 onJoinConfirmed = { matchId, password ->
-                    try {
-                        val id = matchId.toIntOrNull()
-                        if (id != null) {
-                            // Use ViewModel to join via SignalR (handles init and auth)
-                            coroutineScope.launch {
-                                joinMatchesViewModel.joinGame(id, password) { result ->
-                                            result.fold(
-                                                onSuccess = {
-                                                    navController.navigate(Routes.waitingWithGame(id.toString()))
-                                                },
-                                        onFailure = { err ->
-                                            android.util.Log.e("JoinMatches", "Failed to join: ${err.message}")
-                                            // Still navigate to waiting so UI remains consistent
-                                                    navController.navigate(Routes.waitingWithGame(id.toString()))
-                                        }
-                                    )
-                                }
-                            }
-                        } else {
-                            navController.navigate(Routes.WAITING_OPPONENT)
-                        }
-                    } catch (e: Exception) {
-                        navController.navigate(Routes.WAITING_OPPONENT)
-                    }
+                    // When user joins, navigate to waiting opponent screen
+                    navController.navigate(Routes.WAITING_OPPONENT)
                 },
                 onBack = { navController.navigateUp() }
             )

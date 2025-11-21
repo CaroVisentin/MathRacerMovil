@@ -1,5 +1,6 @@
 package com.app.mathracer.ui.screens.multiplayer.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.mathracer.data.network.RetrofitClient
@@ -54,6 +55,7 @@ class JoinMatchesViewModel @Inject constructor(
             try {
                 // Ensure connection + join over SignalR
                 val result = gameRepository.joinGame(matchId, password)
+                Log.d("MATHI", result.toString())
                 onResult(result)
             } catch (e: Exception) {
                 _error.value = e.message

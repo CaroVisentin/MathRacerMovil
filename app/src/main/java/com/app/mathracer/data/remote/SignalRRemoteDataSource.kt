@@ -203,14 +203,36 @@ class SignalRRemoteDataSource @Inject constructor() {
                     val gameIdInt = gameIdNumeric.toInt()
                     val playerIdInt = playerIdNumeric.toInt()
                     android.util.Log.d("SignalR", "🎯 Invoking SendAnswer with ints: $gameIdInt, $playerIdInt, $answer")
-                    hubConnection?.invoke("SendAnswer", gameIdInt, playerIdInt, answer)
+                    val future = hubConnection?.invoke("SendAnswer", gameIdInt, playerIdInt, answer)
+                    try {
+                        (future as? java.util.concurrent.CompletableFuture<Any?>)?.get()
+                        android.util.Log.d("SignalR", "SendAnswer invoke completed (ints)")
+                    } catch (e: Exception) {
+                        android.util.Log.e("SignalR", "SendAnswer invocation failed (ints)", e)
+                        return@withContext Result.failure(e)
+                    }
                 } catch (e: Exception) {
-                    android.util.Log.w("SignalR", "Could not convert ids to int or send as ints, falling back to strings", e)
-                    hubConnection?.invoke("SendAnswer", gameId, playerId, answer)
+                    android.util.Log.w("SignalR", "Could not convert ids to int, falling back to strings", e)
+                    val future = hubConnection?.invoke("SendAnswer", gameId, playerId, answer)
+                    try {
+                        (future as? java.util.concurrent.CompletableFuture<Any?>)?.get()
+                        android.util.Log.d("SignalR", "SendAnswer invoke completed (strings)")
+                    } catch (ex: Exception) {
+                        android.util.Log.e("SignalR", "SendAnswer invocation failed (strings)", ex)
+                        return@withContext Result.failure(ex)
+                    }
                 }
             } else {
-                hubConnection?.invoke("SendAnswer", gameId, playerId, answer)
+                val future = hubConnection?.invoke("SendAnswer", gameId, playerId, answer)
+                try {
+                    (future as? java.util.concurrent.CompletableFuture<Any?>)?.get()
+                    android.util.Log.d("SignalR", "SendAnswer invoke completed (strings)")
+                } catch (e: Exception) {
+                    android.util.Log.e("SignalR", "SendAnswer invocation failed (strings)", e)
+                    return@withContext Result.failure(e)
+                }
             }
+
             Result.success(Unit)
         } catch (e: Exception) {
             android.util.Log.e("SignalR", "Failed to send answer", e)

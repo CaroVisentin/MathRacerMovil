@@ -7,6 +7,7 @@ import com.app.mathracer.domain.models.GameStatus
 import com.app.mathracer.domain.usecases.ObserveGameUpdatesUseCase
 import com.app.mathracer.domain.usecases.SubmitAnswerUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import com.app.mathracer.data.repository.UserRemoteRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,11 +23,37 @@ class GameViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(GameUiState())
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
     
-    fun initializeGame(gameId: String, playerName: String = "Jugador") {
+    fun initializeGame(gameId: String, playerName: String ) {
         _uiState.value = _uiState.value.copy(
             gameId = gameId,
             playerName = playerName
         )
+        // Try to resolve numeric player id from server using Firebase UID
+        viewModelScope.launch {
+            try {
+                val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+                val uid = firebaseUser?.uid
+                if (!uid.isNullOrBlank()) {
+                    try {
+                        val resp = UserRemoteRepository.getUserByUid(uid)
+                        if (resp.isSuccessful) {
+                            val body = resp.body()
+                            val resolvedId = body?.id?.toString()
+                            if (!resolvedId.isNullOrBlank()) {
+                                android.util.Log.d("GameViewModel", "Resolved numeric player id from server: $resolvedId")
+                                _uiState.value = _uiState.value.copy(myPlayerId = resolvedId)
+                            }
+                        } else {
+                            android.util.Log.w("GameViewModel", "Failed to get user by uid: ${resp.code()}")
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.w("GameViewModel", "Error fetching user by uid: ${e.message}")
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.w("GameViewModel", "Failed to resolve player id: ${e.message}")
+            }
+        }
         observeGameEvents()
     }
     
@@ -49,62 +76,90 @@ class GameViewModel @Inject constructor(
         
         if (gameId == currentGameId) {
             android.util.Log.d("GameViewModel", "🎮 Processing game update for game $gameId, status: ${game.status}")
+
+            // Try to reliably determine "my player" id if not set yet
+            val currentState = _uiState.value
+            var myPlayerId = currentState.myPlayerId
+
+            // Prefer id match if available
+            if (myPlayerId == null) {
+                // Try to match by player name
+                val displayName = currentState.playerName
+                if (displayName.isNotBlank()) {
+                    if (game.playerOne.name.equals(displayName, ignoreCase = true)) {
+                        myPlayerId = game.playerOne.id
+                    } else if (game.playerTwo?.name?.equals(displayName, ignoreCase = true) == true) {
+                        myPlayerId = game.playerTwo?.id
+                    }
+                }
+            }
+
+            // If still null, try to infer from previous opponentName (fallback)
+            if (myPlayerId == null && currentState.opponentName.isNotBlank()) {
+                if (!game.playerOne.name.equals(currentState.opponentName, ignoreCase = true)) {
+                    myPlayerId = game.playerOne.id
+                } else if (!game.playerTwo?.name.equals(currentState.opponentName, ignoreCase = true)) {
+                    myPlayerId = game.playerTwo?.id
+                }
+            }
+
+            // Persist discovered id into state for future submits
+            if (myPlayerId != null && myPlayerId != currentState.myPlayerId) {
+                android.util.Log.d("GameViewModel", "🎮 Detected myPlayerId=$myPlayerId from game update")
+            }
+
+            _uiState.value = currentState.copy(myPlayerId = myPlayerId)
+
             when (game.status) {
                 GameStatus.IN_PROGRESS -> {
                     android.util.Log.d("GameViewModel", "🎮 Processing IN_PROGRESS status")
-                    val currentState = _uiState.value
-                    val myPlayerName = currentState.playerName
-                    
-                    android.util.Log.d("GameViewModel", "🎮 Looking for player: '$myPlayerName'")
-                    android.util.Log.d("GameViewModel", "🎮 Player 1: '${game.playerOne.name}', Player 2: '${game.playerTwo?.name}'")
-                    
-                    
+                    val stateBefore = _uiState.value
+
+                    android.util.Log.d("GameViewModel", "🎮 Player names: p1='${game.playerOne.name}', p2='${game.playerTwo?.name}' | myPlayerId(state)='${stateBefore.myPlayerId}'")
+
+                    // Determine myPlayer and opponent based on discovered myPlayerId or name fallback
                     val myPlayer = when {
-                        game.playerOne.name.equals(myPlayerName, ignoreCase = true) -> game.playerOne
-                        game.playerTwo?.name?.equals(myPlayerName, ignoreCase = true) == true -> game.playerTwo
-                         
-                        currentState.myPlayerId != null && game.playerOne.id == currentState.myPlayerId -> game.playerOne
-                        currentState.myPlayerId != null && game.playerTwo?.id == currentState.myPlayerId -> game.playerTwo
+                        stateBefore.myPlayerId != null && game.playerOne.id == stateBefore.myPlayerId -> game.playerOne
+                        stateBefore.myPlayerId != null && game.playerTwo?.id == stateBefore.myPlayerId -> game.playerTwo
+                        game.playerOne.name.equals(stateBefore.playerName, ignoreCase = true) -> game.playerOne
+                        game.playerTwo?.name?.equals(stateBefore.playerName, ignoreCase = true) == true -> game.playerTwo
                         else -> null
                     }
 
-                    
                     val opponent = when (myPlayer) {
-                        null -> if (game.playerOne.name.equals(myPlayerName, ignoreCase = true)) game.playerTwo else game.playerOne
+                        null -> if (game.playerOne.name.equals(stateBefore.playerName, ignoreCase = true)) game.playerTwo else game.playerOne
                         game.playerOne -> game.playerTwo
                         else -> game.playerOne
                     }
-                    
+
                     android.util.Log.d("GameViewModel", "🎮 Found myPlayer: ${myPlayer?.name} (score: ${myPlayer?.score})")
                     android.util.Log.d("GameViewModel", "🎮 Found opponent: ${opponent?.name} (score: ${opponent?.score})")
-                    android.util.Log.d("GameViewModel", "🎮 Current question: '${game.currentQuestion?.text}'")
-                   
+                    android.util.Log.d("GameViewModel", "🎮 Current question: '${game.currentQuestion?.text}' | options: ${game.currentQuestion?.options}")
+
                     val newQuestion = game.currentQuestion?.text ?: ""
-                    val hasNewQuestion = newQuestion.isNotEmpty() && newQuestion != currentState.currentQuestion
-                    
+                    val hasNewQuestion = newQuestion.isNotEmpty() && newQuestion != stateBefore.currentQuestion
+
                     if (hasNewQuestion) {
                         android.util.Log.d("GameViewModel", "🆕 New question detected: '$newQuestion'")
                     }
-                    
+
                     // Por ahora lo puse asi nomas, dps se puede mejorar
                     val myPlayerScore = myPlayer?.score ?: 0
                     val opponentScore = opponent?.score ?: 0
-                    
-                   
+
                     val myPlayerPosition = minOf(myPlayerScore, 10)
                     val opponentPosition = minOf(opponentScore, 10)
-                    
-                    
+
                     val gameFinished = myPlayerPosition >= 10 || opponentPosition >= 10
                     val winner = when {
                         myPlayerPosition >= 10 -> "¡Ganaste!"
                         opponentPosition >= 10 -> "Perdiste"
                         else -> null
                     }
-                    
+
                     android.util.Log.d("GameViewModel", "🏁 Positions - Me: $myPlayerPosition/10, Opponent: $opponentPosition/10, GameFinished: $gameFinished")
-                     
-                    _uiState.value = currentState.copy(
+
+                    _uiState.value = stateBefore.copy(
                         isLoading = false,
                         playerScore = myPlayerScore,
                         opponentScore = opponentScore,
@@ -113,37 +168,63 @@ class GameViewModel @Inject constructor(
                         correctAnswer = game.currentQuestion?.correctAnswer,
                         playerProgress = myPlayerPosition,
                         opponentProgress = opponentPosition,
-                        myPlayerId = myPlayer?.id ?: currentState.myPlayerId,
+                        myPlayerId = myPlayer?.id ?: stateBefore.myPlayerId,
                         opponentName = opponent?.name ?: "Oponente",
-                        gameEnded = gameFinished || currentState.gameEnded,
-                        winner = winner ?: currentState.winner,
-                        
-                        showFeedback = if (hasNewQuestion) false else currentState.showFeedback,
-                        selectedOption = if (hasNewQuestion) null else currentState.selectedOption,
-                        isLastAnswerCorrect = if (hasNewQuestion) null else currentState.isLastAnswerCorrect,
-                        
-                        isPenalized = currentState.isPenalized,
+                        gameEnded = gameFinished || stateBefore.gameEnded,
+                        winner = winner ?: stateBefore.winner,
+
+                        showFeedback = if (hasNewQuestion) false else stateBefore.showFeedback,
+                        selectedOption = if (hasNewQuestion) null else stateBefore.selectedOption,
+                        isLastAnswerCorrect = if (hasNewQuestion) null else stateBefore.isLastAnswerCorrect,
+
+                        isPenalized = stateBefore.isPenalized,
                         expectedResult = game.expectedResult ?: "" // <-- NUEVO
                     )
-                    
+
                     if (hasNewQuestion) {
                         android.util.Log.d("GameViewModel", "✅ New question loaded and UI updated!")
                     }
-                    
+
                     android.util.Log.d("GameViewModel", "🎮 ✅ UI State updated successfully!")
                 }
                 GameStatus.FINISHED -> {
                     val currentState = _uiState.value
-                    val winner = game.winner
-                    val isWinner = winner?.name == currentState.playerName
-                    
+
+                    // Determine myPlayer and opponent consistently like in IN_PROGRESS
+                    val myPlayer = when {
+                        currentState.myPlayerId != null && game.playerOne.id == currentState.myPlayerId -> game.playerOne
+                        currentState.myPlayerId != null && game.playerTwo?.id == currentState.myPlayerId -> game.playerTwo
+                        game.playerOne.name.equals(currentState.playerName, ignoreCase = true) -> game.playerOne
+                        game.playerTwo?.name?.equals(currentState.playerName, ignoreCase = true) == true -> game.playerTwo
+                        else -> null
+                    }
+
+                    val opponent = when (myPlayer) {
+                        null -> if (game.playerOne.name.equals(currentState.playerName, ignoreCase = true)) game.playerTwo else game.playerOne
+                        game.playerOne -> game.playerTwo
+                        else -> game.playerOne
+                    }
+
+                    // Decide winner by id when possible, fallback to name
+                    val winnerEntity = game.winner
+                    val isWinner = if (!winnerEntity?.id.isNullOrBlank() && !currentState.myPlayerId.isNullOrBlank()) {
+                        winnerEntity?.id == currentState.myPlayerId
+                    } else {
+                        winnerEntity?.name == currentState.playerName
+                    }
+
+                    val playerScore = myPlayer?.score ?: 0
+                    val oppScore = opponent?.score ?: 0
+
+                    android.util.Log.d("GameViewModel", "🏁 FINISHED - myPlayer='${myPlayer?.name}', opponent='${opponent?.name}', isWinner=$isWinner")
+
                     _uiState.value = currentState.copy(
                         isLoading = false,
                         gameEnded = true,
                         winner = if (isWinner) "¡Ganaste!" else "Perdiste",
-                        playerScore = game.playerOne.score,
-                        opponentScore = game.playerTwo?.score ?: 0,
-                        expectedResult = currentState.expectedResult ?: "" // <-- NUEVO
+                        playerScore = playerScore,
+                        opponentScore = oppScore,
+                        expectedResult = currentState.expectedResult ?: ""
                     )
                 }
                 GameStatus.WAITING_FOR_PLAYERS -> {

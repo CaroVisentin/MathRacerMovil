@@ -51,6 +51,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import com.app.mathracer.data.CurrentUser
 
 private val PanelColor  = Color(0xE62C2C2C) // #2C2C2C con 90% alpha
 private val BorderLight = Color(0x66FFFFFF)
@@ -684,7 +685,7 @@ fun GameScreen(
 
     // Inicializar el juego
     LaunchedEffect(gameId, playerName) {
-        viewModel.initializeGame(gameId, playerName)
+        viewModel.initializeGame(gameId, CurrentUser.user?.name.toString())
     }
 
     // Limpiar feedback automáticamente después de mostrar resultado
