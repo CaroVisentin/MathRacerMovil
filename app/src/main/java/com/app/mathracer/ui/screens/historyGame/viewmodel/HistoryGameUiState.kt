@@ -20,6 +20,7 @@ data class HistoryGameUiState(
     val gameEnded: Boolean = false,
     val winner: String? = null,
     val error: String? = null,
+    val coinsAwarded: Int = 0,
     val expectedResult: String = "",
     val fireExtinguisherActive: Boolean = false,
     val fireExtinguisherCount: Int = 0,
