@@ -8,7 +8,7 @@ data class ChestItem(
     val type: String,
     val quantity: Int,
     val product: Product? = null,
-    val wildcard: Wildcard? = null,
+    val wildcard: ChestWildcard? = null,
     val compensationCoins: Int? = null
 )
 
@@ -22,7 +22,7 @@ data class Product(
     val rarityColor: String?
 )
 
-data class Wildcard(
+data class ChestWildcard(
     val id: Int,
     val name: String,
     val description: String?

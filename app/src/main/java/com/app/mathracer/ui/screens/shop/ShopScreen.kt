@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -23,43 +24,30 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import coil.compose.AsyncImage
 import com.app.mathracer.R
 import com.app.mathracer.data.CurrentUser
 import com.app.mathracer.data.network.ItemDto
+import com.app.mathracer.data.network.ShopResponseEnergies
+import com.app.mathracer.data.network.ShopResponseWildcards
 import com.app.mathracer.ui.components.ProductImage
+import com.app.mathracer.ui.screens.shop.viewmodel.ShopBuyType
 import com.app.mathracer.ui.screens.shop.viewmodel.ShopViewModel
+import com.app.mathracer.ui.theme.MagentaMR
 
-// ---------------------------------------------------------------------
-// MODELOS
-// ---------------------------------------------------------------------
-enum class ShopCategory {
-    CAR,
-    BACKGROUND,
-    CHARACTER
-}
 // ---------------------------------------------------------------------
 // PANTALLA PRINCIPAL
 // ---------------------------------------------------------------------
 @Composable
 fun ShopScreen(
-    viewModel: ShopViewModel, onBackClick: () -> Unit = {}
+    viewModel: ShopViewModel,
+    onBackClick: () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsState()
-    var selectedItem by remember { mutableStateOf<ItemDto?>(null) }
 
-//    val specialOffer = ItemDto(
-//        id = 999,
-//        price = 100_000,
-//        imageUrl = "www.google.com",
-//        name = "oferta",
-//        description = "oferta",
-//        productTypeId = 2,
-//        productTypeName = "2",
-//        rarity = "2",
-//        isOwned = false,
-//        currency = "455",
-//    )
+    var selectedItem by remember { mutableStateOf<ItemDto?>(null) }
+    var selectedBuyType by remember { mutableStateOf<ShopBuyType?>(null) }
+    var showDialog by remember { mutableStateOf(false) }
+    var dialogPrice by remember { mutableStateOf(0) }
 
     Box(
         modifier = Modifier
@@ -73,7 +61,6 @@ fun ShopScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // HEADER
             item {
                 ShopHeader(
                     coins = state.coins,
@@ -81,16 +68,41 @@ fun ShopScreen(
                 )
             }
 
-//            // OFERTA ESPECIAL
-//            item {
-//                SectionTitle(text = "OFERTA ESPECIAL")
-//            }
-//            item {
-//                SpecialOfferCard(
-//                    item = specialOffer,
-//                    onClick = { selectedItem = it }
-//                )
-//            }
+            // ENERGÍAS
+            item {
+                SectionTitle(text = "ENERGIAS")
+            }
+
+            item {
+                state.energies?.let { energies ->
+                    EnergyShopCard(
+                        data = energies,
+                        onClick = {
+                            selectedItem = null        // porque no es ItemDto
+                            selectedBuyType = ShopBuyType.ENERGY
+                            dialogPrice = energies.pricePerUnit  // o el total que quieras cobrar
+                            showDialog = true
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+
+            // COMODINES
+            item {
+                SectionTitle(text = "COMODINES")
+            }
+            item {
+                ShopSectionWildcardGrid(
+                    items = state.comodines,
+                    onItemClick = {
+                        selectedItem = null
+                        selectedBuyType = ShopBuyType.COMODIN
+                        dialogPrice = 0
+                        showDialog = true
+                    }
+                )
+            }
 
             // AUTOS
             item {
@@ -99,7 +111,12 @@ fun ShopScreen(
             item {
                 ShopSectionGrid(
                     items = state.cars,
-                    onItemClick = { selectedItem = it }
+                    onItemClick = { item ->
+                        selectedItem = item
+                        selectedBuyType = ShopBuyType.CAR
+                        dialogPrice = item.price
+                        showDialog = true
+                    }
                 )
             }
 
@@ -110,7 +127,12 @@ fun ShopScreen(
             item {
                 ShopSectionGrid(
                     items = state.backgrounds,
-                    onItemClick = { selectedItem = it }
+                    onItemClick = { item ->
+                        selectedItem = item
+                        selectedBuyType = ShopBuyType.BACKGROUND
+                        dialogPrice = item.price
+                        showDialog = true
+                    }
                 )
             }
 
@@ -121,24 +143,78 @@ fun ShopScreen(
             item {
                 ShopSectionGrid(
                     items = state.characters,
-                    onItemClick = { selectedItem = it }
+                    onItemClick = { item ->
+                        selectedItem = item
+                        selectedBuyType = ShopBuyType.CHARACTER
+                        dialogPrice = item.price
+                        showDialog = true
+                    }
                 )
             }
         }
 
         // DIALOGO DE COMPRA
-        if (selectedItem != null) {
+        if (showDialog && selectedBuyType != null) {
             BuyConfirmDialog(
-                price = selectedItem!!.price,
-                onDismiss = { selectedItem = null },
+                price = dialogPrice,
+                onDismiss = {
+                    showDialog = false
+                    selectedItem = null
+                    selectedBuyType = null
+                },
                 onConfirm = {
-                    if(selectedItem != null) {
-                        viewModel.buyItem(
-                            playerId = CurrentUser.user!!.id ?: 0,
-                            item = selectedItem
-                        )
-                        selectedItem = null
+                    val playerId = CurrentUser.user?.id ?: 0
+
+                    when (selectedBuyType) {
+                        ShopBuyType.CAR -> {
+                            selectedItem?.let { item ->
+                                viewModel.buyCar(
+                                    playerId = playerId,
+                                    item = item
+                                )
+                            }
+                        }
+
+                        ShopBuyType.BACKGROUND -> {
+                            selectedItem?.let { item ->
+                                viewModel.buyBackground(
+                                    playerId = playerId,
+                                    item = item
+                                )
+                            }
+                        }
+
+                        ShopBuyType.CHARACTER -> {
+                            selectedItem?.let { item ->
+                                viewModel.buyCharacter(
+                                    playerId = playerId,
+                                    item = item
+                                )
+                            }
+                        }
+
+                        ShopBuyType.ENERGY -> {
+                            viewModel.buyEnergy(
+                                playerId = playerId
+                            )
+                        }
+
+                        ShopBuyType.COMODIN -> {
+                            selectedItem?.let { item ->
+                                viewModel.buyComodin(
+                                    playerId = playerId,
+                                    item = item
+                                )
+                            }
+                        }
+
+                        null -> Unit
                     }
+
+                    // cierro el diálogo
+                    showDialog = false
+                    selectedItem = null
+                    selectedBuyType = null
                 }
             )
         }
@@ -180,7 +256,7 @@ fun ShopHeader(
         Spacer(modifier = Modifier.weight(1f))
 
         Row(
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Image(
                 painter = painterResource(id = R.drawable.coin),
@@ -212,75 +288,6 @@ fun SectionTitle(text: String) {
 }
 
 // ---------------------------------------------------------------------
-// CARD DE OFERTA ESPECIAL
-// ---------------------------------------------------------------------
-@Composable
-fun SpecialOfferCard(
-    item: ItemDto,
-    onClick: (ItemDto) -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFF243149))
-            .border(2.dp, Color.White, RoundedCornerShape(16.dp))
-            .clickable { onClick(item) }
-            .padding(16.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Imagen grande (auto + personaje)
-//            Image(
-//                painter = painterResource(id = item.image),
-//                contentDescription = null,
-//                modifier = Modifier
-//                    .height(90.dp)
-//                    .weight(1f)
-//            )
-            AsyncImage(
-                model = item.imageUrl,
-                contentDescription = null,
-                modifier = Modifier
-                    .height(90.dp)
-                    .weight(1f)
-            )
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = "MARIO + AUTO ESTILO\n\"MATH RACER\"",
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.coin),
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "%,d".format(item.price),
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
-                    )
-                }
-            }
-        }
-    }
-}
-
-// ---------------------------------------------------------------------
 // GRID POR SECCIÓN (3 columnas)
 // ---------------------------------------------------------------------
 @Composable
@@ -303,7 +310,7 @@ fun ShopSectionGrid(
                         onClick = { onItemClick(item) }
                     )
                 }
-                // si la fila no tiene las 3 columnas, agrego espacios vacíos
+
                 repeat(3 - rowItems.size) {
                     Spacer(
                         modifier = Modifier
@@ -315,6 +322,42 @@ fun ShopSectionGrid(
         }
     }
 }
+
+@Composable
+fun ShopSectionWildcardGrid(
+    items: List<ShopResponseWildcards>,
+    onItemClick: (ShopResponseWildcards) -> Unit
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        items.chunked(3).forEach { rowItems ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                rowItems.forEach { item ->
+                    ShopItemWildcardCard(
+                        item = item,
+                        modifier = Modifier
+                            .weight(1f), // <- IMPORTANTE: igual que ShopItemCard
+                        onClick = { onItemClick(item) }
+                    )
+                }
+
+                repeat(3 - rowItems.size) {
+                    Spacer(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(0.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+
 fun textColorForBackground(bg: Color): Color {
     val r = bg.red
     val g = bg.green
@@ -325,31 +368,20 @@ fun textColorForBackground(bg: Color): Color {
 
     return if (luminance > 0.6) Color.Black else Color.White
 }
+
 fun rarityColor(rarity: String): Color {
     return when (rarity.lowercase()) {
-        "común", "comun" -> {
-            Color(0xFF9C9C9C)
-        }
-        "poco común", "poco comun" -> {
-            Color(0xFF1EFF00)
-        }
-        "raro" -> {
-            Color(0xFF007BFF)
-        }
-        "épico", "epico" -> {
-            Color(0xFFA335EE)
-        }
-        "legendario" -> {
-            Color(0xFFFFA500)
-        }
-        else -> {
-            Color(0xFF1E1E1E)
-        }
+        "común", "comun" -> Color(0xFF9C9C9C)
+        "poco común", "poco comun" -> Color(0xFF1EFF00)
+        "raro" -> Color(0xFF007BFF)
+        "épico", "epico" -> Color(0xFFA335EE)
+        "legendario" -> Color(0xFFFFA500)
+        else -> Color(0xFF1E1E1E)
     }
 }
 
 // ---------------------------------------------------------------------
-// CARD DE CADA ITEM (AUTO, FONDO, PERSONAJE)
+// CARD DE CADA ITEM (AUTO, FONDO, PERSONAJE, COMODÍN)
 // ---------------------------------------------------------------------
 @Composable
 fun ShopItemCard(
@@ -374,22 +406,12 @@ fun ShopItemCard(
             verticalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxSize()
         ) {
-//            Image(
-//                painter = item.imageUrl,
-//                contentDescription = null,
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .weight(1f)
-//            )
-//            AsyncImage(
-//                model = item.imageUrl,
-//                contentDescription = null,
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .weight(1f)
-//            )
-            ProductImage(productId = item.id, fallbackRes = R.drawable.mathi, modifier = Modifier.size(80.dp), contentScale = ContentScale.Fit)
-
+            ProductImage(
+                productId = item.id,
+                fallbackRes = R.drawable.mathi,
+                modifier = Modifier.size(80.dp),
+                contentScale = ContentScale.Fit
+            )
 
             Spacer(modifier = Modifier.height(6.dp))
 
@@ -413,6 +435,83 @@ fun ShopItemCard(
         }
     }
 }
+
+@Composable
+fun ShopItemWildcardCard(
+    item: ShopResponseWildcards,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val textColor = textColorForBackground(Color.White)
+
+    Box(
+        modifier = modifier
+            .aspectRatio(0.8f)
+            .clip(RoundedCornerShape(12.dp))
+            .background(MagentaMR)
+            .border(2.dp, Color.White, RoundedCornerShape(12.dp))
+            .clickable { onClick() }
+            .padding(8.dp)
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxSize().padding(top = 20.dp)
+        ) {
+            val iconModifier = Modifier.size(36.dp) // <- tamaño de la imagen
+
+            when (item.name) {
+                "Matafuego" -> {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_shield),
+                        contentDescription = null,
+                        modifier = iconModifier,
+                        contentScale = ContentScale.Fit
+                    )
+                }
+
+                "Cambio de rumbo" -> {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_shuffle),
+                        contentDescription = null,
+                        modifier = iconModifier,
+                        contentScale = ContentScale.Fit
+                    )
+                }
+
+                "Nitro" -> {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_bolt),
+                        contentDescription = null,
+                        modifier = iconModifier,
+                        contentScale = ContentScale.Fit
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.coin),
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "%,d".format(item.price),
+                    color = textColor,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
 
 // ---------------------------------------------------------------------
 // DIALOGO DE CONFIRMACIÓN
@@ -460,7 +559,6 @@ fun BuyConfirmDialog(
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )
-
                     // Botón comprar
                     Box(
                         modifier = Modifier
@@ -486,10 +584,88 @@ fun BuyConfirmDialog(
                             )
                         }
                     }
-
-
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun EnergyShopCard(
+    data: ShopResponseEnergies,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val enabled = data.maxCanBuy > 0
+
+    val bgColor = if (enabled) Color(0xFF00C853) else Color(0xFF555555) // verde / gris
+    val contentAlpha = if (enabled) 1f else 0.4f
+
+    val cardModifier = modifier
+        .fillMaxWidth()
+        .height(130.dp) // ajustá este alto para matchear la otra card
+        .clip(RoundedCornerShape(12.dp))
+        .background(bgColor)
+        .border(2.dp, Color.White, RoundedCornerShape(12.dp))
+        .then(
+            if (enabled) Modifier.clickable { onClick() } else Modifier
+        )
+        .padding(8.dp)
+
+    Box(modifier = cardModifier) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxSize()
+                .alpha(contentAlpha)
+        ) {
+            // Imagen de batería (tu PNG de energía)
+            Image(
+                painter = painterResource(id = R.drawable.energy),
+                contentDescription = null,
+                modifier = Modifier.size(80.dp),
+                contentScale = ContentScale.Fit
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            // Precio por unidad
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.coin),
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "%,d".format(data.pricePerUnit),
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Info de energía
+            Text(
+                text = "Energía: ${data.currentAmount}/${data.maxAmount}",
+                color = Color.White,
+                fontSize = 12.sp
+            )
+
+            Text(
+                text = if (enabled)
+                    "Podés comprar: ${data.maxCanBuy}"
+                else
+                    "Sin energía disponible",
+                color = Color.White,
+                fontSize = 12.sp
+            )
         }
     }
 }

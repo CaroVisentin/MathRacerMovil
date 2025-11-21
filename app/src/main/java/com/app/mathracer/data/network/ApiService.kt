@@ -73,9 +73,34 @@ data class ItemDto(
     val currency: String
 )
 
+data class ShopResponseEnergies(
+    val pricePerUnit: Int,
+    val maxAmount: Int,
+    val currentAmount: Int,
+    val maxCanBuy: Int
+)
+
+data class ShopResponseWildcards(
+    val id: Int,
+    val name: String,
+    val description: String,
+    val price: Int,
+    val currentQuantity: Int
+)
+
 data class PurchaseSuccessResponseDto(
     val remainingCoins: Int
 )
+
+data class PurchaseEnergyResponseDto(
+    val quantity: Int
+)
+
+data class PurchaseWildscardResponseDto(
+    val wildcardId: Int,
+    val quantity: Int
+)
+
 
 interface ApiService {
     @POST("player/register")
@@ -182,13 +207,31 @@ interface ApiService {
     @GET("characters")
     suspend fun getShopCharacters(@Query("playerId") playerId: Int): Response<ShopResponse>
 
-    @POST("api/players/{playerId}/backgrounds/{backgroundId}")
+    @GET("Energy/store/{playerId}")
+    suspend fun getShopEnergies(@Header("Authorization") authorization: String?, @Path("playerId") playerId: Int): Response<ShopResponseEnergies>
+
+    @GET("Wildcards/store/{playerId}")
+    suspend fun getShopWildcards(@Header("Authorization") authorization: String?, @Path("playerId") playerId: Int): Response<List<ShopResponseWildcards>>
+
+    @POST("players/{playerId}/backgrounds/{backgroundId}")
     suspend fun purchaseBackground(@Path("playerId") playerId: Int, @Path("backgroundId") backgroundId: Int): Response<PurchaseSuccessResponseDto>
 
-    @POST("api/players/{playerId}/characters/{charactersId}")
+    @POST("players/{playerId}/characters/{charactersId}")
     suspend fun purchaseCharacters(@Path("playerId") playerId: Int, @Path("charactersId") charactersId: Int): Response<PurchaseSuccessResponseDto>
 
-    @POST("api/players/{playerId}/cars/{carsId}")
+    @POST("players/{playerId}/cars/{carsId}")
     suspend fun purchaseCars(@Path("playerId") playerId: Int, @Path("carsId") carsId: Int): Response<PurchaseSuccessResponseDto>
+
+    @POST("Energy/purchase/{playerId}")
+    suspend fun purchaseEnergy(
+        @Path("playerId") playerId: Int,
+        @Body body: PurchaseEnergyResponseDto
+    ): Response<ShopResponse>
+
+    @POST("Wildcards/purchase/{playerId}")
+    suspend fun purchaseWildcards(
+        @Path("playerId") playerId: Int,
+        @Body body: PurchaseWildscardResponseDto
+    ): Response<ShopResponse>
 
 }

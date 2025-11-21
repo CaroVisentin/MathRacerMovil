@@ -1,8 +1,8 @@
 package com.app.mathracer.ui.screens.shop.viewmodel
 
-import com.app.mathracer.data.network.GarageItemDto
 import com.app.mathracer.data.network.ItemDto
-import com.app.mathracer.ui.screens.shop.ShopCategory
+import com.app.mathracer.data.network.ShopResponseEnergies
+import com.app.mathracer.data.network.ShopResponseWildcards
 
 data class ShopItem(
     val id: Int,
@@ -17,6 +17,21 @@ data class ShopUiState(
     val characters: List<ItemDto> = emptyList(),
     val backgrounds: List<ItemDto> = emptyList(),
     val loading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val energies: ShopResponseEnergies? = null,
+    val comodines: List<ShopResponseWildcards> = emptyList()
 )
 
+enum class ShopBuyType {
+    CAR,
+    BACKGROUND,
+    CHARACTER,
+    ENERGY,
+    COMODIN
+}
+
+enum class ShopCategory {
+    CAR,
+    BACKGROUND,
+    CHARACTER
+}
