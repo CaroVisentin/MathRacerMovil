@@ -136,8 +136,11 @@ class ShopRepository @Inject constructor() {
     suspend fun purchaseEnergy(playerId: Int, quantity: Int): Result<PurchaseEnergyResultDto> {
         return try {
             Log.d("ShopRepository", "purchaseEnergy: playerId=$playerId, quantity=$quantity")
+            val token = try { getIdToken() } catch (e: Exception) { null }
+            val header = token?.let { "Bearer $it" }
             val body = PurchaseEnergyRequestDto(quantity = quantity)
             val response = RetrofitClient.api.purchaseEnergy(
+                header,
                 playerId = playerId,
                 body = body
             )

@@ -20,6 +20,8 @@ data class ShopUiState(
     val error: String? = null,
     val energies: ShopResponseEnergies? = null,
     val comodines: List<ShopResponseWildcards> = emptyList()
+    ,
+    val purchaseMessage: String? = null
 )
 
 enum class ShopBuyType {

@@ -243,6 +243,7 @@ interface ApiService {
 
     @POST("Energy/purchase/{playerId}")
     suspend fun purchaseEnergy(
+        @Header("Authorization") authorization: String?,
         @Path("playerId") playerId: Int,
         @Body body: PurchaseEnergyRequestDto
     ): Response<PurchaseEnergyResultDto>

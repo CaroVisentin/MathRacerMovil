@@ -16,6 +16,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -47,6 +49,14 @@ fun ShopScreen(
     onBackClick: () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsState()
+
+    val context = LocalContext.current
+    LaunchedEffect(state.purchaseMessage) {
+        state.purchaseMessage?.let { msg ->
+            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+            viewModel.clearPurchaseMessage()
+        }
+    }
 
     var selectedItem by remember { mutableStateOf<ItemDto?>(null) }
     var selectedWildcard by remember { mutableStateOf<ShopResponseWildcards?>(null) }
@@ -100,6 +110,7 @@ fun ShopScreen(
             item {
                 ShopSectionWildcardGrid(
                     items = state.comodines,
+                    coins = state.coins,
                     onItemClick = { wildcard ->
                         selectedItem = null
                         selectedWildcard = wildcard
@@ -117,6 +128,7 @@ fun ShopScreen(
             item {
                 ShopSectionGrid(
                     items = state.cars,
+                    coins = state.coins,
                     onItemClick = { item ->
                         selectedItem = item
                         selectedBuyType = ShopBuyType.CAR
@@ -133,6 +145,7 @@ fun ShopScreen(
             item {
                 ShopSectionGrid(
                     items = state.backgrounds,
+                    coins = state.coins,
                     onItemClick = { item ->
                         selectedItem = item
                         selectedBuyType = ShopBuyType.BACKGROUND
@@ -149,6 +162,7 @@ fun ShopScreen(
             item {
                 ShopSectionGrid(
                     items = state.characters,
+                    coins = state.coins,
                     onItemClick = { item ->
                         selectedItem = item
                         selectedBuyType = ShopBuyType.CHARACTER
@@ -320,6 +334,7 @@ fun SectionTitle(text: String) {
 @Composable
 fun ShopSectionGrid(
     items: List<ItemDto>,
+    coins: Int,
     onItemClick: (ItemDto) -> Unit
 ) {
     Column(
@@ -331,10 +346,12 @@ fun ShopSectionGrid(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 rowItems.forEach { item ->
+                    val enabled = coins >= item.price
                     ShopItemCard(
                         item = item,
                         modifier = Modifier.weight(1f),
-                        onClick = { onItemClick(item) }
+                        enabled = enabled,
+                        onClick = { if (enabled) onItemClick(item) }
                     )
                 }
 
@@ -353,6 +370,7 @@ fun ShopSectionGrid(
 @Composable
 fun ShopSectionWildcardGrid(
     items: List<ShopResponseWildcards>,
+    coins: Int,
     onItemClick: (ShopResponseWildcards) -> Unit
 ) {
     Column(
@@ -364,11 +382,13 @@ fun ShopSectionWildcardGrid(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 rowItems.forEach { item ->
+                    val enabled = coins >= item.price
                     ShopItemWildcardCard(
                         item = item,
                         modifier = Modifier
                             .weight(1f), // <- IMPORTANTE: igual que ShopItemCard
-                        onClick = { onItemClick(item) }
+                        enabled = enabled,
+                        onClick = { if (enabled) onItemClick(item) }
                     )
                 }
 
@@ -414,26 +434,29 @@ fun rarityColor(rarity: String): Color {
 fun ShopItemCard(
     item: ItemDto,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
-    val bgColor = rarityColor(item.rarity)
+    val bgColor = if (enabled) rarityColor(item.rarity) else Color(0xFF555555)
+    val borderColor = if (enabled) Color.White else Color(0xFF888888)
     val textColor = textColorForBackground(bgColor)
+    val contentAlpha = if (enabled) 1f else 0.4f
 
     Box(
         modifier = modifier
             .aspectRatio(0.8f) // para formar cuadraditos
             .clip(RoundedCornerShape(12.dp))
             .background(bgColor)
-            .border(2.dp, Color.White, RoundedCornerShape(12.dp))
-            .clickable { onClick() }
+            .border(2.dp, borderColor, RoundedCornerShape(12.dp))
+            .then(if (enabled) Modifier.clickable { onClick() } else Modifier)
             .padding(8.dp)
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize().alpha(contentAlpha)
         ) {
-            ProductImage(
+                ProductImage(
                 productId = item.id,
                 fallbackRes = R.drawable.mathi,
                 modifier = Modifier.size(80.dp),
@@ -454,7 +477,7 @@ fun ShopItemCard(
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = "%,d".format(item.price),
-                    color = textColor,
+                    color = if (enabled) textColor else Color.LightGray,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -467,23 +490,27 @@ fun ShopItemCard(
 fun ShopItemWildcardCard(
     item: ShopResponseWildcards,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
-    val textColor = textColorForBackground(Color.White)
+    val bgColor = if (enabled) MagentaMR else Color(0xFF6B6B6B)
+    val borderColor = if (enabled) Color.White else Color(0xFF888888)
+    val textColor = if (enabled) textColorForBackground(Color.White) else Color.LightGray
+    val contentAlpha = if (enabled) 1f else 0.4f
 
     Box(
         modifier = modifier
             .aspectRatio(0.8f)
             .clip(RoundedCornerShape(12.dp))
-            .background(MagentaMR)
-            .border(2.dp, Color.White, RoundedCornerShape(12.dp))
-            .clickable { onClick() }
+            .background(bgColor)
+            .border(2.dp, borderColor, RoundedCornerShape(12.dp))
+            .then(if (enabled) Modifier.clickable { onClick() } else Modifier)
             .padding(8.dp)
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxSize().padding(top = 20.dp)
+            modifier = Modifier.fillMaxSize().padding(top = 20.dp).alpha(contentAlpha)
         ) {
             val iconModifier = Modifier.size(36.dp) // <- tamaño de la imagen
 
