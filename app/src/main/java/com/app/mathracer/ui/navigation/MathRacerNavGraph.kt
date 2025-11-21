@@ -199,7 +199,7 @@ fun MathRacerNavGraph(
             )
 
             val viewModel: ShopViewModel = hiltViewModel()
-            ShopScreen(viewModel = viewModel)
+            ShopScreen(viewModel = viewModel, onBackClick = { navController.navigateUp() })
         }
 
         composable(Routes.GARAGE) {

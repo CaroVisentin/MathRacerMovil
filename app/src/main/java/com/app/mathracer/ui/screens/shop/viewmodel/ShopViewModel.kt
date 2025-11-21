@@ -98,20 +98,21 @@ class ShopViewModel @Inject constructor(
     // Compra genérica para auto / fondo / personaje
     fun buyItem(playerId: Int, item: ItemDto?) {
         if (item == null) return
-
+        Log.d("ShopRepository", "purchaseCar: imte=$item")
         viewModelScope.launch {
-            val result = when (item.productTypeName.lowercase()) {
-                "background" -> repository.purchaseBackground(
+            Log.d("ShopViewModel", "buyItem invoked: playerId=$playerId, itemId=${item.id}, type=${item.productTypeName}")
+            val result = when (item.productTypeName) {
+                "Fondo" -> repository.purchaseBackground(
                     playerId = playerId,
                     backgroundId = item.id
                 )
 
-                "car" -> repository.purchaseCar(
+                "Auto" -> repository.purchaseCar(
                     playerId = playerId,
                     carId = item.id
                 )
 
-                "character" -> repository.purchaseCharacter(
+                "Personaje" -> repository.purchaseCharacter(
                     playerId = playerId,
                     characterId = item.id
                 )
@@ -124,7 +125,13 @@ class ShopViewModel @Inject constructor(
 
             result
                 .onSuccess { response ->
-                    _uiState.update { it.copy(coins = response.remainingCoins) }
+                    // update CurrentUser and ui state if backend returned remainingCoins
+                    try {
+                        response.remainingCoins?.let { rc ->
+                            CurrentUser.user?.coins = rc
+                            _uiState.update { it.copy(coins = rc, purchaseMessage = "Compra exitosa. Monedas restantes: $rc") }
+                        }
+                    } catch (_: Exception) {}
                     loadAll(playerId)
                 }
                 .onFailure { e ->
@@ -134,7 +141,10 @@ class ShopViewModel @Inject constructor(
     }
 
     // Atajos si querés llamarlos directo desde la UI
-    fun buyCar(playerId: Int, item: ItemDto) = buyItem(playerId, item)
+    fun buyCar(playerId: Int, item: ItemDto) {
+        Log.d("ShopViewModel", "buyCar: playerId=$playerId, car=${item.id}")
+        buyItem(playerId, item)
+    }
 
     fun buyBackground(playerId: Int, item: ItemDto) = buyItem(playerId, item)
 
@@ -143,6 +153,7 @@ class ShopViewModel @Inject constructor(
     // ENERGÍA
     fun buyEnergy(playerId: Int) {
         viewModelScope.launch {
+            Log.d("ShopViewModel", "buyEnergy invoked: playerId=$playerId, quantity=1")
             val result = repository.purchaseEnergy(
                 playerId = playerId,
                 quantity = 1
@@ -150,6 +161,15 @@ class ShopViewModel @Inject constructor(
             result
                 .onSuccess { response ->
 
+                    try {
+                        val msg = response.message ?: "Compra exitosa"
+                        response.remainingCoins?.let { rc ->
+                            CurrentUser.user?.coins = rc
+                            _uiState.update { it.copy(coins = rc, purchaseMessage = "$msg. Monedas restantes: $rc") }
+                        } ?: run {
+                            _uiState.update { it.copy(purchaseMessage = response.message ?: "Compra exitosa") }
+                        }
+                    } catch (_: Exception) {}
                     loadAll(playerId)
                 }
                 .onFailure { e ->
@@ -161,6 +181,7 @@ class ShopViewModel @Inject constructor(
     // COMODÍN
     fun buyComodin(playerId: Int, item: ItemDto) {
         viewModelScope.launch {
+            Log.d("ShopViewModel", "buyComodin invoked: playerId=$playerId, wildcardId=${item.id}, quantity=1")
             val result = repository.purchaseWildcard(
                 playerId = playerId,
                 wildcardId = item.id,
@@ -170,12 +191,53 @@ class ShopViewModel @Inject constructor(
             result
                 .onSuccess { response ->
 
+                    try {
+                        val msg = response.message ?: "Compra exitosa"
+                        response.remainingCoins?.let { rc ->
+                            CurrentUser.user?.coins = rc
+                            _uiState.update { it.copy(coins = rc, purchaseMessage = "$msg. Monedas restantes: $rc") }
+                        } ?: run {
+                            _uiState.update { it.copy(purchaseMessage = msg) }
+                        }
+                    } catch (_: Exception) {}
                     loadAll(playerId)
                 }
                 .onFailure { e ->
                     Log.e("ShopViewModel", "Error al comprar comodín", e)
                 }
         }
+    }
+
+    // Comprar comodín por id (cuando UI proporciona ShopResponseWildcards)
+    fun buyWildcardById(playerId: Int, wildcardId: Int) {
+        viewModelScope.launch {
+            Log.d("ShopViewModel", "buyWildcardById invoked: playerId=$playerId, wildcardId=$wildcardId")
+            val result = repository.purchaseWildcard(
+                playerId = playerId,
+                wildcardId = wildcardId,
+                quantity = 1
+            )
+            result
+                .onSuccess { response ->
+                    try {
+                        val msg = response.message ?: "Compra exitosa"
+                        response.remainingCoins?.let { rc ->
+                            CurrentUser.user?.coins = rc
+                            _uiState.update { it.copy(coins = rc, purchaseMessage = "$msg. Monedas restantes: $rc") }
+                        } ?: run {
+                            _uiState.update { it.copy(purchaseMessage = msg) }
+                        }
+                    } catch (_: Exception) {}
+                    loadAll(playerId)
+                }
+                .onFailure { e ->
+                    Log.e("ShopViewModel", "Error al comprar comodín por id", e)
+                }
+        }
+    }
+
+    fun clearPurchaseMessage() {
+        _uiState.update { it.copy(purchaseMessage = null) }
     }
 }
 
