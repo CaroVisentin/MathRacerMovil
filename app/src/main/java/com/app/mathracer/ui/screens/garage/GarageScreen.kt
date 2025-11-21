@@ -89,9 +89,12 @@ fun GarageScreen(viewModel: GarageViewModel, onBack: () -> Unit = {}) {
 
     Box(modifier = Modifier.fillMaxSize()) {
         
-        Image(painter = painterResource(id = R.drawable.garage_background), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-
-         
+        Image(
+            painter = painterResource(id = R.drawable.garage_background),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
         Box(
             modifier = Modifier
                 .fillMaxWidth()

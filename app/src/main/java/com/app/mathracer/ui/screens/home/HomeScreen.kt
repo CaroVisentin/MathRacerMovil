@@ -313,7 +313,7 @@ fun HomeScreen(
                                         .shadow(4.dp, RoundedCornerShape(16.dp))
                                         .border(2.dp, CyanMR, RoundedCornerShape(16.dp))
                                         .background(
-                                            Color.Gray.copy(alpha = 0.6f),
+                                            Color.Black.copy(alpha = 0.6f),
                                             shape = RoundedCornerShape(8.dp)
                                         )
                                         .size(64.dp)
