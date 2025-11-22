@@ -85,6 +85,30 @@ class ShopRepository @Inject constructor() {
         }
     }
 
+    suspend fun createPaymentPreference(
+        playerId: Int,
+        coinPackageId: Int,
+        successUrl: String,
+        failureUrl: String,
+        pendingUrl: String
+    ): Result<com.google.gson.JsonObject> {
+        return try {
+            val body = com.app.mathracer.data.network.PaymentPreferenceRequestDto(
+                playerId = playerId,
+                coinPackageId = coinPackageId,
+                successUrl = successUrl,
+                failureUrl = failureUrl,
+                pendingUrl = pendingUrl
+            )
+            val resp = RetrofitClient.api.createPaymentPreference(body)
+            Log.d("Payments", resp.toString())
+            if (resp.isSuccessful && resp.body() != null) Result.success(resp.body()!!)
+            else Result.failure(Exception("createPaymentPreference failed ${resp.code()} - ${resp.message()}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
 
     suspend fun purchaseBackground(
         playerId: Int,

@@ -18,6 +18,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import android.widget.Toast
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -56,6 +58,21 @@ fun ShopScreen(
         state.purchaseMessage?.let { msg ->
             Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
             viewModel.clearPurchaseMessage()
+        }
+    }
+
+    LaunchedEffect(state.paymentRedirectUrl) {
+        state.paymentRedirectUrl?.let { url ->
+            try {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                // add FLAG_ACTIVITY_NEW_TASK when called from non-Activity context
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(intent)
+            } catch (e: Exception) {
+                Toast.makeText(context, "No se pudo abrir el navegador", Toast.LENGTH_SHORT).show()
+            } finally {
+                viewModel.clearPaymentRedirect()
+            }
         }
     }
 

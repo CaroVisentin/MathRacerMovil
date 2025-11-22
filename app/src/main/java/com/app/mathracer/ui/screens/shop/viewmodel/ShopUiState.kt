@@ -23,7 +23,8 @@ data class ShopUiState(
     val comodines: List<ShopResponseWildcards> = emptyList(),
     val coinPackages: List<CoinPackageDto> = emptyList()
     ,
-    val purchaseMessage: String? = null
+    val purchaseMessage: String? = null,
+    val paymentRedirectUrl: String? = null
 )
 
 enum class ShopBuyType {

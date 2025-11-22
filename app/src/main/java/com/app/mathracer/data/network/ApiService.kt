@@ -12,11 +12,12 @@ import com.app.mathracer.data.model.Worlds
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.Query
 import retrofit2.http.Header
-import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
+import com.google.gson.JsonObject
 
 
 data class RankingPlayerDto(
@@ -125,6 +126,14 @@ data class CoinPackageDto(
     val coinAmount: Int = 0,
     val price: Int = 0,
     val description: String? = null
+)
+
+data class PaymentPreferenceRequestDto(
+    val playerId: Int,
+    val coinPackageId: Int,
+    val successUrl: String,
+    val failureUrl: String,
+    val pendingUrl: String
 )
 
 
@@ -263,5 +272,8 @@ interface ApiService {
 
     @GET("Coins/packages")
     suspend fun getCoinPackages(): Response<List<CoinPackageDto>>
+
+    @POST("Payments/create-preference")
+    suspend fun createPaymentPreference(@Body body: PaymentPreferenceRequestDto): Response<JsonObject>
 
 }
