@@ -9,6 +9,7 @@ import com.app.mathracer.data.network.ShopResponse
 import com.app.mathracer.data.network.ShopResponseEnergies
 import com.app.mathracer.data.network.ShopResponseWildcards
 import com.app.mathracer.data.repository.ShopRepository
+import com.app.mathracer.data.network.CoinPackageDto
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -40,6 +41,7 @@ class ShopViewModel @Inject constructor(
                 val bgsRes = repository.getBackgrounds(playerId)
                 val comodinesRes = repository.getComodines(playerId) // <- ajustá si se llama distinto
                 val energiesRes = repository.getEneries(playerId)    // <- nombre según tu repo
+                val coinPackagesRes = repository.getCoinPackages()
 
                 val cars = carsRes.getOrElse { ShopResponse() }.items
                     .filter { !it.isOwned }
@@ -72,12 +74,15 @@ class ShopViewModel @Inject constructor(
                     )
                 }
 
+                val coinPackages = coinPackagesRes.getOrElse { emptyList() }
+
                 _uiState.update {
                     it.copy(
                         cars = cars,
                         characters = chars,
                         backgrounds = bgs,
                         comodines = comodines as List<ShopResponseWildcards>,
+                        coinPackages = coinPackages,
                         energies = energies,
                         loading = false,
                         coins = CurrentUser.user?.coins ?: it.coins
@@ -91,6 +96,22 @@ class ShopViewModel @Inject constructor(
                         error = e.localizedMessage
                     )
                 }
+            }
+        }
+    }
+
+    // Compra de paquete de monedas — aquí puedes redirigir a la pasarela de pago
+    fun buyCoinPackage(playerId: Int, pkg: CoinPackageDto) {
+        viewModelScope.launch {
+            try {
+                // Simulación de compra local: aumentar monedas del usuario y notificar
+                val added = pkg.coinAmount
+                val newCoins = (CurrentUser.user?.coins ?: 0) + added
+                CurrentUser.user?.coins = newCoins
+                _uiState.update { it.copy(coins = newCoins, purchaseMessage = "Paquete comprado: +${added} monedas") }
+            } catch (e: Exception) {
+                Log.e("ShopViewModel", "Error al procesar compra de paquete", e)
+                _uiState.update { it.copy(purchaseMessage = "Error al comprar paquete") }
             }
         }
     }

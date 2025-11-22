@@ -74,6 +74,17 @@ class ShopRepository @Inject constructor() {
         } as Result<List<ShopResponseWildcards>>
     }
 
+    suspend fun getCoinPackages(): Result<List<com.app.mathracer.data.network.CoinPackageDto>> {
+        return try {
+            val resp = RetrofitClient.api.getCoinPackages()
+            Log.d("CoinPackages", resp.body().toString())
+            if (resp.isSuccessful) Result.success(resp.body() ?: emptyList())
+            else Result.failure(Exception("getCoinPackages failed ${resp.code()}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
 
     suspend fun purchaseBackground(
         playerId: Int,

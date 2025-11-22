@@ -120,6 +120,13 @@ data class PurchaseWildscardResultDto(
     val remainingCoins: Int?
 )
 
+data class CoinPackageDto(
+    val id: Int = 0,
+    val coinAmount: Int = 0,
+    val price: Int = 0,
+    val description: String? = null
+)
+
 
 interface ApiService {
     @POST("player/register")
@@ -253,5 +260,8 @@ interface ApiService {
         @Path("playerId") playerId: Int,
         @Body body: PurchaseWildscardRequestDto
     ): Response<PurchaseWildscardResultDto>
+
+    @GET("Coins/packages")
+    suspend fun getCoinPackages(): Response<List<CoinPackageDto>>
 
 }
