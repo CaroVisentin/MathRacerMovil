@@ -30,6 +30,8 @@ import com.app.mathracer.ui.screens.levels.viewmodel.LevelsViewModel
 import com.app.mathracer.ui.screens.profile.ProfileScreen
 import com.app.mathracer.ui.screens.register.viewmodel.RegisterViewModel
 import com.app.mathracer.ui.screens.waitingOpponent.WaitingOpponentScreen
+import com.app.mathracer.ui.screens.freepractice.FreePracticeOptionsScreen
+import com.app.mathracer.ui.screens.infinite.InfiniteGameScreen
 import com.app.mathracer.ui.screens.multiplayer.MultiplayerOptionsScreen
 import com.app.mathracer.ui.screens.multiplayer.CreateMatchScreen
 import com.app.mathracer.ui.screens.multiplayer.JoinMatchesScreen
@@ -76,7 +78,7 @@ fun MathRacerNavGraph(
                         navController.navigate(Routes.WORLDS)
                     },
                     onFreePracticeClick = {
-                        // TODO: Implementar navegación a práctica libre
+                        navController.navigate(Routes.FREE_PRACTICE_OPTIONS)
                     },
                     onShopClick = {
                         navController.navigate(Routes.SHOP)
@@ -154,6 +156,38 @@ fun MathRacerNavGraph(
                 },
                 onBack = { navController.navigateUp() }
             )
+        }
+
+        composable(Routes.FREE_PRACTICE_OPTIONS) {
+            HandleBackNavigation(
+                navController = navController,
+                currentRoute = currentRoute,
+                onBackPressed = { navController.navigateUp() }
+            )
+
+            FreePracticeOptionsScreen(
+                onModoLibre = {
+                    navController.navigate(Routes.WORLDS)
+                },
+                onModoInfinito = {
+                    navController.navigate(Routes.infiniteGameWithId("local"))
+                },
+                onBack = { navController.navigateUp() }
+            )
+        }
+
+        composable(
+            route = "infinite_game/{gameId}",
+            arguments = listOf(navArgument("gameId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            HandleBackNavigation(
+                navController = navController,
+                currentRoute = currentRoute,
+                onBackPressed = { navController.navigateUp() }
+            )
+
+            val gameId = backStackEntry.arguments?.getString("gameId") ?: ""
+            InfiniteGameScreen(gameId = gameId, onExit = { navController.navigateUp() })
         }
 
         composable(Routes.INVITE_FRIENDS) {
