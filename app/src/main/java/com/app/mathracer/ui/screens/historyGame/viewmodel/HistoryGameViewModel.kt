@@ -55,6 +55,10 @@ class HistoryGameViewModel @Inject constructor(
                     val w2 = gameStart.availableWildcards.firstOrNull { it.wildcardId == 2 }?.quantity ?: 0
                     val w3 = gameStart.availableWildcards.firstOrNull { it.wildcardId == 3 }?.quantity ?: 0
 
+                    val carProductId = gameStart.playerProducts
+                        ?.firstOrNull { it.productTypeId == 1 } // 1 = Auto
+                        ?.productId
+
                     _uiState.value = _uiState.value.copy(
                         gameId = gameStart.gameId,
                         playerId = gameStart.playerId,
@@ -72,7 +76,8 @@ class HistoryGameViewModel @Inject constructor(
                         wildcard3Available = w3 > 0,
                         wildcard1Quantity = w1,
                         wildcard2Quantity = w2,
-                        wildcard3Quantity = w3
+                        wildcard3Quantity = w3,
+                        playerCarRes = carProductId ?: 1
                     )
                     startPolling(gameStart.gameId, gameStart.timePerEquation)
                     startQuestionTimer()

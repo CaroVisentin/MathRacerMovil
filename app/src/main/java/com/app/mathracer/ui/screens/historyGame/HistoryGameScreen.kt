@@ -103,10 +103,10 @@ fun HistoryGameScreen(
         coins = 123_000,
         rivalTrackRes = R.drawable.track_city,
         youTrackRes = R.drawable.track_cake,
-        rivalCarRes = R.drawable.car_game,
+        rivalCarRes = 1, //R.drawable.car_game,
         opponentName = uiState.machineName,
         playerName = uiState.playerName,
-        youCarRes = R.drawable.car_game,
+        youCarRes = uiState.playerCarRes,
         livesRemaining = uiState.livesRemaining,
         timePerEquation = uiState.timePerEquation,
         powerUps = listOf(

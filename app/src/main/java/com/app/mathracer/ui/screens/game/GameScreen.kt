@@ -51,6 +51,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import com.app.mathracer.ui.components.ProductImage
 
 private val PanelColor  = Color(0xE62C2C2C) // #2C2C2C con 90% alpha
 private val BorderLight = Color(0x66FFFFFF)
@@ -376,8 +377,20 @@ public fun TrackCard(
                 }
             }
 
+            ProductImage(
+                productId = carRes,
+                fallbackRes = R.drawable.car,
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .offset(x = startMargin + offsetX, y = 0.dp)
+                    .padding(bottom = 12.dp)
+                    .size(width = carWidth, height = carHeight),
+                contentScale = ContentScale.Fit
+            )
+
+        /*
             Image(
-                painter = painterResource(carRes),
+                painter =  painterResource(carRes),
                 contentDescription = null,
                 modifier = Modifier
                     .align(Alignment.BottomStart)
@@ -386,6 +399,8 @@ public fun TrackCard(
                     .size(width = carWidth, height = carHeight),
                 contentScale = ContentScale.Fit
             )
+
+         */
         }
 
         Box(
@@ -737,7 +752,7 @@ fun GameScreen(
         rivalCarRes = R.drawable.car_game,
         opponentName = uiState.opponentName,
         playerName = uiState.playerName,
-        youCarRes = R.drawable.car_game,
+        youCarRes = 5,//R.drawable.car_game,
         powerUps = listOf(
             PowerUp(R.drawable.ic_shield, uiState.fireExtinguisherCount, Color(0xFFFF6B6B)), // Matafuegos
            // PowerUp(R.drawable.ic_shuffle, 99, Color.White),
