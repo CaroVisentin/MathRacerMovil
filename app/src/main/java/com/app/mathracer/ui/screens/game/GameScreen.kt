@@ -379,7 +379,7 @@ public fun TrackCard(
 
             ProductImage(
                 productId = carRes,
-                fallbackRes = R.drawable.car,
+                fallbackRes = R.drawable.car_game,
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .offset(x = startMargin + offsetX, y = 0.dp)
@@ -418,7 +418,6 @@ public fun TrackCard(
         }
     }
 }
-
 @Composable
 fun ScrollingTrack(
     trackRes: Int,
@@ -432,55 +431,51 @@ fun ScrollingTrack(
             .height(height)
             .clip(RoundedCornerShape(corner))
     ) {
-        val containerWidth: Dp = maxWidth
         val density = LocalDensity.current
-        val containerWidthPx = with(density) { maxWidth.toPx() }
-        val speedPxPerSec    = with(density) { speedDpPerSec.toPx() }
 
-        // Animación infinita: 0 -> containerWidthPx y reinicia
-        val t = rememberInfiniteTransition(label = "track-scroll")
+        val containerWidth: Dp = this.maxWidth
+        val containerWidthPx = with(density) { containerWidth.toPx() }
+        val speedPxPerSec = with(density) { speedDpPerSec.toPx() }
+
+        val duration = ((containerWidthPx / speedPxPerSec) * 1000f).toInt()
+
+        val t = rememberInfiniteTransition(label = "scroll")
         val x by t.animateFloat(
             initialValue = 0f,
-            targetValue  = containerWidthPx,
+            targetValue = containerWidthPx,
             animationSpec = infiniteRepeatable(
-                animation = tween(
-                    durationMillis = ((containerWidthPx / speedPxPerSec) * 1000f).toInt(),
-                    easing = LinearEasing
-                ),
+                animation = tween(durationMillis = duration, easing = LinearEasing),
                 repeatMode = RepeatMode.Restart
             ),
-            label = "x"
+            label = "xAnim"
         )
 
-        // Desplazamiento modular (0..width)
         val offsetPx = x % containerWidthPx
 
-        // Dos copias: una arrancando en -offset, otra a +width - offset
         Box(Modifier.fillMaxSize()) {
-            Image(
-                painter = painterResource(trackRes),
-                contentDescription = null,
+
+            ProductImage(
+                productId = trackRes,
+                fallbackRes = R.drawable.track_city,
                 modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .width(containerWidth)
                     .fillMaxHeight()
-                    .offset { IntOffset(x = -offsetPx.roundToInt(), y = 0) },
-                contentScale = ContentScale.Crop
+                    .width(containerWidth)
+                    .offset { IntOffset((-offsetPx).roundToInt(), 0) },
+                contentScale = ContentScale.FillHeight
             )
-            Image(
-                painter = painterResource(trackRes),
-                contentDescription = null,
+
+            ProductImage(
+                productId = trackRes,
+                fallbackRes = R.drawable.track_city,
                 modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .width(containerWidth)
                     .fillMaxHeight()
-                    .offset { IntOffset(x = (-offsetPx + containerWidthPx).roundToInt(), y = 0) },
-                contentScale = ContentScale.Crop
+                    .width(containerWidth)
+                    .offset { IntOffset((containerWidthPx - offsetPx).roundToInt(), 0) },
+                contentScale = ContentScale.FillHeight
             )
         }
     }
 }
-
 
 @Composable
 public fun PowerUpChip(

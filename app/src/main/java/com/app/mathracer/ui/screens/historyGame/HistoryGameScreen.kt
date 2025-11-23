@@ -102,7 +102,7 @@ fun HistoryGameScreen(
         timeLabel = "10 seg",
         coins = 123_000,
         rivalTrackRes = R.drawable.track_city,
-        youTrackRes = R.drawable.track_cake,
+        youTrackRes = uiState.playerTrackRes,//R.drawable.track_cake,
         rivalCarRes = 1, //R.drawable.car_game,
         opponentName = uiState.machineName,
         playerName = uiState.playerName,

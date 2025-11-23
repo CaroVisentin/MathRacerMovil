@@ -59,6 +59,10 @@ class HistoryGameViewModel @Inject constructor(
                         ?.firstOrNull { it.productTypeId == 1 } // 1 = Auto
                         ?.productId
 
+                    val trackProductId = gameStart.playerProducts
+                        ?.firstOrNull { it.productTypeId == 3 } // 3 = Pista
+                        ?.productId
+
                     _uiState.value = _uiState.value.copy(
                         gameId = gameStart.gameId,
                         playerId = gameStart.playerId,
@@ -77,7 +81,8 @@ class HistoryGameViewModel @Inject constructor(
                         wildcard1Quantity = w1,
                         wildcard2Quantity = w2,
                         wildcard3Quantity = w3,
-                        playerCarRes = carProductId ?: 1
+                        playerCarRes = carProductId ?: 1,
+                        playerTrackRes = trackProductId ?: 1
                     )
                     startPolling(gameStart.gameId, gameStart.timePerEquation)
                     startQuestionTimer()

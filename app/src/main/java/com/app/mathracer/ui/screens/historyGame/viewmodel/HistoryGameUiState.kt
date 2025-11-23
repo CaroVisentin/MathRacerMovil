@@ -42,5 +42,6 @@ data class HistoryGameUiState(
     val wildcard2Quantity: Int = 0,
     val wildcard3Quantity: Int = 0,
     val playerCarRes: Int = 0,
+    val playerTrackRes: Int = 0
 )
 
