@@ -288,10 +288,9 @@ fun HomeScreen(
                                             Color.Black.copy(alpha = 0.6f),
                                             shape = RoundedCornerShape(8.dp)
                                         )
-                                       
                                 ) {
                                     Text(
-                                        text = "Práctica libre",
+                                        text = "Modo Infinito",
                                         fontSize = 30.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = CyanMR,

@@ -78,7 +78,7 @@ fun MathRacerNavGraph(
                         navController.navigate(Routes.WORLDS)
                     },
                     onFreePracticeClick = {
-                        navController.navigate(Routes.FREE_PRACTICE_OPTIONS)
+                        navController.navigate(Routes.infiniteGameWithId("local"))
                     },
                     onShopClick = {
                         navController.navigate(Routes.SHOP)
@@ -158,23 +158,6 @@ fun MathRacerNavGraph(
             )
         }
 
-        composable(Routes.FREE_PRACTICE_OPTIONS) {
-            HandleBackNavigation(
-                navController = navController,
-                currentRoute = currentRoute,
-                onBackPressed = { navController.navigateUp() }
-            )
-
-            FreePracticeOptionsScreen(
-                onModoLibre = {
-                    navController.navigate(Routes.WORLDS)
-                },
-                onModoInfinito = {
-                    navController.navigate(Routes.infiniteGameWithId("local"))
-                },
-                onBack = { navController.navigateUp() }
-            )
-        }
 
         composable(
             route = "infinite_game/{gameId}",
