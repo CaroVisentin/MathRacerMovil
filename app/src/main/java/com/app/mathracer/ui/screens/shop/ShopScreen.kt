@@ -1,5 +1,6 @@
 package com.app.mathracer.ui.screens.shop
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -10,8 +11,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Icon
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -29,6 +37,7 @@ import com.app.mathracer.data.CurrentUser
 import com.app.mathracer.data.network.ItemDto
 import com.app.mathracer.data.network.ShopResponseEnergies
 import com.app.mathracer.data.network.ShopResponseWildcards
+import com.app.mathracer.data.network.CoinPackageDto
 import com.app.mathracer.ui.components.ProductImage
 import com.app.mathracer.ui.screens.shop.viewmodel.ShopBuyType
 import com.app.mathracer.ui.screens.shop.viewmodel.ShopViewModel
@@ -44,9 +53,35 @@ fun ShopScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
 
+    val context = LocalContext.current
+    LaunchedEffect(state.purchaseMessage) {
+        state.purchaseMessage?.let { msg ->
+            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+            viewModel.clearPurchaseMessage()
+        }
+    }
+
+    LaunchedEffect(state.paymentRedirectUrl) {
+        state.paymentRedirectUrl?.let { url ->
+            try {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                // add FLAG_ACTIVITY_NEW_TASK when called from non-Activity context
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(intent)
+            } catch (e: Exception) {
+                Toast.makeText(context, "No se pudo abrir el navegador", Toast.LENGTH_SHORT).show()
+            } finally {
+                viewModel.clearPaymentRedirect()
+            }
+        }
+    }
+
     var selectedItem by remember { mutableStateOf<ItemDto?>(null) }
+    var selectedWildcard by remember { mutableStateOf<ShopResponseWildcards?>(null) }
+    var selectedCoinPackage by remember { mutableStateOf<CoinPackageDto?>(null) }
     var selectedBuyType by remember { mutableStateOf<ShopBuyType?>(null) }
     var showDialog by remember { mutableStateOf(false) }
+    var showCoinDialog by remember { mutableStateOf(false) }
     var dialogPrice by remember { mutableStateOf(0) }
 
     Box(
@@ -95,10 +130,12 @@ fun ShopScreen(
             item {
                 ShopSectionWildcardGrid(
                     items = state.comodines,
-                    onItemClick = {
+                    coins = state.coins,
+                    onItemClick = { wildcard ->
                         selectedItem = null
+                        selectedWildcard = wildcard
                         selectedBuyType = ShopBuyType.COMODIN
-                        dialogPrice = 0
+                        dialogPrice = wildcard.price
                         showDialog = true
                     }
                 )
@@ -111,6 +148,7 @@ fun ShopScreen(
             item {
                 ShopSectionGrid(
                     items = state.cars,
+                    coins = state.coins,
                     onItemClick = { item ->
                         selectedItem = item
                         selectedBuyType = ShopBuyType.CAR
@@ -127,6 +165,7 @@ fun ShopScreen(
             item {
                 ShopSectionGrid(
                     items = state.backgrounds,
+                    coins = state.coins,
                     onItemClick = { item ->
                         selectedItem = item
                         selectedBuyType = ShopBuyType.BACKGROUND
@@ -143,6 +182,7 @@ fun ShopScreen(
             item {
                 ShopSectionGrid(
                     items = state.characters,
+                    coins = state.coins,
                     onItemClick = { item ->
                         selectedItem = item
                         selectedBuyType = ShopBuyType.CHARACTER
@@ -151,20 +191,38 @@ fun ShopScreen(
                     }
                 )
             }
+        // PAQUETES DE MONEDAS
+        item {
+            SectionTitle(text = "MONEDAS")
         }
+
+        item {
+            ShopSectionCoinPackages(
+                items = state.coinPackages,
+                onBuyClick = { pkg ->
+                    selectedCoinPackage = pkg
+                    showCoinDialog = true
+                }
+            )
+        }
+        }
+
+
 
         // DIALOGO DE COMPRA
         if (showDialog && selectedBuyType != null) {
             BuyConfirmDialog(
                 price = dialogPrice,
+                text = "¿Deseas comprar este\nartículo por ${"%,d".format(dialogPrice)} Coins?",
                 onDismiss = {
                     showDialog = false
                     selectedItem = null
+                    selectedWildcard = null
                     selectedBuyType = null
                 },
                 onConfirm = {
                     val playerId = CurrentUser.user?.id ?: 0
-
+                    Log.d("ShopRepository", "purchaseCar: playerId=$playerId, $selectedBuyType")
                     when (selectedBuyType) {
                         ShopBuyType.CAR -> {
                             selectedItem?.let { item ->
@@ -200,7 +258,10 @@ fun ShopScreen(
                         }
 
                         ShopBuyType.COMODIN -> {
-                            selectedItem?.let { item ->
+                            // Si tenemos un wildcard seleccionado por su DTO, llamamos por id
+                            selectedWildcard?.let { w ->
+                                viewModel.buyWildcardById(playerId, w.id)
+                            } ?: selectedItem?.let { item ->
                                 viewModel.buyComodin(
                                     playerId = playerId,
                                     item = item
@@ -214,9 +275,45 @@ fun ShopScreen(
                     // cierro el diálogo
                     showDialog = false
                     selectedItem = null
+                    selectedWildcard = null
                     selectedBuyType = null
                 }
             )
+        }
+
+        // DIALOGO PARA PAQUETES DE MONEDAS (acción distinta)
+        if (showCoinDialog && selectedCoinPackage != null) {
+            val pkg = selectedCoinPackage!!
+            BuyConfirmDialog(
+                price = pkg.price,
+                text = "¿Deseas comprar este\nartículo por $ ${"%,d".format(pkg.price)}?",
+                onDismiss = {
+                    showCoinDialog = false
+                    selectedCoinPackage = null
+                },
+                onConfirm = {
+                    val playerId = CurrentUser.user?.id ?: 0
+                    viewModel.buyCoinPackage(playerId, pkg)
+                    showCoinDialog = false
+                    selectedCoinPackage = null
+                }
+            )
+        }
+
+        // Loader overlay mientras se cargan los datos
+        if (state.loading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.6f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator(color = MagentaMR)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(text = "Cargando...", color = Color.White)
+                }
+            }
         }
     }
 }
@@ -293,6 +390,7 @@ fun SectionTitle(text: String) {
 @Composable
 fun ShopSectionGrid(
     items: List<ItemDto>,
+    coins: Int,
     onItemClick: (ItemDto) -> Unit
 ) {
     Column(
@@ -304,10 +402,12 @@ fun ShopSectionGrid(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 rowItems.forEach { item ->
+                    val enabled = coins >= item.price
                     ShopItemCard(
                         item = item,
                         modifier = Modifier.weight(1f),
-                        onClick = { onItemClick(item) }
+                        enabled = enabled,
+                        onClick = { if (enabled) onItemClick(item) }
                     )
                 }
 
@@ -326,6 +426,7 @@ fun ShopSectionGrid(
 @Composable
 fun ShopSectionWildcardGrid(
     items: List<ShopResponseWildcards>,
+    coins: Int,
     onItemClick: (ShopResponseWildcards) -> Unit
 ) {
     Column(
@@ -337,11 +438,13 @@ fun ShopSectionWildcardGrid(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 rowItems.forEach { item ->
+                    val enabled = coins >= item.price
                     ShopItemWildcardCard(
                         item = item,
                         modifier = Modifier
                             .weight(1f), // <- IMPORTANTE: igual que ShopItemCard
-                        onClick = { onItemClick(item) }
+                        enabled = enabled,
+                        onClick = { if (enabled) onItemClick(item) }
                     )
                 }
 
@@ -387,26 +490,29 @@ fun rarityColor(rarity: String): Color {
 fun ShopItemCard(
     item: ItemDto,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
-    val bgColor = rarityColor(item.rarity)
+    val bgColor = if (enabled) rarityColor(item.rarity) else Color(0xFF555555)
+    val borderColor = if (enabled) Color.White else Color(0xFF888888)
     val textColor = textColorForBackground(bgColor)
+    val contentAlpha = if (enabled) 1f else 0.4f
 
     Box(
         modifier = modifier
             .aspectRatio(0.8f) // para formar cuadraditos
             .clip(RoundedCornerShape(12.dp))
             .background(bgColor)
-            .border(2.dp, Color.White, RoundedCornerShape(12.dp))
-            .clickable { onClick() }
+            .border(2.dp, borderColor, RoundedCornerShape(12.dp))
+            .then(if (enabled) Modifier.clickable { onClick() } else Modifier)
             .padding(8.dp)
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize().alpha(contentAlpha)
         ) {
-            ProductImage(
+                ProductImage(
                 productId = item.id,
                 fallbackRes = R.drawable.mathi,
                 modifier = Modifier.size(80.dp),
@@ -427,7 +533,7 @@ fun ShopItemCard(
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = "%,d".format(item.price),
-                    color = textColor,
+                    color = if (enabled) textColor else Color.LightGray,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -440,23 +546,27 @@ fun ShopItemCard(
 fun ShopItemWildcardCard(
     item: ShopResponseWildcards,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
-    val textColor = textColorForBackground(Color.White)
+    val bgColor = if (enabled) MagentaMR else Color(0xFF6B6B6B)
+    val borderColor = if (enabled) Color.White else Color(0xFF888888)
+    val textColor = if (enabled) textColorForBackground(Color.White) else Color.LightGray
+    val contentAlpha = if (enabled) 1f else 0.4f
 
     Box(
         modifier = modifier
             .aspectRatio(0.8f)
             .clip(RoundedCornerShape(12.dp))
-            .background(MagentaMR)
-            .border(2.dp, Color.White, RoundedCornerShape(12.dp))
-            .clickable { onClick() }
+            .background(bgColor)
+            .border(2.dp, borderColor, RoundedCornerShape(12.dp))
+            .then(if (enabled) Modifier.clickable { onClick() } else Modifier)
             .padding(8.dp)
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxSize().padding(top = 20.dp)
+            modifier = Modifier.fillMaxSize().padding(top = 20.dp).alpha(contentAlpha)
         ) {
             val iconModifier = Modifier.size(36.dp) // <- tamaño de la imagen
 
@@ -513,12 +623,95 @@ fun ShopItemWildcardCard(
 }
 
 
+@Composable
+fun ShopSectionCoinPackages(
+    items: List<CoinPackageDto>,
+    onBuyClick: (CoinPackageDto) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        items.chunked(3).forEach { rowItems ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                rowItems.forEach { pkg ->
+                    ShopCoinPackageCard(
+                        pkg = pkg,
+                        modifier = Modifier.weight(1f),
+                        onBuyClick = { onBuyClick(pkg) }
+                    )
+                }
+
+                repeat(3 - rowItems.size) {
+                    Spacer(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(0.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ShopCoinPackageCard(
+    pkg: CoinPackageDto,
+    modifier: Modifier = Modifier,
+    onBuyClick: () -> Unit
+) {
+    Box(
+        modifier = modifier
+            .aspectRatio(0.8f)
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFF222222))
+            .border(2.dp, Color.White, RoundedCornerShape(12.dp))
+            .padding(8.dp)
+            .then(Modifier.clickable { onBuyClick() } )
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // Icono grande de moneda
+            Image(
+                painter = painterResource(id = R.drawable.coin),
+                contentDescription = null,
+                modifier = Modifier.size(56.dp),
+                contentScale = ContentScale.Fit
+            )
+
+            Text(
+                text = pkg.description ?: "Paquete",
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = "$${"%,d".format(pkg.price)}",
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White)
+            }
+        }
+    }
+}
+
+
 // ---------------------------------------------------------------------
 // DIALOGO DE CONFIRMACIÓN
 // ---------------------------------------------------------------------
 @Composable
 fun BuyConfirmDialog(
     price: Int,
+    text: String,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
@@ -552,7 +745,7 @@ fun BuyConfirmDialog(
                     )
                     // Texto
                     Text(
-                        text = "¿Deseas comprar este\nartículo por ${"%,d".format(price)} monedas?",
+                        text = text,
                         color = Color.White,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
@@ -560,22 +753,21 @@ fun BuyConfirmDialog(
                         modifier = Modifier.fillMaxWidth()
                     )
                     // Botón comprar
-                    Box(
+                    // Botón comprar (reemplazado por Button para accesibilidad y comportamiento nativo)
+                    Button(
+                        onClick = onConfirm,
                         modifier = Modifier
                             .clip(RoundedCornerShape(30.dp))
                             .border(2.dp, Color.White, RoundedCornerShape(30.dp))
-                            .clickable { onConfirm() }
-                            .padding(horizontal = 32.dp, vertical = 10.dp)
+                            .padding(horizontal = 32.dp, vertical = 10.dp),
+                        shape = RoundedCornerShape(30.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = Color.White),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.coin),
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
                             Text(
                                 text = "COMPRAR",
                                 color = Color.White,

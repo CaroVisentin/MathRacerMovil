@@ -12,11 +12,12 @@ import com.app.mathracer.data.model.Worlds
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.Query
 import retrofit2.http.Header
-import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
+import com.google.gson.JsonObject
 
 
 data class RankingPlayerDto(
@@ -92,14 +93,94 @@ data class PurchaseSuccessResponseDto(
     val remainingCoins: Int
 )
 
-data class PurchaseEnergyResponseDto(
+// Request DTO for purchasing energy
+data class PurchaseEnergyRequestDto(
     val quantity: Int
 )
 
-data class PurchaseWildscardResponseDto(
+// Response DTO for purchasing energy
+data class PurchaseEnergyResultDto(
+    val success: Boolean,
+    val message: String?,
+    val newEnergyAmount: Int?,
+    val remainingCoins: Int?,
+    val totalPrice: Int?
+)
+
+// Request DTO for purchasing wildcards
+data class PurchaseWildscardRequestDto(
     val wildcardId: Int,
     val quantity: Int
 )
+
+// Response DTO for purchasing wildcards
+data class PurchaseWildscardResultDto(
+    val success: Boolean,
+    val message: String?,
+    val newQuantity: Int?,
+    val remainingCoins: Int?
+)
+
+data class CoinPackageDto(
+    val id: Int = 0,
+    val coinAmount: Int = 0,
+    val price: Int = 0,
+    val description: String? = null
+)
+
+data class PaymentPreferenceRequestDto(
+    val playerId: Int,
+    val coinPackageId: Int,
+    val successUrl: String,
+    val failureUrl: String,
+    val pendingUrl: String
+)
+
+data class InfiniteQuestionDto(
+        val questionId: Int = 0,
+        val equation: String = "",
+        val options: List<Int> = emptyList(),
+        val correctAnswer: Int = 0,
+        val expectedResult: String? = null
+    )
+
+    data class InfiniteStartResponse(
+        val gameId: Int = 0,
+        val playerName: String = "",
+        val questions: List<InfiniteQuestionDto> = emptyList(),
+        val totalCorrectAnswers: Int = 0,
+        val currentBatch: Int = 0
+    )
+
+    data class InfiniteAnswerRequest(
+        val selectedAnswer: Int
+    )
+
+    data class InfiniteAnswerResponse(
+        val isCorrect: Boolean,
+        val correctAnswer: Int,
+        val totalCorrectAnswers: Int,
+        val currentQuestionIndex: Int,
+        val needsNewBatch: Boolean
+    )
+
+    data class InfiniteLoadBatchResponse(
+        val gameId: Int,
+        val questions: List<InfiniteQuestionDto>,
+        val currentBatch: Int,
+        val totalCorrectAnswers: Int
+    )
+
+    data class InfiniteStatusResponse(
+        val gameId: Int,
+        val playerName: String,
+        val totalCorrectAnswers: Int,
+        val currentQuestionIndex: Int,
+        val currentBatch: Int,
+        val isActive: Boolean,
+        val gameStartedAt: String?,
+        val abandonedAt: String?
+    )
 
 
 interface ApiService {
@@ -227,14 +308,49 @@ interface ApiService {
 
     @POST("Energy/purchase/{playerId}")
     suspend fun purchaseEnergy(
+        @Header("Authorization") authorization: String?,
         @Path("playerId") playerId: Int,
-        @Body body: PurchaseEnergyResponseDto
-    ): Response<ShopResponse>
+        @Body body: PurchaseEnergyRequestDto
+    ): Response<PurchaseEnergyResultDto>
 
     @POST("Wildcards/purchase/{playerId}")
     suspend fun purchaseWildcards(
         @Path("playerId") playerId: Int,
-        @Body body: PurchaseWildscardResponseDto
-    ): Response<ShopResponse>
+        @Body body: PurchaseWildscardRequestDto
+    ): Response<PurchaseWildscardResultDto>
+
+    @GET("Coins/packages")
+    suspend fun getCoinPackages(): Response<List<CoinPackageDto>>
+
+    @POST("Payments/create-preference")
+    suspend fun createPaymentPreference(@Body body: PaymentPreferenceRequestDto): Response<JsonObject>
+
+    @POST("/api/Infinite/start")
+    suspend fun startInfinite(@Header("Authorization") authorization: String?): Response<InfiniteStartResponse>
+
+    @POST("/api/Infinite/{gameId}/answer")
+    suspend fun submitInfiniteAnswer(
+        @Header("Authorization") authorization: String?,
+        @Path("gameId") gameId: Int,
+        @Body request: InfiniteAnswerRequest
+    ): Response<InfiniteAnswerResponse>
+
+    @POST("/api/Infinite/{gameId}/load-batch")
+    suspend fun loadInfiniteBatch(
+        @Header("Authorization") authorization: String?,
+        @Path("gameId") gameId: Int
+    ): Response<InfiniteLoadBatchResponse>
+
+    @GET("/api/Infinite/{gameId}/status")
+    suspend fun getInfiniteStatus(
+        @Header("Authorization") authorization: String?,
+        @Path("gameId") gameId: Int
+    ): Response<InfiniteStatusResponse>
+
+    @POST("/api/Infinite/{gameId}/abandon")
+    suspend fun abandonInfinite(
+        @Header("Authorization") authorization: String?,
+        @Path("gameId") gameId: Int
+    ): Response<InfiniteStatusResponse>
 
 }
