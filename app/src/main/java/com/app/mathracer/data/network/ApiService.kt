@@ -136,6 +136,51 @@ data class PaymentPreferenceRequestDto(
     val pendingUrl: String
 )
 
+data class InfiniteQuestionDto(
+    val questionId: Int = 0,
+    val equation: String = "",
+    val options: List<Int> = emptyList(),
+    val correctAnswer: Int = 0,
+    val expectedResult: String? = null
+)
+
+data class InfiniteStartResponse(
+    val gameId: Int = 0,
+    val playerName: String = "",
+    val questions: List<InfiniteQuestionDto> = emptyList(),
+    val totalCorrectAnswers: Int = 0,
+    val currentBatch: Int = 0
+)
+
+data class InfiniteAnswerRequest(
+    val selectedAnswer: Int
+)
+
+data class InfiniteAnswerResponse(
+    val isCorrect: Boolean,
+    val correctAnswer: Int,
+    val totalCorrectAnswers: Int,
+    val currentQuestionIndex: Int,
+    val needsNewBatch: Boolean
+)
+
+data class InfiniteLoadBatchResponse(
+    val gameId: Int,
+    val questions: List<InfiniteQuestionDto>,
+    val currentBatch: Int,
+    val totalCorrectAnswers: Int
+)
+
+data class InfiniteStatusResponse(
+    val gameId: Int,
+    val playerName: String,
+    val totalCorrectAnswers: Int,
+    val currentQuestionIndex: Int,
+    val currentBatch: Int,
+    val isActive: Boolean,
+    val gameStartedAt: String?,
+    val abandonedAt: String?
+)
 
 interface ApiService {
     @POST("player/register")
@@ -275,5 +320,33 @@ interface ApiService {
 
     @POST("Payments/create-preference")
     suspend fun createPaymentPreference(@Body body: PaymentPreferenceRequestDto): Response<JsonObject>
+
+    @POST("/api/Infinite/start")
+    suspend fun startInfinite(@Header("Authorization") authorization: String?): Response<InfiniteStartResponse>
+
+    @POST("/api/Infinite/{gameId}/answer")
+    suspend fun submitInfiniteAnswer(
+        @Header("Authorization") authorization: String?,
+        @Path("gameId") gameId: Int,
+        @Body request: InfiniteAnswerRequest
+    ): Response<InfiniteAnswerResponse>
+
+    @POST("/api/Infinite/{gameId}/load-batch")
+    suspend fun loadInfiniteBatch(
+        @Header("Authorization") authorization: String?,
+        @Path("gameId") gameId: Int
+    ): Response<InfiniteLoadBatchResponse>
+
+    @GET("/api/Infinite/{gameId}/status")
+    suspend fun getInfiniteStatus(
+        @Header("Authorization") authorization: String?,
+        @Path("gameId") gameId: Int
+    ): Response<InfiniteStatusResponse>
+
+    @POST("/api/Infinite/{gameId}/abandon")
+    suspend fun abandonInfinite(
+        @Header("Authorization") authorization: String?,
+        @Path("gameId") gameId: Int
+    ): Response<InfiniteStatusResponse>
 
 }

@@ -514,7 +514,7 @@ enum class OptionButtonState {
     NORMAL, SELECTED, CORRECT, INCORRECT, DISABLED
 }
 
-private fun getOptionButtonState(
+fun getOptionButtonState(
     option: Int?,
     lastAnswerGiven: Int?,
     lastAnswerWasCorrect: Boolean?,
