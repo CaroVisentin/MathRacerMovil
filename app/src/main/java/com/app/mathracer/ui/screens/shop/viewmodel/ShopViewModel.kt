@@ -110,22 +110,20 @@ class ShopViewModel @Inject constructor(
                 val result = repository.createPaymentPreference(
                     playerId = playerId,
                     coinPackageId = pkg.id,
-                    successUrl = "app://payments/success",
-                    failureUrl = "app://payments/failure",
-                    pendingUrl = "app://payments/pending"
+                    successUrl = "mathracer://payment?status=success",
+                    failureUrl = "mathracer://payment?status=failure",
+                    pendingUrl = "mathracer://payment?status=pending"
                 )
-
+                Log.d("payment", "$result")
                 result
                     .onSuccess { json: JsonObject ->
                         // Intentamos extraer un URL de redirección común (init_point / sandbox_init_point / url / preferenceUrl)
                         var url: String? = when {
-                            json.has("init_point") -> json.get("init_point").asString
-                            json.has("sandbox_init_point") -> json.get("sandbox_init_point").asString
+                            json.has("initPoint") -> json.get("initPoint").asString
                             json.has("url") -> json.get("url").asString
                             json.has("preferenceUrl") -> json.get("preferenceUrl").asString
                             else -> null
                         }
-
                         // Si backend solo devuelve PreferenceId (como en tu controller), construimos la URL de MercadoPago
                         if (url.isNullOrBlank()) {
                             val prefId = when {
