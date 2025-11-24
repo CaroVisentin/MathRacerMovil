@@ -276,7 +276,7 @@ fun HomeScreen(
 
                                 TextButton(
                                     onClick = onFreePracticeClick,
-                                    enabled = false,
+                                    enabled = true,
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .border(
@@ -285,12 +285,12 @@ fun HomeScreen(
                                             shape = RoundedCornerShape(8.dp)
                                         )
                                         .background(
-                                            Color.Gray.copy(alpha = 0.6f),
+                                            Color.Black.copy(alpha = 0.6f),
                                             shape = RoundedCornerShape(8.dp)
                                         )
                                 ) {
                                     Text(
-                                        text = "Práctica libre",
+                                        text = "Modo Infinito",
                                         fontSize = 30.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = CyanMR,
