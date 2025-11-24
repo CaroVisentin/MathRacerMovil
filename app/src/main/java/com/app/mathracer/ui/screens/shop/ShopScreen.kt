@@ -18,6 +18,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import android.widget.Toast
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -35,6 +37,7 @@ import com.app.mathracer.data.CurrentUser
 import com.app.mathracer.data.network.ItemDto
 import com.app.mathracer.data.network.ShopResponseEnergies
 import com.app.mathracer.data.network.ShopResponseWildcards
+import com.app.mathracer.data.network.CoinPackageDto
 import com.app.mathracer.ui.components.ProductImage
 import com.app.mathracer.ui.screens.shop.viewmodel.ShopBuyType
 import com.app.mathracer.ui.screens.shop.viewmodel.ShopViewModel
@@ -58,10 +61,27 @@ fun ShopScreen(
         }
     }
 
+    LaunchedEffect(state.paymentRedirectUrl) {
+        state.paymentRedirectUrl?.let { url ->
+            try {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                // add FLAG_ACTIVITY_NEW_TASK when called from non-Activity context
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(intent)
+            } catch (e: Exception) {
+                Toast.makeText(context, "No se pudo abrir el navegador", Toast.LENGTH_SHORT).show()
+            } finally {
+                viewModel.clearPaymentRedirect()
+            }
+        }
+    }
+
     var selectedItem by remember { mutableStateOf<ItemDto?>(null) }
     var selectedWildcard by remember { mutableStateOf<ShopResponseWildcards?>(null) }
+    var selectedCoinPackage by remember { mutableStateOf<CoinPackageDto?>(null) }
     var selectedBuyType by remember { mutableStateOf<ShopBuyType?>(null) }
     var showDialog by remember { mutableStateOf(false) }
+    var showCoinDialog by remember { mutableStateOf(false) }
     var dialogPrice by remember { mutableStateOf(0) }
 
     Box(
@@ -171,12 +191,29 @@ fun ShopScreen(
                     }
                 )
             }
+        // PAQUETES DE MONEDAS
+        item {
+            SectionTitle(text = "MONEDAS")
         }
+
+        item {
+            ShopSectionCoinPackages(
+                items = state.coinPackages,
+                onBuyClick = { pkg ->
+                    selectedCoinPackage = pkg
+                    showCoinDialog = true
+                }
+            )
+        }
+        }
+
+
 
         // DIALOGO DE COMPRA
         if (showDialog && selectedBuyType != null) {
             BuyConfirmDialog(
                 price = dialogPrice,
+                text = "¿Deseas comprar este\nartículo por ${"%,d".format(dialogPrice)} Coins?",
                 onDismiss = {
                     showDialog = false
                     selectedItem = null
@@ -240,6 +277,25 @@ fun ShopScreen(
                     selectedItem = null
                     selectedWildcard = null
                     selectedBuyType = null
+                }
+            )
+        }
+
+        // DIALOGO PARA PAQUETES DE MONEDAS (acción distinta)
+        if (showCoinDialog && selectedCoinPackage != null) {
+            val pkg = selectedCoinPackage!!
+            BuyConfirmDialog(
+                price = pkg.price,
+                text = "¿Deseas comprar este\nartículo por $ ${"%,d".format(pkg.price)}?",
+                onDismiss = {
+                    showCoinDialog = false
+                    selectedCoinPackage = null
+                },
+                onConfirm = {
+                    val playerId = CurrentUser.user?.id ?: 0
+                    viewModel.buyCoinPackage(playerId, pkg)
+                    showCoinDialog = false
+                    selectedCoinPackage = null
                 }
             )
         }
@@ -567,12 +623,95 @@ fun ShopItemWildcardCard(
 }
 
 
+@Composable
+fun ShopSectionCoinPackages(
+    items: List<CoinPackageDto>,
+    onBuyClick: (CoinPackageDto) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        items.chunked(3).forEach { rowItems ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                rowItems.forEach { pkg ->
+                    ShopCoinPackageCard(
+                        pkg = pkg,
+                        modifier = Modifier.weight(1f),
+                        onBuyClick = { onBuyClick(pkg) }
+                    )
+                }
+
+                repeat(3 - rowItems.size) {
+                    Spacer(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(0.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ShopCoinPackageCard(
+    pkg: CoinPackageDto,
+    modifier: Modifier = Modifier,
+    onBuyClick: () -> Unit
+) {
+    Box(
+        modifier = modifier
+            .aspectRatio(0.8f)
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFF222222))
+            .border(2.dp, Color.White, RoundedCornerShape(12.dp))
+            .padding(8.dp)
+            .then(Modifier.clickable { onBuyClick() } )
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // Icono grande de moneda
+            Image(
+                painter = painterResource(id = R.drawable.coin),
+                contentDescription = null,
+                modifier = Modifier.size(56.dp),
+                contentScale = ContentScale.Fit
+            )
+
+            Text(
+                text = pkg.description ?: "Paquete",
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = "$${"%,d".format(pkg.price)}",
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White)
+            }
+        }
+    }
+}
+
+
 // ---------------------------------------------------------------------
 // DIALOGO DE CONFIRMACIÓN
 // ---------------------------------------------------------------------
 @Composable
 fun BuyConfirmDialog(
     price: Int,
+    text: String,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
@@ -606,7 +745,7 @@ fun BuyConfirmDialog(
                     )
                     // Texto
                     Text(
-                        text = "¿Deseas comprar este\nartículo por ${"%,d".format(price)} monedas?",
+                        text = text,
                         color = Color.White,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
@@ -629,11 +768,6 @@ fun BuyConfirmDialog(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.coin),
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
                             Text(
                                 text = "COMPRAR",
                                 color = Color.White,

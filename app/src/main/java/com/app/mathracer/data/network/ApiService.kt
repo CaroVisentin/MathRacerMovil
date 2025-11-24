@@ -12,11 +12,12 @@ import com.app.mathracer.data.model.Worlds
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.Query
 import retrofit2.http.Header
-import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
+import com.google.gson.JsonObject
 
 
 data class RankingPlayerDto(
@@ -119,6 +120,67 @@ data class PurchaseWildscardResultDto(
     val newQuantity: Int?,
     val remainingCoins: Int?
 )
+
+data class CoinPackageDto(
+    val id: Int = 0,
+    val coinAmount: Int = 0,
+    val price: Int = 0,
+    val description: String? = null
+)
+
+data class PaymentPreferenceRequestDto(
+    val playerId: Int,
+    val coinPackageId: Int,
+    val successUrl: String,
+    val failureUrl: String,
+    val pendingUrl: String
+)
+
+data class InfiniteQuestionDto(
+        val questionId: Int = 0,
+        val equation: String = "",
+        val options: List<Int> = emptyList(),
+        val correctAnswer: Int = 0,
+        val expectedResult: String? = null
+    )
+
+    data class InfiniteStartResponse(
+        val gameId: Int = 0,
+        val playerName: String = "",
+        val questions: List<InfiniteQuestionDto> = emptyList(),
+        val totalCorrectAnswers: Int = 0,
+        val currentBatch: Int = 0
+    )
+
+    data class InfiniteAnswerRequest(
+        val selectedAnswer: Int
+    )
+
+    data class InfiniteAnswerResponse(
+        val isCorrect: Boolean,
+        val correctAnswer: Int,
+        val totalCorrectAnswers: Int,
+        val currentQuestionIndex: Int,
+        val needsNewBatch: Boolean
+    )
+
+    data class InfiniteLoadBatchResponse(
+        val gameId: Int,
+        val questions: List<InfiniteQuestionDto>,
+        val currentBatch: Int,
+        val totalCorrectAnswers: Int
+    )
+
+    data class InfiniteStatusResponse(
+        val gameId: Int,
+        val playerName: String,
+        val totalCorrectAnswers: Int,
+        val currentQuestionIndex: Int,
+        val currentBatch: Int,
+        val isActive: Boolean,
+        val gameStartedAt: String?,
+        val abandonedAt: String?
+    )
 
 
 interface ApiService {
@@ -254,52 +316,11 @@ interface ApiService {
         @Body body: PurchaseWildscardRequestDto
     ): Response<PurchaseWildscardResultDto>
 
- 
-    data class InfiniteQuestionDto(
-        val questionId: Int = 0,
-        val equation: String = "",
-        val options: List<Int> = emptyList(),
-        val correctAnswer: Int = 0,
-        val expectedResult: String? = null
-    )
+    @GET("Coins/packages")
+    suspend fun getCoinPackages(): Response<List<CoinPackageDto>>
 
-    data class InfiniteStartResponse(
-        val gameId: Int = 0,
-        val playerName: String = "",
-        val questions: List<InfiniteQuestionDto> = emptyList(),
-        val totalCorrectAnswers: Int = 0,
-        val currentBatch: Int = 0
-    )
-
-    data class InfiniteAnswerRequest(
-        val selectedAnswer: Int
-    )
-
-    data class InfiniteAnswerResponse(
-        val isCorrect: Boolean,
-        val correctAnswer: Int,
-        val totalCorrectAnswers: Int,
-        val currentQuestionIndex: Int,
-        val needsNewBatch: Boolean
-    )
-
-    data class InfiniteLoadBatchResponse(
-        val gameId: Int,
-        val questions: List<InfiniteQuestionDto>,
-        val currentBatch: Int,
-        val totalCorrectAnswers: Int
-    )
-
-    data class InfiniteStatusResponse(
-        val gameId: Int,
-        val playerName: String,
-        val totalCorrectAnswers: Int,
-        val currentQuestionIndex: Int,
-        val currentBatch: Int,
-        val isActive: Boolean,
-        val gameStartedAt: String?,
-        val abandonedAt: String?
-    )
+    @POST("Payments/create-preference")
+    suspend fun createPaymentPreference(@Body body: PaymentPreferenceRequestDto): Response<JsonObject>
 
     @POST("/api/Infinite/start")
     suspend fun startInfinite(@Header("Authorization") authorization: String?): Response<InfiniteStartResponse>

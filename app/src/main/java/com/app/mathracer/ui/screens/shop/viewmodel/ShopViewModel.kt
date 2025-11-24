@@ -9,6 +9,9 @@ import com.app.mathracer.data.network.ShopResponse
 import com.app.mathracer.data.network.ShopResponseEnergies
 import com.app.mathracer.data.network.ShopResponseWildcards
 import com.app.mathracer.data.repository.ShopRepository
+import com.app.mathracer.data.network.CoinPackageDto
+import com.app.mathracer.BuildConfig
+import com.google.gson.JsonObject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -40,6 +43,7 @@ class ShopViewModel @Inject constructor(
                 val bgsRes = repository.getBackgrounds(playerId)
                 val comodinesRes = repository.getComodines(playerId) // <- ajustá si se llama distinto
                 val energiesRes = repository.getEneries(playerId)    // <- nombre según tu repo
+                val coinPackagesRes = repository.getCoinPackages()
 
                 val cars = carsRes.getOrElse { ShopResponse() }.items
                     .filter { !it.isOwned }
@@ -72,12 +76,15 @@ class ShopViewModel @Inject constructor(
                     )
                 }
 
+                val coinPackages = coinPackagesRes.getOrElse { emptyList() }
+
                 _uiState.update {
                     it.copy(
                         cars = cars,
                         characters = chars,
                         backgrounds = bgs,
                         comodines = comodines as List<ShopResponseWildcards>,
+                        coinPackages = coinPackages,
                         energies = energies,
                         loading = false,
                         coins = CurrentUser.user?.coins ?: it.coins
@@ -93,6 +100,67 @@ class ShopViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    // Compra de paquete de monedas — aquí puedes redirigir a la pasarela de pago
+    fun buyCoinPackage(playerId: Int, pkg: CoinPackageDto) {
+        viewModelScope.launch {
+            try {
+                // Llamamos al backend para crear la preferencia de pago
+                val result = repository.createPaymentPreference(
+                    playerId = playerId,
+                    coinPackageId = pkg.id,
+                    successUrl = "app://payments/success",
+                    failureUrl = "app://payments/failure",
+                    pendingUrl = "app://payments/pending"
+                )
+
+                result
+                    .onSuccess { json: JsonObject ->
+                        // Intentamos extraer un URL de redirección común (init_point / sandbox_init_point / url / preferenceUrl)
+                        var url: String? = when {
+                            json.has("init_point") -> json.get("init_point").asString
+                            json.has("sandbox_init_point") -> json.get("sandbox_init_point").asString
+                            json.has("url") -> json.get("url").asString
+                            json.has("preferenceUrl") -> json.get("preferenceUrl").asString
+                            else -> null
+                        }
+
+                        // Si backend solo devuelve PreferenceId (como en tu controller), construimos la URL de MercadoPago
+                        if (url.isNullOrBlank()) {
+                            val prefId = when {
+                                json.has("PreferenceId") -> json.get("PreferenceId").asString
+                                json.has("preferenceId") -> json.get("preferenceId").asString
+                                json.has("preference_id") -> json.get("preference_id").asString
+                                else -> null
+                            }
+
+                            if (!prefId.isNullOrBlank()) {
+                                val base = if (BuildConfig.DEBUG) "https://sandbox.mercadopago.com/checkout/v1/redirect?pref_id=" else "https://www.mercadopago.com/checkout/v1/redirect?pref_id="
+                                url = base + prefId
+                            }
+                        }
+
+                        if (!url.isNullOrBlank()) {
+                            _uiState.update { it.copy(paymentRedirectUrl = url) }
+                        } else {
+                            _uiState.update { it.copy(purchaseMessage = "Preferencia creada, pero no se recibió URL") }
+                        }
+                    }
+                    .onFailure { e ->
+                        Log.e("ShopViewModel", "Error al crear preferencia de pago", e)
+                        _uiState.update { it.copy(purchaseMessage = "Error al iniciar pago: ${e.localizedMessage}") }
+                    }
+
+            } catch (e: Exception) {
+                Log.e("ShopViewModel", "Error al procesar compra de paquete", e)
+                _uiState.update { it.copy(purchaseMessage = "Error al comprar paquete") }
+            }
+        }
+    }
+
+    fun clearPaymentRedirect() {
+        _uiState.update { it.copy(paymentRedirectUrl = null) }
     }
 
     // Compra genérica para auto / fondo / personaje

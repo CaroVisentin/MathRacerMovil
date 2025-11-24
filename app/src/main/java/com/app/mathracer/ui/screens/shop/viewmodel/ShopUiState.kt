@@ -3,6 +3,7 @@ package com.app.mathracer.ui.screens.shop.viewmodel
 import com.app.mathracer.data.network.ItemDto
 import com.app.mathracer.data.network.ShopResponseEnergies
 import com.app.mathracer.data.network.ShopResponseWildcards
+import com.app.mathracer.data.network.CoinPackageDto
 
 data class ShopItem(
     val id: Int,
@@ -19,9 +20,11 @@ data class ShopUiState(
     val loading: Boolean = false,
     val error: String? = null,
     val energies: ShopResponseEnergies? = null,
-    val comodines: List<ShopResponseWildcards> = emptyList()
+    val comodines: List<ShopResponseWildcards> = emptyList(),
+    val coinPackages: List<CoinPackageDto> = emptyList()
     ,
-    val purchaseMessage: String? = null
+    val purchaseMessage: String? = null,
+    val paymentRedirectUrl: String? = null
 )
 
 enum class ShopBuyType {
