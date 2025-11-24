@@ -32,15 +32,19 @@ class WorldsViewModel : ViewModel() {
                     val progressMap = mutableMapOf<Int, Pair<Int, Int>>()
                     for (w in fetchedWorlds) {
                         try {
-                            val levelsResp = LevelsRemoteRepository.getLevels(w.id)
-                            if (levelsResp.isSuccessful) {
-                                val levelsBody = levelsResp.body()
-                                val total = levelsBody?.levels?.size ?: 15
-                                val lastCompletedId = levelsBody?.lastCompletedLevelId ?: 0
-                                val completed = levelsBody?.levels?.count { it.id <= lastCompletedId } ?: 0
-                                progressMap[w.id] = Pair(completed, total)
-                            } else {
-                                progressMap[w.id] = Pair(0, 15)
+                            Log.d("WorldsViewModel", "Fetching levels for world ${w}")
+                            if(w.id == (worlds?.lastAvailableWorldId ?: 0)) {
+                                val levelsResp = LevelsRemoteRepository.getLevels(w.id)
+                                if (levelsResp.isSuccessful) {
+                                    val levelsBody = levelsResp.body()
+                                    val total = levelsBody?.levels?.size ?: 15
+                                    val lastCompletedId = levelsBody?.lastCompletedLevelId ?: 0
+                                    val completed =
+                                        levelsBody?.levels?.count { it.id <= lastCompletedId } ?: 0
+                                    progressMap[w.id] = Pair(completed, total)
+                                } else {
+                                    progressMap[w.id] = Pair(0, 15)
+                                }
                             }
                         } catch (e: Exception) {
                             android.util.Log.e("WorldsViewModel", "Error fetching levels for world ${w.id}", e)
