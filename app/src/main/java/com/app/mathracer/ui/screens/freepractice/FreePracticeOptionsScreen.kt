@@ -53,24 +53,6 @@ fun FreePracticeOptionsScreen(
                 modifier = Modifier.fillMaxSize()
             )
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-                    .padding(start = 16.dp, end = 16.dp)
-                    .align(Alignment.TopCenter)
-            ) {
-                IconButton(onClick = onBack, modifier = Modifier.align(CenterStart)) {
-                    Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Volver", tint = CyanMR)
-                }
-                Text(
-                    text = "Práctica libre",
-                    modifier = Modifier.align(Alignment.Center),
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = CyanMR
-                )
-            }
 
             Box(
                 modifier = Modifier

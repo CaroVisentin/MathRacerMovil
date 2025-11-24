@@ -84,23 +84,7 @@ fun JoinMatchesScreen(
             )
 
             
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-                    .padding(start = 16.dp, end = 16.dp)
-            ) {
-                IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
-                    Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Volver", tint = CyanMR)
-                }
-                Text(
-                    text = "Lista de partidas",
-                    modifier = Modifier.align(Alignment.Center),
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = CyanMR
-                )
-            }
+           
 
             
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

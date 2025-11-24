@@ -63,7 +63,7 @@ fun ProfileScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(Color(0xFF101010))
             .padding(top = 24.dp)
     ) {
         var showAddDialog by remember { mutableStateOf(false) }

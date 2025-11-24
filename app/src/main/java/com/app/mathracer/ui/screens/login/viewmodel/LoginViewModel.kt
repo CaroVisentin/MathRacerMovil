@@ -13,9 +13,11 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.app.mathracer.data.repository.UserRemoteRepository
 import com.app.mathracer.data.CurrentUser
+import com.app.mathracer.data.UserState
 import com.app.mathracer.data.model.User
 import androidx.lifecycle.viewModelScope
 import com.app.mathracer.data.model.UserGoogle
+import com.app.mathracer.data.repository.GarageRepository
 import com.app.mathracer.data.model.UserLogin
 import kotlinx.coroutines.launch
 
@@ -58,6 +60,29 @@ class LoginViewModel : ViewModel() {
                                     if (response.isSuccessful) {
                                         CurrentUser.user = response.body()
                                         Log.d("Login", "Usuario obtenido del backend: ${CurrentUser.user}")
+                                         
+                                        try {
+                                            val playerId = CurrentUser.user?.id ?: 0
+                                            if (playerId > 0) {
+                                                viewModelScope.launch {
+                                                    try {
+                                                                val repo = GarageRepository()
+                                                                val charsRes = repo.getCharacters(playerId)
+                                                                val bgsRes = repo.getBackgrounds(playerId)
+                                                                val carsRes = repo.getCars(playerId)
+                                                                val activeChar = charsRes.getOrNull()?.activeItem
+                                                                val activeBg = bgsRes.getOrNull()?.activeItem
+                                                                val activeCar = carsRes.getOrNull()?.activeItem
+                                                                com.app.mathracer.data.CurrentUser.activeCharacterProductId = activeChar?.productId
+                                                                com.app.mathracer.data.CurrentUser.activeBackgroundProductId = activeBg?.productId
+                                                                com.app.mathracer.data.CurrentUser.activeVehicleProductId = activeCar?.productId
+                                                                com.app.mathracer.data.UserState.setActiveCharacter(activeChar?.productId)
+                                                                com.app.mathracer.data.UserState.setActiveBackground(activeBg?.productId)
+                                                                com.app.mathracer.data.UserState.setActiveVehicle(activeCar?.productId)
+                                                    } catch (_: Exception) { }
+                                                }
+                                            }
+                                        } catch (_: Exception) { }
                                     } else {
                                         android.util.Log.e("Login", "getUser failed: ${response.code()}")
                                     }
@@ -123,6 +148,29 @@ class LoginViewModel : ViewModel() {
                                     android.util.Log.e("Register", "Error creando usuario en backend", e)
                                     CurrentUser.user = createdUser
                                 }
+                                
+                                try {
+                                    val playerId = CurrentUser.user?.id ?: 0
+                                    if (playerId > 0) {
+                                        viewModelScope.launch {
+                                            try {
+                                                        val repo = GarageRepository()
+                                                        val charsRes = repo.getCharacters(playerId)
+                                                        val bgsRes = repo.getBackgrounds(playerId)
+                                                        val carsRes = repo.getCars(playerId)
+                                                        val activeChar = charsRes.getOrNull()?.activeItem
+                                                        val activeBg = bgsRes.getOrNull()?.activeItem
+                                                        val activeCar = carsRes.getOrNull()?.activeItem
+                                                        com.app.mathracer.data.CurrentUser.activeCharacterProductId = activeChar?.productId
+                                                        com.app.mathracer.data.CurrentUser.activeBackgroundProductId = activeBg?.productId
+                                                        com.app.mathracer.data.CurrentUser.activeVehicleProductId = activeCar?.productId
+                                                        com.app.mathracer.data.UserState.setActiveCharacter(activeChar?.productId)
+                                                        com.app.mathracer.data.UserState.setActiveBackground(activeBg?.productId)
+                                                        com.app.mathracer.data.UserState.setActiveVehicle(activeCar?.productId)
+                                            } catch (_: Exception) { }
+                                        }
+                                    }
+                                } catch (_: Exception) { }
                                 _uiState.value = _uiState.value.copy(
                                     isLoading = false,
                                     isSuccess = true

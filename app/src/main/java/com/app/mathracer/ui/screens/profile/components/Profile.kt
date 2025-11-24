@@ -2,7 +2,9 @@ package com.app.mathracer.ui.screens.profile.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,6 +27,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.mathracer.R
+import com.app.mathracer.data.UserState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 
 @Composable
 fun Profile(
@@ -40,15 +45,30 @@ fun Profile(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Image(
-            painter = painterResource(R.drawable.avatar),
-            contentDescription = "avatar",
-            contentScale = ContentScale.Crop,
+       
+        Box(
             modifier = Modifier
-                .size(150.dp)
-                .clip(CircleShape)
-
-        )
+                .size(150.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(150.dp)
+                    .clip(CircleShape)
+                    .background(Color.White),
+                contentAlignment = Alignment.Center
+            ) {
+                val activeChar by UserState.activeCharacter.collectAsState()
+                com.app.mathracer.ui.components.ProductImage(
+                    productId = activeChar,
+                    fallbackRes = R.drawable.avatar,
+                    modifier = Modifier
+                        .size(140.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            }
+        }
         Text(
             text = userName,
             color = Color.White,

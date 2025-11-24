@@ -76,12 +76,7 @@ fun ShopScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            item {
-                ShopHeader(
-                    coins = state.coins,
-                    onBackClick = onBackClick
-                )
-            }
+            // Header removed: AppTopBar now provides the shop header and back navigation
 
             // ENERGÍAS
             item {

@@ -38,7 +38,7 @@ fun Settings(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(Color(0xFF101010))
             .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
@@ -106,20 +106,11 @@ fun Settings(
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            Text(
-                text = "Cuenta",
-                color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             Button(
                 onClick = onLogout,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Black,
+                    containerColor = Color.Red,
                     contentColor = Color.White
                 ),
                 border = BorderStroke(2.dp, Color.White),
