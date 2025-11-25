@@ -1,6 +1,5 @@
 package com.app.mathracer.ui.screens.home.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.mathracer.data.repository.UserRemoteRepository

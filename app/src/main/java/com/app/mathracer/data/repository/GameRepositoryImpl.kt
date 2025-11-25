@@ -1,5 +1,6 @@
-package com.app.mathracer.data.repositories
+package com.app.mathracer.data.repository
 
+import android.util.Log
 import com.app.mathracer.data.mappers.GameMapper
 import com.app.mathracer.data.network.RetrofitClient
 import com.app.mathracer.data.remote.SignalRRemoteDataSource
@@ -92,9 +93,9 @@ class GameRepositoryImpl(
     override suspend fun sendAnswer(gameId: String, playerId: String, answer: Int): Result<AnswerResult> {
         return if (signalRRemoteDataSource.isConnected()) {
             try {
-                android.util.Log.d("GameRepository", "🔁 Sending answer to remote: gameId=$gameId, playerId=$playerId, answer=$answer")
+                Log.d("GameRepository", "🔁 Sending answer to remote: gameId=$gameId, playerId=$playerId, answer=$answer")
                 val result = signalRRemoteDataSource.sendAnswer(gameId, playerId, answer)
-                android.util.Log.d("GameRepository", "🔁 Remote sendAnswer result: isSuccess=${result.isSuccess}")
+                Log.d("GameRepository", "🔁 Remote sendAnswer result: isSuccess=${result.isSuccess}")
                 if (result.isSuccess) {
                     Result.success(
                         AnswerResult(
@@ -107,11 +108,11 @@ class GameRepositoryImpl(
                     Result.failure(result.exceptionOrNull() ?: Exception("Failed to send answer"))
                 }
             } catch (e: Exception) {
-                android.util.Log.e("GameRepository", "❌ Exception sending answer", e)
+                Log.e("GameRepository", "❌ Exception sending answer", e)
                 Result.failure(e)
             }
         } else {
-            android.util.Log.e("GameRepository", "❌ Not connected to game server when sending answer")
+            Log.e("GameRepository", "❌ Not connected to game server when sending answer")
             Result.failure(Exception("Not connected to game server"))
         }
     }

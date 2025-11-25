@@ -1,6 +1,7 @@
 package com.app.mathracer.data.repository
 
 import android.util.Log
+import com.app.mathracer.data.model.GenericResponse
 import com.app.mathracer.data.network.GarageResponseDto
 import com.app.mathracer.data.network.RetrofitClient
 import javax.inject.Inject
@@ -38,10 +39,10 @@ class GarageRepository @Inject constructor() {
         }
     }
 
-    suspend fun activateItem(playerId: Int, productId: Int, productType: String): Result<com.app.mathracer.data.model.GenericResponse> {
+    suspend fun activateItem(playerId: Int, productId: Int, productType: String): Result<GenericResponse> {
         return try {
             val resp = RetrofitClient.api.activateItem(playerId, productId, productType)
-            if (resp.isSuccessful) Result.success(resp.body() ?: com.app.mathracer.data.model.GenericResponse(success = true))
+            if (resp.isSuccessful) Result.success(resp.body() ?: GenericResponse(success = true))
             else Result.failure(Exception("activateItem failed ${resp.code()}"))
         } catch (e: Exception) {
             Result.failure(e)
