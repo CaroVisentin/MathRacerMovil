@@ -13,6 +13,7 @@ object Routes {
     const val WAITING_OPPONENT = "waiting_opponent"
     const val FREE_PRACTICE_OPTIONS = "free_practice_options"
     const val INFINITE_GAME = "infinite_game"
+    fun waitingWithGame(gameId: String) = "waiting_opponent/$gameId"
     const val MULTIPLAYER_OPTIONS = "multiplayer_options"
     const val CREATE_MATCH = "create_match"
     const val JOIN_MATCHES = "join_matches"

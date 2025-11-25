@@ -267,8 +267,30 @@ fun MathRacerNavGraph(
                 onBackPressed = { navController.navigateUp() }
             )
 
+            val joinViewModel: com.app.mathracer.ui.screens.multiplayer.viewmodel.JoinMatchesViewModel = hiltViewModel()
+            val gamesState by joinViewModel.games.collectAsState()
+            val isLoading by joinViewModel.isLoading.collectAsState()
+
+            LaunchedEffect(Unit) {
+                // Fetch available games when entering the screen
+                joinViewModel.fetchAvailableGames(publicOnly = false)
+            }
+
+            // Map API DTOs into local MatchItem for the composable
+            val matches = gamesState.map { dto ->
+                com.app.mathracer.ui.screens.multiplayer.MatchItem(
+                    id = dto.gameId.toString(),
+                    name = dto.gameName,
+                    difficulty = dto.difficulty ?: "",
+                    privacy = if (dto.isPrivate) "Privada" else "Pública",
+                    requiresPassword = dto.requiresPassword
+                )
+            }
+
             JoinMatchesScreen(
+                matches = matches,
                 onJoinConfirmed = { matchId, password ->
+                    // When user joins, navigate to waiting opponent screen
                     navController.navigate(Routes.WAITING_OPPONENT)
                 },
                 onBack = { navController.navigateUp() }

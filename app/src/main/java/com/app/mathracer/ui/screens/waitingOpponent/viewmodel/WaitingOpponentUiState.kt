@@ -6,6 +6,8 @@ data class WaitingOpponentUiState(
     val isSearchingMatch: Boolean = false,
     val gameFound: Boolean = false,
     val playerName: String = "",
+    val playerUid: String = "",
+    val assignedPlayerId: String? = null,
     val opponentName: String = "",
     val gameId: String = "",
     val message: String = "Conectando...",
