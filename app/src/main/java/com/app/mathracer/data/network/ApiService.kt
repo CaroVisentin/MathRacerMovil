@@ -1,6 +1,8 @@
 package com.app.mathracer.data.network
 
+import com.app.mathracer.data.model.Friend
 import com.app.mathracer.data.model.Levels
+import com.app.mathracer.data.model.Player
 import com.app.mathracer.data.model.SoloAnswerResponse
 import com.app.mathracer.data.model.SoloGameStartResponse
 import com.app.mathracer.data.model.SoloGameUpdateResponse
@@ -236,10 +238,13 @@ interface ApiService {
     suspend fun getUserByUid(@Header("Authorization") authorization: String?, @Path("uid") uid: String): Response<User>
     
     @GET("Friendship/{playerId}/friends")
-    suspend fun getFriends(@Header("Authorization") authorization: String?, @Path("playerId") playerId: Int): Response<List<com.app.mathracer.data.model.Friend>>
+    suspend fun getFriends(@Header("Authorization") authorization: String?, @Path("playerId") playerId: Int): Response<List<Friend>>
+
+    @GET("Player/email/{email}")
+    suspend fun getPlayer(@Header("Authorization") authorization: String?, @Path("email") email: String): Response<Player>
 
     @GET("Friendship/{playerId}/pending")
-    suspend fun getPending(@Header("Authorization") authorization: String?, @Path("playerId") playerId: Int): Response<List<com.app.mathracer.data.model.Friend>>
+    suspend fun getPending(@Header("Authorization") authorization: String?, @Path("playerId") playerId: Int): Response<List<Friend>>
 
     @POST("Friendship/request")
     suspend fun sendFriendRequest(@Header("Authorization") authorization: String?, @Body body: com.app.mathracer.data.model.FriendshipActionRequest): Response<Unit>

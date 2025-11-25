@@ -1,8 +1,11 @@
 package com.app.mathracer.ui.screens.profile.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.app.mathracer.R
 import com.app.mathracer.data.CurrentUser
+import com.app.mathracer.data.model.Player
 import com.app.mathracer.data.repository.FriendRepository
 import com.app.mathracer.ui.screens.profile.components.Friend as FriendUi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,8 +45,8 @@ class ProfileViewModel : ViewModel() {
                     FriendUi(
                         name = remote.name,
                         score = remote.points.toString(),
-                        avatarRes = com.app.mathracer.R.drawable.avatar,
-                        carRes = com.app.mathracer.R.drawable.car
+                        avatarRes = R.drawable.avatar,
+                        carRes = R.drawable.car
                     )
                 }
                 _uiState.update { it.copy(friends = uiList, remoteFriends = list) }
@@ -54,8 +57,8 @@ class ProfileViewModel : ViewModel() {
                         FriendUi(
                             name = remote.name,
                             score = remote.points.toString(),
-                            avatarRes = com.app.mathracer.R.drawable.avatar,
-                            carRes = com.app.mathracer.R.drawable.car
+                            avatarRes = R.drawable.avatar,
+                            carRes = R.drawable.car
                         )
                     }
                     _uiState.update { it.copy(friends = uiList, remoteFriends = cached) }
@@ -71,8 +74,8 @@ class ProfileViewModel : ViewModel() {
                     FriendUi(
                         name = remote.name,
                         score = remote.points.toString(),
-                        avatarRes = com.app.mathracer.R.drawable.avatar,
-                        carRes = com.app.mathracer.R.drawable.car
+                        avatarRes = R.drawable.avatar,
+                        carRes = R.drawable.car
                     )
                 }
                 _uiState.update { it.copy(friends = uiList, remoteFriends = cached) }
@@ -108,6 +111,40 @@ class ProfileViewModel : ViewModel() {
 
     fun onMusicVolumeChange(value: Float) {
         _uiState.update { it.copy(musicVolume = value) }
+    }
+
+    fun searchPlayer(email: String) {
+        viewModelScope.launch {
+            try {
+                val resp = FriendRepository.getPlayer(email)
+                Log.d("friend", "${resp.body()}")
+                if (resp.isSuccessful) {
+                    _uiState.update {
+                        it.copy(
+                            friendToSearch = Player(
+                                name = resp.body()?.name ?: "",
+                                id =  resp.body()?.id ?: 0,
+                                email =  resp.body()?.email ?: "",
+                                coins =  resp.body()?.coins ?: 0,
+                                points =  resp.body()?.points ?: 0,
+                                character =  resp.body()?.character
+                            ))
+                    }
+                    Log.d("friend", "aca ${resp.body()}")
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            friendToSearch = null
+                        )
+                    }
+                }
+                //refreshAll()
+            } catch (e: Exception) {
+                Log.d("friend", "catch")
+
+                e.printStackTrace()
+            }
+        }
     }
 
     fun inviteByPlayerId(toPlayerId: Int, onComplete: (Boolean, String?) -> Unit = { _, _ -> }) {
