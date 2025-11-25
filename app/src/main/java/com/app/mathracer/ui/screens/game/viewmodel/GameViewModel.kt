@@ -30,7 +30,6 @@ class GameViewModel @Inject constructor(
             gameId = gameId,
             playerName = playerName
         )
-        // Try to resolve numeric player id from server using Firebase UID
         viewModelScope.launch {
             try {
                 val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
@@ -79,13 +78,10 @@ class GameViewModel @Inject constructor(
         if (gameId == currentGameId) {
             android.util.Log.d("GameViewModel", "🎮 Processing game update for game $gameId, status: ${game.status}")
 
-            // Try to reliably determine "my player" id if not set yet
             val currentState = _uiState.value
             var myPlayerId = currentState.myPlayerId
 
-            // Prefer id match if available
             if (myPlayerId == null) {
-                // Try to match by player name
                 val displayName = currentState.playerName
                 if (displayName.isNotBlank()) {
                     if (game.playerOne.name.equals(displayName, ignoreCase = true)) {
@@ -96,7 +92,6 @@ class GameViewModel @Inject constructor(
                 }
             }
 
-            // If still null, try to infer from previous opponentName (fallback)
             if (myPlayerId == null && currentState.opponentName.isNotBlank()) {
                 if (!game.playerOne.name.equals(currentState.opponentName, ignoreCase = true)) {
                     myPlayerId = game.playerOne.id
@@ -105,7 +100,6 @@ class GameViewModel @Inject constructor(
                 }
             }
 
-            // Persist discovered id into state for future submits
             if (myPlayerId != null && myPlayerId != currentState.myPlayerId) {
                 android.util.Log.d("GameViewModel", "🎮 Detected myPlayerId=$myPlayerId from game update")
             }
@@ -119,7 +113,6 @@ class GameViewModel @Inject constructor(
 
                     android.util.Log.d("GameViewModel", "🎮 Player names: p1='${game.playerOne.name}', p2='${game.playerTwo?.name}' | myPlayerId(state)='${stateBefore.myPlayerId}'")
 
-                    // Determine myPlayer and opponent based on discovered myPlayerId or name fallback
                     val myPlayer = when {
                         stateBefore.myPlayerId != null && game.playerOne.id == stateBefore.myPlayerId -> game.playerOne
                         stateBefore.myPlayerId != null && game.playerTwo?.id == stateBefore.myPlayerId -> game.playerTwo
@@ -145,11 +138,9 @@ class GameViewModel @Inject constructor(
                         android.util.Log.d("GameViewModel", "🆕 New question detected: '$newQuestion'")
                     }
 
-                    // Preserve optimistic local score when possible (avoid server update overwriting +2)
                     val incomingMyPlayerScore = myPlayer?.score ?: 0
                     val incomingOpponentScore = opponent?.score ?: 0
 
-                    // Use the higher of the current local optimistic score and the incoming server score
                     val myPlayerScore = maxOf(stateBefore.playerScore, incomingMyPlayerScore)
                     val opponentScore = incomingOpponentScore
 
@@ -186,6 +177,8 @@ class GameViewModel @Inject constructor(
                         isLastAnswerCorrect = if (hasNewQuestion) null else stateBefore.isLastAnswerCorrect,
 
                         isPenalized = stateBefore.isPenalized,
+                        powerUpsLocked = if (hasNewQuestion) false else stateBefore.powerUpsLocked,
+                        fireExtinguisherActive = if (hasNewQuestion) false else stateBefore.fireExtinguisherActive,
                         expectedResult = game.expectedResult ?: "" // <-- NUEVO
                     )
 
@@ -198,7 +191,6 @@ class GameViewModel @Inject constructor(
                 GameStatus.FINISHED -> {
                     val currentState = _uiState.value
 
-                    // Determine myPlayer and opponent consistently like in IN_PROGRESS
                     val myPlayer = when {
                         currentState.myPlayerId != null && game.playerOne.id == currentState.myPlayerId -> game.playerOne
                         currentState.myPlayerId != null && game.playerTwo?.id == currentState.myPlayerId -> game.playerTwo
@@ -213,7 +205,6 @@ class GameViewModel @Inject constructor(
                         else -> game.playerOne
                     }
 
-                    // Decide winner by id when possible, fallback to name
                     val winnerEntity = game.winner
                     val isWinner = if (!winnerEntity?.id.isNullOrBlank() && !currentState.myPlayerId.isNullOrBlank()) {
                         winnerEntity?.id == currentState.myPlayerId
@@ -248,34 +239,27 @@ class GameViewModel @Inject constructor(
     
     fun useFireExtinguisher() {
         val currentState = _uiState.value
-        if (currentState.fireExtinguisherActive || currentState.gameEnded || currentState.options.isEmpty() || currentState.fireExtinguisherCount <= 0) return
+        if (currentState.fireExtinguisherActive || currentState.gameEnded || currentState.options.isEmpty() || currentState.fireExtinguisherCount <= 0 || currentState.powerUpsLocked) return
 
-        // Encontrar la respuesta correcta
         val correctAnswer = currentState.correctAnswer
         if (correctAnswer == null) return
 
-        // Crear una lista filtrada con solo dos opciones: la correcta y una incorrecta
         val filteredOptions = currentState.options.filter { it == correctAnswer }.take(1) +
                             currentState.options.filter { it != correctAnswer }.shuffled().take(1)
 
-        // Asegurar que la lista esté ordenada aleatoriamente
         val shuffledOptions = filteredOptions.shuffled()
 
         _uiState.value = currentState.copy(
             options = shuffledOptions,
             fireExtinguisherActive = true,
-            fireExtinguisherCount = 0 // Reducir el contador a 0 cuando se usa
+            fireExtinguisherCount = 0,
+            powerUpsLocked = true
         )
     }
 
-    /**
-     * Use a generic power-up by type.
-     * powerUpType: 1 = lightning (double progress on correct answer)
-     *              2 = shuffle (swap/shuffle opponent's options)
-     */
     fun usePowerUp(type: Int) {
         val currentState = _uiState.value
-        if (currentState.gameEnded || currentState.options.isEmpty() || currentState.myPlayerId == null || currentState.gameId.isBlank()) return
+        if (currentState.gameEnded || currentState.options.isEmpty() || currentState.myPlayerId == null || currentState.gameId.isBlank() || currentState.powerUpsLocked) return
 
         viewModelScope.launch {
             try {
@@ -288,16 +272,23 @@ class GameViewModel @Inject constructor(
                 result.fold(
                     onSuccess = {
                             android.util.Log.d("GameViewModel", "✨ Power-up $type used successfully")
-                            // Apply optimistic local effects for certain power-ups
+
                             when (type) {
                                 1 -> {
-                                    // Lightning: next correct answer counts double
-                                    _uiState.value = _uiState.value.copy(doubleProgressActive = true, lastPowerUpMessage = "Rayo activado: siguiente respuesta vale x2")
+                                    _uiState.value = _uiState.value.copy(
+                                        doubleProgressActive = true,
+                                        doublePointsCount = 0,
+                                        powerUpsLocked = true,
+                                        lastPowerUpMessage = "Rayo activado: siguiente respuesta vale x2"
+                                    )
                                     android.util.Log.d("GameViewModel", "✨ doubleProgressActive set = ${_uiState.value.doubleProgressActive}")
                                 }
                                 2 -> {
-                                    // Shuffle: inform user that opponent's options will be shuffled
-                                    _uiState.value = _uiState.value.copy(lastPowerUpMessage = "Shuffle enviado al rival")
+                                    _uiState.value = _uiState.value.copy(
+                                        shuffleRivalCount = 0,
+                                        powerUpsLocked = true,
+                                        lastPowerUpMessage = "Shuffle enviado al rival"
+                                    )
                                 }
                                 else -> {
                                     _uiState.value = _uiState.value.copy(lastPowerUpMessage = "Power-up usado")

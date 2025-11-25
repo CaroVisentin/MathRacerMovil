@@ -64,7 +64,7 @@ private val LabelBlue     = Color(0xFF51B7FF)
 private val OptionTeal    = Color(0xFF2EB7A7)
 
 data class PlayerResult(val rank: Int, val name: String, val points: Int)
-data class PowerUp(val iconRes: Int, val count: Int, val tint: Color)
+data class PowerUp(val iconRes: Int, val count: Int, val tint: Color, val enabled: Boolean = true)
 
 @Composable
 fun GamePlayScreen(
@@ -141,7 +141,8 @@ fun GamePlayScreen(
                         iconRes = p.iconRes,
                         count = p.count,
                         tint = p.tint,
-                        onClick = { onPowerUpClick(i) }
+                        onClick = { onPowerUpClick(i) },
+                        enabled = p.enabled
                     )
                     Spacer(Modifier.width(12.dp))
                 }
@@ -717,9 +718,24 @@ fun GameScreen(
         playerName = uiState.playerName,
         youCarRes = R.drawable.car_game,
         powerUps = listOf(
-            PowerUp(R.drawable.ic_shield, uiState.fireExtinguisherCount, Color(0xFFFF6B6B)), // Matafuegos
-            PowerUp(R.drawable.ic_shuffle, 99, Color.White),
-            PowerUp(R.drawable.ic_bolt, 99, Color(0xFF76E4FF))
+            PowerUp(
+                R.drawable.ic_shield,
+                uiState.fireExtinguisherCount,
+                Color(0xFFFF6B6B),
+                enabled = uiState.fireExtinguisherCount > 0 && !uiState.powerUpsLocked && !uiState.fireExtinguisherActive
+            ), // Matafuegos
+            PowerUp(
+                R.drawable.ic_shuffle,
+                uiState.shuffleRivalCount,
+                Color.White,
+                enabled = uiState.shuffleRivalCount > 0 && !uiState.powerUpsLocked
+            ),
+            PowerUp(
+                R.drawable.ic_bolt,
+                uiState.doublePointsCount,
+                Color(0xFF76E4FF),
+                enabled = uiState.doublePointsCount > 0 && !uiState.powerUpsLocked && !uiState.doubleProgressActive
+            )
         ),
         expression = uiState.currentQuestion.ifEmpty { 
             when {
@@ -743,28 +759,24 @@ fun GameScreen(
         onBack = onNavigateBack,
         onPowerUpClick = { index -> 
             when (index) {
-                0 -> viewModel.useFireExtinguisher() // Matafuegos
-                1 -> viewModel.usePowerUp(2) // Rayo: doble avance en respuesta correcta
-                2 -> viewModel.usePowerUp(1) // Shuffle: cambia opciones del rival
+                0 -> viewModel.useFireExtinguisher()
+                1 -> viewModel.usePowerUp(2)
+                2 -> viewModel.usePowerUp(1)
             }
         },
         onOptionClick = { index, value ->
-            // Solo permitir responder si hay pregunta, no está penalizado, y no está mostrando feedback
             if (uiState.currentQuestion.isNotEmpty() && !uiState.isPenalized && !uiState.showFeedback) {
                 viewModel.submitAnswer(value)
             }
         }
     )
 
-    // Modal de resultado del juego
     if (uiState.gameEnded) {
         GameResultModal(
             isWinner = uiState.winner?.contains("Ganaste") == true,
-           // gameSummary = uiState.winner ?: "Juego terminado",
             userName = uiState.playerName,
             userNameRival = uiState.opponentName,
-            onDismiss = { 
-                // No necesitamos método específico, el estado ya está manejado
+            onDismiss = {
             },
             onPlayAgain = {
                 onPlayAgain()
@@ -774,8 +786,4 @@ fun GameScreen(
             }
         )
     }
-}
-
-fun onClickPowerUp(index: Int) {
-    // Lógica para usar el power-up correspondiente
 }
