@@ -40,3 +40,8 @@ enum class ShopCategory {
     BACKGROUND,
     CHARACTER
 }
+
+data class PaymentResponse (
+    val preferenceId: String = "",
+    val initPoint: String = ""
+)
