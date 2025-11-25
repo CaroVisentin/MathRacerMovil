@@ -136,14 +136,15 @@ fun InvitationsScreen(
 
                                                 Button(
                                                     onClick = {
-                                                        // Accept invitation, get gameId and navigate to WaitingOpponent passing the gameId
-                                                        viewModel.acceptAndJoin(inv.id) { ok, gameId ->
+                                                        viewModel.acceptAndGetGameId(inv.id) { ok, gameId ->
                                                             if (ok) {
-                                                                // Store the pending gameId in a small shared location on the WaitingOpponentViewModel
-                                                                // We can't directly pass args via nav for this route, so we'll use a simple side-channel:
-                                                                com.app.mathracer.ui.screens.waitingOpponent.viewmodel.PendingJoinHolder.pendingGameId = gameId
+                                                                try {
+                                                                    gameId?.let { com.app.mathracer.ui.screens.waitingOpponent.viewmodel.PendingJoinHolder.pendingGameId = it }
+                                                                } catch (e: Exception) {
+                                                                    android.util.Log.w("Invitations", "Failed to store pending gameId: ${e.message}")
+                                                                }
                                                                 onJoinAndWait()
-                                                            } else android.util.Log.e("Invitations", "Failed to accept: $gameId")
+                                                            } else android.util.Log.e("Invitations", "Failed to accept invitation")
                                                         }
                                                     },
                                                     modifier = Modifier.widthIn(min = 88.dp),

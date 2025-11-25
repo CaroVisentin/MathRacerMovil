@@ -67,6 +67,15 @@ fun WaitingOpponentScreen(
                 android.util.Log.w("WaitingOpponentScreen", "Failed to pass expectedGameId to ViewModel: ${e.message}")
             }
         }
+        try {
+            val pending = com.app.mathracer.ui.screens.waitingOpponent.viewmodel.PendingJoinHolder.pendingGameId
+            if (pending != null) {
+                viewModel.setExpectedGameId(pending.toString())
+                com.app.mathracer.ui.screens.waitingOpponent.viewmodel.PendingJoinHolder.pendingGameId = null
+            }
+        } catch (e: Exception) {
+            android.util.Log.w("WaitingOpponentScreen", "No pending game id in holder: ${e.message}")
+        }
         // Pass both uid (for server) and displayName (for local UI comparisons)
         viewModel.startConnection(uid, displayName)
     }

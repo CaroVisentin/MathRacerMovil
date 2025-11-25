@@ -51,7 +51,7 @@ object GameInvitationRepository {
         return api.getGameInvitationInbox(authHeader(token))
     }
 
-    suspend fun respondInvitation(invitationId: Int, accept: Boolean): Response<Unit> {
+    suspend fun respondInvitation(invitationId: Int, accept: Boolean): Response<com.app.mathracer.data.network.ApiService.GameInvitationRespondResponse> {
         val token = try { getIdToken() } catch (e: Exception) { Log.e("GameInvRepo", "Failed to get idToken", e); null }
         val body = ApiService.GameInvitationRespondRequest(invitationId = invitationId, accept = accept)
         try {

@@ -54,4 +54,24 @@ class InvitationsViewModel : ViewModel() {
             }
         }
     }
+
+   
+    fun acceptAndGetGameId(invitationId: Int, onComplete: (Boolean, Int?) -> Unit = { _, _ -> }) {
+        viewModelScope.launch {
+            try {
+                val resp = GameInvitationRepository.respondInvitation(invitationId, true)
+                if (resp.isSuccessful) {
+                    val body = resp.body()
+                    val gameId = body?.gameId
+                    loadInbox()
+                    onComplete(true, gameId)
+                } else {
+                    val err = resp.errorBody()?.string()
+                    onComplete(false, null)
+                }
+            } catch (e: Exception) {
+                onComplete(false, null)
+            }
+        }
+    }
 }
