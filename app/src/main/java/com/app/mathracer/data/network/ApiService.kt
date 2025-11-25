@@ -350,4 +350,59 @@ interface ApiService {
         @Path("gameId") gameId: Int
     ): Response<InfiniteStatusResponse>
 
+    // Game Invitation endpoints
+    data class GameInvitationSendRequest(
+        val invitedFriendId: Int,
+        val difficulty: String,
+        val expectedResult: String
+    )
+
+    data class GameInvitationDto(
+        val id: Int,
+        val gameId: Int? = null,
+        val inviterId: Int? = null,
+        val inviterName: String? = null,
+        // backend may return inviterPlayerName
+        val inviterPlayerName: String? = null,
+        val invitedFriendId: Int? = null,
+        val gameName: String? = null,
+        val difficulty: String? = null,
+        val expectedResult: String? = null,
+        val status: String? = null,
+        val createdAt: String? = null
+    )
+
+    data class GameInvitationRespondRequest(
+        val invitationId: Int,
+        val accept: Boolean
+    )
+
+    data class GameInvitationRespondResponse(
+        val accepted: Boolean,
+        val gameId: Int?,
+        val message: String?
+    )
+
+    @POST("/api/GameInvitation/send")
+    suspend fun sendGameInvitation(
+        @Header("Authorization") authorization: String?,
+        @Body request: GameInvitationSendRequest
+    ): Response<Unit>
+
+    data class GameInvitationInboxResponse(
+        val totalInvitations: Int = 0,
+        val invitations: List<GameInvitationDto> = emptyList()
+    )
+
+    @GET("/api/GameInvitation/inbox")
+    suspend fun getGameInvitationInbox(
+        @Header("Authorization") authorization: String?
+    ): Response<GameInvitationInboxResponse>
+
+    @POST("/api/GameInvitation/respond")
+    suspend fun respondGameInvitation(
+        @Header("Authorization") authorization: String?,
+        @Body request: GameInvitationRespondRequest
+    ): Response<GameInvitationRespondResponse>
+
 }

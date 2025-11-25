@@ -17,6 +17,7 @@ object Routes {
     const val CREATE_MATCH = "create_match"
     const val JOIN_MATCHES = "join_matches"
     const val INVITE_FRIENDS = "invite_friends"
+    const val INVITATION_INBOX = "invitation_inbox"
     const val GAME = "game"
     const val SIGNALR_TEST = "signalr_test"
     const val LOGIN = "login"
