@@ -108,6 +108,45 @@ class GameRepositoryImpl(
         }
     }
 
+    override suspend fun usePowerUp(
+        gameId: String,
+        playerId: String,
+        powerUpType: Int
+    ): Result<Unit> {
+        return if (signalRRemoteDataSource.isConnected()) {
+            try {
+                android.util.Log.d(
+                    "GameRepository",
+                    "⚡ Using PowerUp: gameId=$gameId, playerId=$playerId, type=$powerUpType"
+                )
+
+                val result = signalRRemoteDataSource.usePowerUp(gameId, playerId, powerUpType)
+
+                if (result.isSuccess) {
+                    android.util.Log.d("GameRepository", "⚡ PowerUp sent successfully")
+                    Result.success(Unit)
+                } else {
+                    android.util.Log.e(
+                        "GameRepository",
+                        "❌ Failed to send PowerUp: ${result.exceptionOrNull()?.message}"
+                    )
+                    Result.failure(result.exceptionOrNull() ?: Exception("Failed to use power-up"))
+                }
+
+            } catch (e: Exception) {
+                android.util.Log.e("GameRepository", "❌ Exception using PowerUp", e)
+                Result.failure(e)
+            }
+        } else {
+            android.util.Log.e(
+                "GameRepository",
+                "❌ Not connected to game server when trying to use power-up"
+            )
+            Result.failure(Exception("Not connected to game server"))
+        }
+    }
+
+
     override fun observeGameUpdates(): Flow<Game?> {
         return signalRRemoteDataSource.gameEvents.map { entity ->
             entity?.let { GameMapper.entityToDomain(it) }

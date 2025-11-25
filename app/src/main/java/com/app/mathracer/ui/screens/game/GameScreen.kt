@@ -718,8 +718,8 @@ fun GameScreen(
         youCarRes = R.drawable.car_game,
         powerUps = listOf(
             PowerUp(R.drawable.ic_shield, uiState.fireExtinguisherCount, Color(0xFFFF6B6B)), // Matafuegos
-           // PowerUp(R.drawable.ic_shuffle, 99, Color.White),
-          //  PowerUp(R.drawable.ic_bolt, 99, Color(0xFF76E4FF))
+            PowerUp(R.drawable.ic_shuffle, 99, Color.White),
+            PowerUp(R.drawable.ic_bolt, 99, Color(0xFF76E4FF))
         ),
         expression = uiState.currentQuestion.ifEmpty { 
             when {

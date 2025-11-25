@@ -26,6 +26,8 @@ interface GameRepository {
      */
     suspend fun joinGame(gameId: Int, password: String?): Result<Unit>
 
+    suspend fun usePowerUp(gameId: String, playerId: String, powerUpType: Int): Result<Unit>
+
     fun getLastRequestedJoinGameId(): Int?
 
     fun clearLastRequestedJoinGameId()

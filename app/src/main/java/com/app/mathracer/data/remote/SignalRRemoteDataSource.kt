@@ -281,7 +281,56 @@ class SignalRRemoteDataSource @Inject constructor() {
             Result.failure(e)
         }
     }
-    
+
+    suspend fun usePowerUp(gameId: String, playerId: String, powerUpType: Int): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            return@withContext try {
+                android.util.Log.d("SignalR", "⚡ Using PowerUp")
+                android.util.Log.d("SignalR", "⚡ GameId: $gameId")
+                android.util.Log.d("SignalR", "⚡ PlayerId: $playerId")
+                android.util.Log.d("SignalR", "⚡ PowerUp: $powerUpType")
+
+                if (!isConnected()) {
+                    return@withContext Result.failure(Exception("Not connected to SignalR hub"))
+                }
+
+                val gameIdNumeric = gameId.toDoubleOrNull()
+                val playerIdNumeric = playerId.toDoubleOrNull()
+
+                try {
+                    if (gameIdNumeric != null && playerIdNumeric != null) {
+                        val future = hubConnection?.invoke(
+                            "UsePowerUp",
+                            gameIdNumeric.toInt(),
+                            playerIdNumeric.toInt(),
+                            powerUpType
+                        )
+                        (future as? java.util.concurrent.CompletableFuture<Any?>)?.get()
+                    } else {
+                        val future = hubConnection?.invoke(
+                            "UsePowerUp",
+                            gameId,
+                            playerId,
+                            powerUpType
+                        )
+                        (future as? java.util.concurrent.CompletableFuture<Any?>)?.get()
+                    }
+
+                    android.util.Log.d("SignalR", "⚡ UsePowerUp invoke completed")
+                    Result.success(Unit)
+
+                } catch (e: Exception) {
+                    android.util.Log.e("SignalR", "❌ UsePowerUp failed", e)
+                    Result.failure(e)
+                }
+
+            } catch (e: Exception) {
+                android.util.Log.e("SignalR", "❌ Error using power-up", e)
+                Result.failure(e)
+            }
+        }
+
+
     fun isConnected(): Boolean {
         return hubConnection?.connectionState == HubConnectionState.CONNECTED
     }

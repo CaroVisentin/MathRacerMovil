@@ -34,3 +34,10 @@ data class AnswerResult(
     val correctAnswer: Int,
     val playerId: String
 )
+
+data class PowerUpUsed(
+    val gameId: Int,
+    val playerId: Int,
+    val powerUpType: Int,
+    val targetPlayerId: Int?
+)

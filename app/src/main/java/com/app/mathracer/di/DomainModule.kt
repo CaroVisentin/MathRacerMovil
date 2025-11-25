@@ -9,6 +9,7 @@ import com.app.mathracer.domain.usecases.ObserveSoloGameUpdatesUseCase
 import com.app.mathracer.domain.usecases.StartSoloGameUseCase
 import com.app.mathracer.domain.usecases.SubmitAnswerUseCase
 import com.app.mathracer.domain.usecases.SubmitSoloAnswerUseCase
+import com.app.mathracer.domain.usecases.UsePowerUpUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -23,6 +24,13 @@ object DomainModule {
         gameRepository: GameRepository
     ): SubmitAnswerUseCase {
         return SubmitAnswerUseCase(gameRepository)
+    }
+
+    @Provides
+    fun provideUsePoweUpUseCase(
+        gameRepository: GameRepository
+    ): UsePowerUpUseCase {
+        return UsePowerUpUseCase(gameRepository)
     }
     
     @Provides

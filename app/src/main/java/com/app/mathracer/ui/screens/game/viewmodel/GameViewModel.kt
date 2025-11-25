@@ -8,6 +8,7 @@ import com.app.mathracer.domain.usecases.ObserveGameUpdatesUseCase
 import com.app.mathracer.domain.usecases.SubmitAnswerUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import com.app.mathracer.data.repository.UserRemoteRepository
+import com.app.mathracer.domain.usecases.UsePowerUpUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,7 +18,8 @@ import javax.inject.Inject
 @HiltViewModel
 class GameViewModel @Inject constructor(
     private val observeGameUpdatesUseCase: ObserveGameUpdatesUseCase,
-    private val submitAnswerUseCase: SubmitAnswerUseCase
+    private val submitAnswerUseCase: SubmitAnswerUseCase,
+    private val usePowerUpUseCase: UsePowerUpUseCase
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(GameUiState())
@@ -277,8 +279,7 @@ class GameViewModel @Inject constructor(
                 showFeedback = true,
                 isLastAnswerCorrect = isCorrect
             )
-            
-           
+
             android.util.Log.d("GameViewModel",
                 "🎯 Submitting answer - GameId: '${currentState.gameId}', PlayerId: '${currentState.myPlayerId}', Answer: '${selectedOption ?: "null"}'")
             
@@ -291,7 +292,6 @@ class GameViewModel @Inject constructor(
                 )
                 return@launch
             }
-            
              
             val result = submitAnswerUseCase(
                 gameId = currentState.gameId,
