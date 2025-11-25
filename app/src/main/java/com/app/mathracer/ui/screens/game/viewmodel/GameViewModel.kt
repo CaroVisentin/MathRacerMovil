@@ -181,6 +181,7 @@ class GameViewModel @Inject constructor(
                         isPenalized = stateBefore.isPenalized,
                         powerUpsLocked = if (hasNewQuestion) false else stateBefore.powerUpsLocked,
                         fireExtinguisherActive = if (hasNewQuestion) false else stateBefore.fireExtinguisherActive,
+                        showShuffleMessage = if (hasNewQuestion) false else stateBefore.showShuffleMessage,
                         expectedResult = game.expectedResult ?: "" // <-- NUEVO
                     )
 
@@ -289,7 +290,8 @@ class GameViewModel @Inject constructor(
                                     _uiState.value = _uiState.value.copy(
                                         shuffleRivalCount = 0,
                                         powerUpsLocked = true,
-                                        lastPowerUpMessage = "Shuffle enviado al rival"
+                                        lastPowerUpMessage = "Shuffle enviado al rival",
+                                        showShuffleMessage = true
                                     )
                                 }
                                 else -> {

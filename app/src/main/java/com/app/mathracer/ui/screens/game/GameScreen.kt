@@ -92,6 +92,7 @@ fun GamePlayScreen(
     onBack: () -> Unit,
     onPowerUpClick: (index: Int) -> Unit,
     onOptionClick: (index: Int, value: Int?) -> Unit,
+    showShuffleMessage: Boolean = false,
 ) {
     Scaffold(
         containerColor = BgDark,
@@ -145,7 +146,20 @@ fun GamePlayScreen(
                 }
             }
 
-            Spacer(Modifier.height(30.dp))
+            if (showShuffleMessage) {
+                Spacer(Modifier.height(8.dp))
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    Text(
+                        text = "Se han mezclado las opciones de la ecuación del rival.",
+                        color = Color.Cyan,
+                        fontSize = 16.sp,
+                        textAlign = TextAlign.Center
+                    )
+                }
+                Spacer(Modifier.height(22.dp))
+            } else {
+                Spacer(Modifier.height(30.dp))
+            }
 
             Box(
                 modifier = Modifier
@@ -511,7 +525,6 @@ fun OptionButton(
     }
 }
 
-/** Modal: Perdiste + Resultados */
 @Composable
 fun ResultsModal(
     open: Boolean,
@@ -710,6 +723,7 @@ fun GameScreen(
         showAnswerFeedback = uiState.showFeedback,
         isPenalized = uiState.isPenalized,
         expectedResult = uiState.expectedResult,
+        showShuffleMessage = uiState.showShuffleMessage,
         onBack = {
             viewModel.leaveCurrentGame()
             onNavigateBack()

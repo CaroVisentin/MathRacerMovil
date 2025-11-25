@@ -28,4 +28,6 @@ data class GameUiState(
     val powerUpsLocked: Boolean = false,
     val lastPowerUpMessage: String? = null,
     val doubleProgressActive: Boolean = false
+    ,
+    val showShuffleMessage: Boolean = false
 )
