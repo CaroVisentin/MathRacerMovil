@@ -49,15 +49,26 @@ fun WaitingOpponentScreen(
     onNavigateToGame: (gameId: String, playerName: String) -> Unit = { _, _ -> },
     onNavigateBack: () -> Unit = {},
     modifier: Modifier = Modifier,
-    viewModel: WaitingOpponentViewModel = hiltViewModel()
+    viewModel: WaitingOpponentViewModel = hiltViewModel(),
+    expectedGameId: String? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val navigationEvent by viewModel.navigationEvent.collectAsState()
     
     // Auto-inicializar conexión cuando se abre la pantalla
     LaunchedEffect(Unit) {
-        val playerName = "Player_${System.currentTimeMillis()}"
-        viewModel.startConnection(playerName)
+        val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+        val uid = firebaseUser?.uid ?: "anon_${System.currentTimeMillis()}"
+        val displayName = firebaseUser?.displayName ?: "Jugador"
+        if (!expectedGameId.isNullOrBlank()) {
+            try {
+                viewModel.setExpectedGameId(expectedGameId)
+            } catch (e: Exception) {
+                android.util.Log.w("WaitingOpponentScreen", "Failed to pass expectedGameId to ViewModel: ${e.message}")
+            }
+        }
+        // Pass both uid (for server) and displayName (for local UI comparisons)
+        viewModel.startConnection(uid, displayName)
     }
     
     // Manejar navegación al juego
