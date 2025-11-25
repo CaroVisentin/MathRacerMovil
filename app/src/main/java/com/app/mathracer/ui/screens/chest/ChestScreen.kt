@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -58,7 +59,7 @@ fun ChestScreen(
             Text("¡Felicidades!", fontSize = 28.sp, color = Color.White)
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "Acá está tu recompensa por terminar el tutorial",
+                text = "Acá está tu recompensa",
                 fontSize = 20.sp,
                 color = Color.White.copy(alpha = 0.9f)
             )
@@ -138,6 +139,16 @@ fun ChestScreen(
                                         else -> R.drawable.coin
                                     }
                                     it.type == "Coins" -> R.drawable.coin
+                                    it.type == "Wildcard" -> {
+                                        val wName = it.wildcard?.name ?: ""
+                                        when {
+                                            wName.contains("nitro", ignoreCase = true) -> R.drawable.ic_bolt
+                                            wName.contains("matafuego", ignoreCase = true) -> R.drawable.ic_shield
+                                            wName.contains("cambio", ignoreCase = true) || wName.contains("rumbo", ignoreCase = true) || wName.contains("shuffle", ignoreCase = true) -> R.drawable.ic_shuffle
+                                            it.wildcard?.id == 3 -> R.drawable.ic_bolt
+                                            else -> R.drawable.coin
+                                        }
+                                    }
                                     else -> R.drawable.coin
                                 }
 
@@ -145,13 +156,15 @@ fun ChestScreen(
                                     com.app.mathracer.ui.components.ProductImage(
                                         productId = it.product?.id,
                                         fallbackRes = imgRes,
-                                        modifier = Modifier.size(72.dp)
+                                        modifier = Modifier.size(88.dp),
+                                        contentScale = ContentScale.Fit
                                     )
                                 } else {
                                     Image(
                                         painter = painterResource(imgRes),
                                         contentDescription = null,
-                                        modifier = Modifier.size(72.dp)
+                                        modifier = Modifier.size(88.dp),
+                                        contentScale = ContentScale.Fit
                                     )
                                 }
 

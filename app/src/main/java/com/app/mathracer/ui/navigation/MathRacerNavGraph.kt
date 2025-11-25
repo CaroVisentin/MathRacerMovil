@@ -128,6 +128,28 @@ fun MathRacerNavGraph(
             )
         }
 
+        composable(
+            route = "chest_world/{worldId}",
+            arguments = listOf(navArgument("worldId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            HandleBackNavigation(
+                navController = navController,
+                currentRoute = currentRoute,
+                onBackPressed = { navController.navigateUp() }
+            )
+
+            val worldIdArg = backStackEntry.arguments?.getInt("worldId") ?: 0
+            val ctx = LocalContext.current
+
+            ChestScreen(onContinue = {
+                try {
+                    ctx.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                        .edit().putBoolean("world_reward_claimed_$worldIdArg", true).apply()
+                } catch (_: Exception) {}
+                navController.navigateUp()
+            }, chestType = "world")
+        }
+
         composable(Routes.CHEST) {
             HandleBackNavigation(
                 navController = navController,
@@ -519,6 +541,7 @@ fun MathRacerNavGraph(
 
             LevelsScreen(
                 viewModel = viewModel,
+                worldId = worldId,
                 worldOperationsEncoded = encodedOps,
                 onLevelClick = { levelId, resultType ->
                     viewModel.checkEnergyBeforePlay(
@@ -531,6 +554,10 @@ fun MathRacerNavGraph(
                             navController.navigate("insufficient_energy")
                         }
                     )
+                }
+                ,
+                onObtenerRecompensaClick = { wid ->
+                    navController.navigate("chest_world/$wid")
                 }
             )
 
