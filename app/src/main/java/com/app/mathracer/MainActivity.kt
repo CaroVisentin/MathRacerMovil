@@ -3,53 +3,57 @@ package com.app.mathracer
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.navigation.NavHostController
+import androidx.activity.viewModels
 import androidx.navigation.compose.rememberNavController
+import com.app.mathracer.data.CurrentUser
 import com.app.mathracer.ui.navigation.MathRacerNavGraph
-import com.app.mathracer.ui.navigation.Routes
+import com.app.mathracer.ui.screens.shop.viewmodel.ShopViewModel
 import com.app.mathracer.ui.theme.MathRacerTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    // Lo inicializamos en setContent
-    private lateinit var navController: NavHostController
+    private val shopViewModel: ShopViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        // Manejar deep link al iniciar
+        handleDeepLink(intent)
+
         setContent {
             MathRacerTheme {
-                navController = rememberNavController()
-
-                // Procesar posible deep link con el intent con el que se abrió la Activity
-                handleDeepLink(intent)
-
+                val navController = rememberNavController()
                 MathRacerNavGraph(navController = navController)
             }
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleDeepLink(intent)
+    }
+
     private fun handleDeepLink(intent: Intent?) {
-        val data: Uri = intent?.data ?: return
+        val data: Uri? = intent?.data
 
-        if (data.scheme == "mathracer" && data.host == "payment") {
-            val status = data.getQueryParameter("status") // "success" / "failure" / "pending"
+        if (data != null && data.scheme == "mathracer" && data.host == "payment") {
+            val path = data.path?.removePrefix("/") // "success", "failure", "pending"
+            val playerId = CurrentUser.user?.id ?: 0
 
-            // Acá podrías guardar status si querés mostrar un mensaje en la shop.
+            Log.d("MainActivity", "🔗 Deep Link recibido: $data")
+            Log.d("MainActivity", "📍 Status: $path, PlayerId: $playerId")
 
-            // Navegamos a la tienda
-            if (::navController.isInitialized) {
-                navController.navigate(Routes.SHOP) {
-                    launchSingleTop = true
-                    // Opcional: limpiar back stack hasta HOME
-                    popUpTo(Routes.HOME) { inclusive = false }
-                }
+            // Delegar al ViewModel para manejar la lógica de negocio
+            path?.let { status ->
+                shopViewModel.handlePaymentResult(status, playerId)
             }
         }
     }
