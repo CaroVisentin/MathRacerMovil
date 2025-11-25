@@ -51,8 +51,11 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import com.app.mathracer.ui.components.ProductImage
+import androidx.compose.runtime.DisposableEffect
+import com.app.mathracer.data.CurrentUser
 
-private val PanelColor  = Color(0xE62C2C2C) // #2C2C2C con 90% alpha
+private val PanelColor  = Color(0xE62C2C2C)
 private val BorderLight = Color(0x66FFFFFF)
 private val NextTeal    = Color(0xFF2EB7A7)
 private val GreyTitle   = Color.White.copy(alpha = 0.35f)
@@ -63,7 +66,7 @@ private val LabelBlue     = Color(0xFF51B7FF)
 private val OptionTeal    = Color(0xFF2EB7A7)
 
 data class PlayerResult(val rank: Int, val name: String, val points: Int)
-data class PowerUp(val iconRes: Int, val count: Int, val tint: Color)
+data class PowerUp(val iconRes: Int, val count: Int, val tint: Color, val enabled: Boolean = true)
 
 @Composable
 fun GamePlayScreen(
@@ -85,12 +88,12 @@ fun GamePlayScreen(
     lastAnswerWasCorrect: Boolean? = null,
     showAnswerFeedback: Boolean = false,
     isPenalized: Boolean = false,
-    // controla si los botones de opción muestran sombra/relieve
     optionsHaveShadows: Boolean = true,
     expectedResult: String = "",
     onBack: () -> Unit,
     onPowerUpClick: (index: Int) -> Unit,
     onOptionClick: (index: Int, value: Int?) -> Unit,
+    showShuffleMessage: Boolean = false,
 ) {
     Scaffold(
         containerColor = BgDark,
@@ -106,7 +109,6 @@ fun GamePlayScreen(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.Top
         ) {
-            // ====== TRACK RIVAL ======
             TrackCard(
                 title = opponentName,
                 titleColor = Color.White.copy(alpha = 0.65f),
@@ -117,7 +119,6 @@ fun GamePlayScreen(
             )
             Spacer(Modifier.height(10.dp))
 
-            // ====== TRACK VOS ======
             TrackCard(
                 title = playerName,
                 titleColor = LabelBlue,
@@ -129,8 +130,6 @@ fun GamePlayScreen(
 
             Spacer(Modifier.height(30.dp))
 
-            // ====== POWER UPS ======
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End,
@@ -141,15 +140,28 @@ fun GamePlayScreen(
                         iconRes = p.iconRes,
                         count = p.count,
                         tint = p.tint,
-                        onClick = { onPowerUpClick(i) }
+                        onClick = { onPowerUpClick(i) },
+                        enabled = p.enabled
                     )
                     Spacer(Modifier.width(12.dp))
                 }
             }
 
-            Spacer(Modifier.height(30.dp))
+            if (showShuffleMessage) {
+                Spacer(Modifier.height(8.dp))
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    Text(
+                        text = "Se han mezclado las opciones de la ecuación del rival.",
+                        color = Color.Cyan,
+                        fontSize = 16.sp,
+                        textAlign = TextAlign.Center
+                    )
+                }
+                Spacer(Modifier.height(22.dp))
+            } else {
+                Spacer(Modifier.height(30.dp))
+            }
 
-            // ====== EXPRESIÓN ======
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -184,76 +196,57 @@ fun GamePlayScreen(
 
             Spacer(Modifier.height(60.dp))
 
-            // ====== OPCIONES (2 x 2) ======
+
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    OptionButton(
-                        text = (options.getOrNull(0) ?: "").toString(),
-                        modifier = Modifier.weight(1f),
-                        state = getOptionButtonState(
-                            option = options.getOrNull(0),
-                            lastAnswerGiven = lastAnswerGiven,
-                            lastAnswerWasCorrect = lastAnswerWasCorrect,
-                            showAnswerFeedback = showAnswerFeedback,
-                            isWaitingForAnswer = isWaitingForAnswer,
-                            isPenalized = isPenalized
-                        ),
-                        hasShadow = optionsHaveShadows,
-                        onClick = { onOptionClick(0, options.getOrNull(0)) }
-                    )
-                    OptionButton(
-                        text = (options.getOrNull(1) ?: "").toString(),
-                        modifier = Modifier.weight(1f),
-                        state = getOptionButtonState(
-                            option = options.getOrNull(1),
-                            lastAnswerGiven = lastAnswerGiven,
-                            lastAnswerWasCorrect = lastAnswerWasCorrect,
-                            showAnswerFeedback = showAnswerFeedback,
-                            isWaitingForAnswer = isWaitingForAnswer,
-                            isPenalized = isPenalized
-                        ),
-                        hasShadow = optionsHaveShadows,
-                        onClick = { onOptionClick(1, options.getOrNull(1)) }
-                    )
-                }
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    OptionButton(
-                        text = (options.getOrNull(2) ?: "").toString(),
-                        modifier = Modifier.weight(1f),
-                        state = getOptionButtonState(
-                            option = options.getOrNull(2),
-                            lastAnswerGiven = lastAnswerGiven,
-                            lastAnswerWasCorrect = lastAnswerWasCorrect,
-                            showAnswerFeedback = showAnswerFeedback,
-                            isWaitingForAnswer = isWaitingForAnswer,
-                            isPenalized = isPenalized
-                        ),
-                        hasShadow = optionsHaveShadows,
-                        onClick = { onOptionClick(2, options.getOrNull(2)) }
-                    )
-                    OptionButton(
-                        text = (options.getOrNull(3) ?: "").toString(),
-                        modifier = Modifier.weight(1f),
-                        state = getOptionButtonState(
-                            option = options.getOrNull(3),
-                            lastAnswerGiven = lastAnswerGiven,
-                            lastAnswerWasCorrect = lastAnswerWasCorrect,
-                            showAnswerFeedback = showAnswerFeedback,
-                            isWaitingForAnswer = isWaitingForAnswer,
-                            isPenalized = isPenalized
-                        ),
-                        hasShadow = optionsHaveShadows,
-                        onClick = { onOptionClick(3, options.getOrNull(3)) }
-                    )
+                val optionRows = options.chunked(2)
+                optionRows.forEachIndexed { rowIndex, rowOptions ->
+                    if (rowOptions.size == 2) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            rowOptions.forEachIndexed { i, opt ->
+                                val globalIndex = rowIndex * 2 + i
+                                OptionButton(
+                                    text = (opt ?: "").toString(),
+                                    modifier = Modifier.weight(1f),
+                                    state = getOptionButtonState(
+                                        option = opt,
+                                        lastAnswerGiven = lastAnswerGiven,
+                                        lastAnswerWasCorrect = lastAnswerWasCorrect,
+                                        showAnswerFeedback = showAnswerFeedback,
+                                        isWaitingForAnswer = isWaitingForAnswer,
+                                        isPenalized = isPenalized
+                                    ),
+                                    hasShadow = optionsHaveShadows,
+                                    onClick = { onOptionClick(globalIndex, opt) }
+                                )
+                            }
+                        }
+                    } else if (rowOptions.size == 1) {
+
+                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                            val opt = rowOptions[0]
+                            val globalIndex = rowIndex * 2
+                            OptionButton(
+                                text = (opt ?: "").toString(),
+                                modifier = Modifier.fillMaxWidth(0.6f),
+                                state = getOptionButtonState(
+                                    option = opt,
+                                    lastAnswerGiven = lastAnswerGiven,
+                                    lastAnswerWasCorrect = lastAnswerWasCorrect,
+                                    showAnswerFeedback = showAnswerFeedback,
+                                    isWaitingForAnswer = isWaitingForAnswer,
+                                    isPenalized = isPenalized
+                                ),
+                                hasShadow = optionsHaveShadows,
+                                onClick = { onOptionClick(globalIndex, opt) }
+                            )
+                        }
+                    }
                 }
             }
 
@@ -275,46 +268,6 @@ public fun TopBar(timeLabel: String, coins: Int, onBack: () -> Unit) {
             Icon(Icons.Filled.ArrowBack, contentDescription = "Atrás", tint = Color.White)
         }
         Spacer(Modifier.width(4.dp))
-        /*
-        Text(
-            text = timeLabel,
-            color = Color.White,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Black,
-            modifier = Modifier.weight(1f),
-            textAlign = TextAlign.Center
-        )
-        // Indicadores / monedas (simplificado)
-        Spacer(Modifier.width(6.dp))
-        // Icono de combustible
-
-        Icon(
-            painter = painterResource(R.drawable.ic_fuel), // tu drawable
-            contentDescription = "Combustible",
-            tint = Color(0xFFFFD600),
-            modifier = Modifier.size(20.dp)
-        )
-        Spacer(Modifier.width(8.dp))
-
-        // Indicadores (2 amarillos + 1 gris)
-        Box(
-            modifier = Modifier
-                .size(16.dp)
-                .background(Color(0xFFFFD600), RoundedCornerShape(4.dp))
-        )
-        Spacer(Modifier.width(4.dp))
-        Box(
-            modifier = Modifier
-                .size(16.dp)
-                .background(Color(0xFFFFD600), RoundedCornerShape(4.dp))
-        )
-        Spacer(Modifier.width(4.dp))
-        Box(
-            modifier = Modifier
-                .size(16.dp)
-                .background(Color(0xFF555555), RoundedCornerShape(4.dp))
-        )
-        */
     }
 }
 
@@ -340,10 +293,9 @@ public fun TrackCard(
             ScrollingTrack(
                 trackRes = trackRes,
                 height = 120.dp,
-                speedDpPerSec = 90.dp  // prueba distintas velocidades
+                speedDpPerSec = 90.dp
             )
 
-            // Etiqueta esquina sup-izq
             Box(
                 modifier = Modifier
                     .padding(start = 10.dp, top = 8.dp)
@@ -376,8 +328,20 @@ public fun TrackCard(
                 }
             }
 
+            ProductImage(
+                productId = carRes,
+                fallbackRes = R.drawable.car_game,
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .offset(x = startMargin + offsetX, y = 0.dp)
+                    .padding(bottom = 12.dp)
+                    .size(width = carWidth, height = carHeight),
+                contentScale = ContentScale.Fit
+            )
+
+        /*
             Image(
-                painter = painterResource(carRes),
+                painter =  painterResource(carRes),
                 contentDescription = null,
                 modifier = Modifier
                     .align(Alignment.BottomStart)
@@ -386,6 +350,8 @@ public fun TrackCard(
                     .size(width = carWidth, height = carHeight),
                 contentScale = ContentScale.Fit
             )
+
+         */
         }
 
         Box(
@@ -403,7 +369,6 @@ public fun TrackCard(
         }
     }
 }
-
 @Composable
 fun ScrollingTrack(
     trackRes: Int,
@@ -417,55 +382,51 @@ fun ScrollingTrack(
             .height(height)
             .clip(RoundedCornerShape(corner))
     ) {
-        val containerWidth: Dp = maxWidth
         val density = LocalDensity.current
-        val containerWidthPx = with(density) { maxWidth.toPx() }
-        val speedPxPerSec    = with(density) { speedDpPerSec.toPx() }
 
-        // Animación infinita: 0 -> containerWidthPx y reinicia
-        val t = rememberInfiniteTransition(label = "track-scroll")
+        val containerWidth: Dp = this.maxWidth
+        val containerWidthPx = with(density) { containerWidth.toPx() }
+        val speedPxPerSec = with(density) { speedDpPerSec.toPx() }
+
+        val duration = ((containerWidthPx / speedPxPerSec) * 1000f).toInt()
+
+        val t = rememberInfiniteTransition(label = "scroll")
         val x by t.animateFloat(
             initialValue = 0f,
-            targetValue  = containerWidthPx,
+            targetValue = containerWidthPx,
             animationSpec = infiniteRepeatable(
-                animation = tween(
-                    durationMillis = ((containerWidthPx / speedPxPerSec) * 1000f).toInt(),
-                    easing = LinearEasing
-                ),
+                animation = tween(durationMillis = duration, easing = LinearEasing),
                 repeatMode = RepeatMode.Restart
             ),
-            label = "x"
+            label = "xAnim"
         )
 
-        // Desplazamiento modular (0..width)
         val offsetPx = x % containerWidthPx
 
-        // Dos copias: una arrancando en -offset, otra a +width - offset
         Box(Modifier.fillMaxSize()) {
-            Image(
-                painter = painterResource(trackRes),
-                contentDescription = null,
+
+            ProductImage(
+                productId = trackRes,
+                fallbackRes = R.drawable.track_city,
                 modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .width(containerWidth)
                     .fillMaxHeight()
-                    .offset { IntOffset(x = -offsetPx.roundToInt(), y = 0) },
-                contentScale = ContentScale.Crop
+                    .width(containerWidth)
+                    .offset { IntOffset((-offsetPx).roundToInt(), 0) },
+                contentScale = ContentScale.FillHeight
             )
-            Image(
-                painter = painterResource(trackRes),
-                contentDescription = null,
+
+            ProductImage(
+                productId = trackRes,
+                fallbackRes = R.drawable.track_city,
                 modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .width(containerWidth)
                     .fillMaxHeight()
-                    .offset { IntOffset(x = (-offsetPx + containerWidthPx).roundToInt(), y = 0) },
-                contentScale = ContentScale.Crop
+                    .width(containerWidth)
+                    .offset { IntOffset((containerWidthPx - offsetPx).roundToInt(), 0) },
+                contentScale = ContentScale.FillHeight
             )
         }
     }
 }
-
 
 @Composable
 public fun PowerUpChip(
@@ -577,11 +538,10 @@ fun OptionButton(
     }
 }
 
-/** Modal: Perdiste + Resultados */
 @Composable
 fun ResultsModal(
     open: Boolean,
-    results: List<PlayerResult>,      // ej: 2 jugadores
+    results: List<PlayerResult>,
     carImageRes: Int,
     medalGoldRes: Int,
     medalSilverRes: Int,
@@ -705,24 +665,23 @@ fun GameScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    // Inicializar el juego
     LaunchedEffect(gameId, playerName) {
-        viewModel.initializeGame(gameId, playerName)
+        viewModel.initializeGame(gameId, CurrentUser.user?.name.toString())
     }
 
-    // Limpiar feedback automáticamente después de mostrar resultado
-    // Si la respuesta fue correcta, preparar la siguiente pregunta inmediatamente.
-    // Si fue incorrecta, el ViewModel realizará la preparación después de la penalización.
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.leaveCurrentGame()
+        }
+    }
+
     LaunchedEffect(uiState.showFeedback) {
         if (uiState.showFeedback) {
             if (uiState.isLastAnswerCorrect == true) {
-                // Respuesta correcta: mostrar un pequeño feedback y preparar la siguiente pregunta YA
-                kotlinx.coroutines.delay(200) // parpadeo rápido para el feedback
+                kotlinx.coroutines.delay(200)
                 viewModel.clearFeedback()
                 viewModel.prepareForNextQuestion()
             } else {
-                // Respuesta incorrecta: el ViewModel aplica penalización y se encargará de preparar la siguiente pregunta.
-                // Aquí solo mostramos el feedback durante 1s y lo limpiamos para que la penalización (si existe) se vea.
                 kotlinx.coroutines.delay(1000)
                 viewModel.clearFeedback()
             }
@@ -737,11 +696,26 @@ fun GameScreen(
         rivalCarRes = R.drawable.car_game,
         opponentName = uiState.opponentName,
         playerName = uiState.playerName,
-        youCarRes = R.drawable.car_game,
+        youCarRes = 5,//R.drawable.car_game,
         powerUps = listOf(
-            PowerUp(R.drawable.ic_shield, uiState.fireExtinguisherCount, Color(0xFFFF6B6B)), // Matafuegos
-           // PowerUp(R.drawable.ic_shuffle, 99, Color.White),
-          //  PowerUp(R.drawable.ic_bolt, 99, Color(0xFF76E4FF))
+            PowerUp(
+                R.drawable.ic_shield,
+                uiState.fireExtinguisherCount,
+                Color(0xFFFF6B6B),
+                enabled = uiState.fireExtinguisherCount > 0 && !uiState.powerUpsLocked && !uiState.fireExtinguisherActive
+            ),
+            PowerUp(
+                R.drawable.ic_shuffle,
+                uiState.shuffleRivalCount,
+                Color.White,
+                enabled = uiState.shuffleRivalCount > 0 && !uiState.powerUpsLocked
+            ),
+            PowerUp(
+                R.drawable.ic_bolt,
+                uiState.doublePointsCount,
+                Color(0xFF76E4FF),
+                enabled = uiState.doublePointsCount > 0 && !uiState.powerUpsLocked && !uiState.doubleProgressActive
+            )
         ),
         expression = uiState.currentQuestion.ifEmpty { 
             when {
@@ -762,30 +736,31 @@ fun GameScreen(
         showAnswerFeedback = uiState.showFeedback,
         isPenalized = uiState.isPenalized,
         expectedResult = uiState.expectedResult,
-        onBack = onNavigateBack,
+        showShuffleMessage = uiState.showShuffleMessage,
+        onBack = {
+            viewModel.leaveCurrentGame()
+            onNavigateBack()
+        },
         onPowerUpClick = { index -> 
             when (index) {
-                0 -> viewModel.useFireExtinguisher() // Matafuegos
-                // Agregar otros power-ups aquí cuando se implementen
+                0 -> viewModel.useFireExtinguisher()
+                1 -> viewModel.usePowerUp(2)
+                2 -> viewModel.usePowerUp(1)
             }
         },
         onOptionClick = { index, value ->
-            // Solo permitir responder si hay pregunta, no está penalizado, y no está mostrando feedback
             if (uiState.currentQuestion.isNotEmpty() && !uiState.isPenalized && !uiState.showFeedback) {
                 viewModel.submitAnswer(value)
             }
         }
     )
 
-    // Modal de resultado del juego
     if (uiState.gameEnded) {
         GameResultModal(
             isWinner = uiState.winner?.contains("Ganaste") == true,
-           // gameSummary = uiState.winner ?: "Juego terminado",
             userName = uiState.playerName,
             userNameRival = uiState.opponentName,
-            onDismiss = { 
-                // No necesitamos método específico, el estado ya está manejado
+            onDismiss = {
             },
             onPlayAgain = {
                 onPlayAgain()
@@ -795,8 +770,4 @@ fun GameScreen(
             }
         )
     }
-}
-
-fun onClickPowerUp(index: Int) {
-    // Lógica para usar el power-up correspondiente
 }

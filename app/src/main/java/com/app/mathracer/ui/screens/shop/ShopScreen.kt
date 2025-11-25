@@ -582,6 +582,7 @@ fun ShopItemWildcardCard(
                         contentScale = ContentScale.Fit
                     )
                 }
+        //    ProductImage(productId = item.id, fallbackRes = R.drawable.mathi, modifier = Modifier.size(80.dp), contentScale = ContentScale.Fit)
 
                 "Cambio de rumbo" -> {
                     Image(

@@ -256,6 +256,9 @@ interface ApiService {
     @POST("Chest/complete-tutorial")
     suspend fun completeTutorial(@Header("Authorization") authorization: String?): Response<com.app.mathracer.data.model.ChestResponse>
 
+    @POST("Chest/open")
+    suspend fun openChest(@Header("Authorization") authorization: String?): Response<com.app.mathracer.data.model.ChestResponse>
+
     @GET("ranking")
     suspend fun getRanking(
         @Query("playerId") playerId: Int? = null
@@ -279,6 +282,56 @@ interface ApiService {
 
     @GET("energy")
     suspend fun getEnergy(@Header("Authorization") authorization: String?): Response<EnergyDto>
+
+    // --- Online multiplayer endpoints ---
+
+    data class AvailableGameDto(
+        val gameId: Int = 0,
+        val gameName: String = "",
+        val isPrivate: Boolean = false,
+        val requiresPassword: Boolean = false,
+        val currentPlayers: Int = 0,
+        val maxPlayers: Int = 0,
+        val difficulty: String? = null,
+        val expectedResult: String? = null,
+        val createdAt: String? = null,
+        val creatorName: String? = null,
+        val isFull: Boolean = false,
+        val status: String? = null
+    )
+
+    data class AvailableGamesResponse(
+        val games: List<AvailableGameDto> = emptyList(),
+        val totalGames: Int = 0,
+        val publicGames: Int = 0,
+        val privateGames: Int = 0,
+        val timestamp: String? = null
+    )
+
+    data class ConnectionInfoDto(
+        val hubUrl: String? = null,
+        val events: List<String>? = null
+    )
+
+    data class CreateGameRequest(
+        val gameName: String,
+        val isPrivate: Boolean,
+        val password: String? = null,
+        val difficulty: String,
+        val expectedResult: String
+    )
+
+    @GET("/api/Online/games/available")
+    suspend fun getAvailableGames(@Query("publicOnly") publicOnly: Boolean = false): Response<AvailableGamesResponse>
+
+    @GET("/api/Online/game/{gameId}")
+    suspend fun getGameById(@Path("gameId") gameId: Int): Response<AvailableGameDto>
+
+    @POST("/api/Online/create")
+    suspend fun createOnlineGame(@Header("Authorization") authorization: String?, @Body body: CreateGameRequest): Response<Unit>
+
+    @GET("/api/Online/connection-info")
+    suspend fun getConnectionInfo(): Response<ConnectionInfoDto>
 
     @GET("cars")
     suspend fun getShopCars(@Query("playerId") playerId: Int): Response<ShopResponse>

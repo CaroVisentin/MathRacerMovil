@@ -1,9 +1,11 @@
 package com.app.mathracer.ui.navigation
 
 import LoginScreen
+import android.app.Activity
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.content.Intent
+import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -44,10 +46,19 @@ import com.app.mathracer.ui.screens.rules.RulesScreen
 import com.app.mathracer.ui.screens.historyGame.HistoryGameScreen
 import com.app.mathracer.data.model.User
 import android.util.Log
+import com.app.mathracer.ui.screens.chest.ChestScreen
+import com.app.mathracer.ui.screens.garage.GarageScreen
+import com.app.mathracer.ui.screens.garage.GarageViewModel
 import com.app.mathracer.ui.screens.insufficientEnergy.InsufficientEnergyScreen
+import com.app.mathracer.ui.screens.login.viewmodel.LoginViewModel
+import com.app.mathracer.ui.screens.multiplayer.FriendItem
+import com.app.mathracer.ui.screens.profile.viewmodel.ProfileViewModel
 import com.app.mathracer.ui.screens.shop.ShopScreen
 import com.app.mathracer.ui.screens.shop.viewmodel.ShopViewModel
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
+import java.net.URLEncoder
 
 
 @Composable
@@ -124,11 +135,14 @@ fun MathRacerNavGraph(
                 onBackPressed = { navController.navigateUp() }
             )
 
-            com.app.mathracer.ui.screens.chest.ChestScreen(onContinue = {
-                navController.navigate(Routes.HOME) {
-                    popUpTo(Routes.HOME) { inclusive = true }
-                }
-            })
+            ChestScreen(
+                onContinue = {
+                    navController.navigate(Routes.HOME) {
+                        popUpTo(Routes.HOME) { inclusive = true }
+                    }
+                },
+                chestType = "tutorial"
+            )
         }
 
         composable(Routes.MULTIPLAYER_OPTIONS) {
@@ -180,12 +194,12 @@ fun MathRacerNavGraph(
                 onBackPressed = { navController.navigateUp() }
             )
 
-            val profileViewModel: com.app.mathracer.ui.screens.profile.viewmodel.ProfileViewModel = hiltViewModel()
+            val profileViewModel: ProfileViewModel = hiltViewModel()
             val profileState by profileViewModel.uiState.collectAsState()
 
              
             val inviteList = profileState.friends.mapIndexed { index, f ->
-                com.app.mathracer.ui.screens.multiplayer.FriendItem(id = "${index}", name = f.name, points = f.score.toIntOrNull() ?: 0)
+                FriendItem(id = "${index}", name = f.name, points = f.score.toIntOrNull() ?: 0)
             }
 
             InviteFriendsScreen(
@@ -226,8 +240,8 @@ fun MathRacerNavGraph(
                 onBackPressed = { navController.navigateUp() }
             )
 
-            val viewModel: com.app.mathracer.ui.screens.garage.GarageViewModel = hiltViewModel()
-            com.app.mathracer.ui.screens.garage.GarageScreen(viewModel = viewModel, onBack = { navController.navigateUp() })
+            val viewModel: GarageViewModel = hiltViewModel()
+            GarageScreen(viewModel = viewModel, onBack = { navController.navigateUp() })
         }
 
 
@@ -253,8 +267,30 @@ fun MathRacerNavGraph(
                 onBackPressed = { navController.navigateUp() }
             )
 
+            val joinViewModel: com.app.mathracer.ui.screens.multiplayer.viewmodel.JoinMatchesViewModel = hiltViewModel()
+            val gamesState by joinViewModel.games.collectAsState()
+            val isLoading by joinViewModel.isLoading.collectAsState()
+
+            LaunchedEffect(Unit) {
+                // Fetch available games when entering the screen
+                joinViewModel.fetchAvailableGames(publicOnly = false)
+            }
+
+            // Map API DTOs into local MatchItem for the composable
+            val matches = gamesState.map { dto ->
+                com.app.mathracer.ui.screens.multiplayer.MatchItem(
+                    id = dto.gameId.toString(),
+                    name = dto.gameName,
+                    difficulty = dto.difficulty ?: "",
+                    privacy = if (dto.isPrivate) "Privada" else "Pública",
+                    requiresPassword = dto.requiresPassword
+                )
+            }
+
             JoinMatchesScreen(
+                matches = matches,
                 onJoinConfirmed = { matchId, password ->
+                    // When user joins, navigate to waiting opponent screen
                     navController.navigate(Routes.WAITING_OPPONENT)
                 },
                 onBack = { navController.navigateUp() }
@@ -269,22 +305,22 @@ fun MathRacerNavGraph(
             )
 
             val context = LocalContext.current
-            val loginViewModel: com.app.mathracer.ui.screens.login.viewmodel.LoginViewModel = hiltViewModel()
+            val loginViewModel: LoginViewModel = hiltViewModel()
 
-            android.util.Log.d("GoogleSignIn", "Configurando cliente de Google Sign-In (Login)")
+            Log.d("GoogleSignIn", "Configurando cliente de Google Sign-In (Login)")
             val googleSignInClient = remember {
                 try {
-                    val gso = com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(
-                        com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN
+                    val gso = GoogleSignInOptions.Builder(
+                        GoogleSignInOptions.DEFAULT_SIGN_IN
                     )
                         .requestIdToken(context.getString(R.string.default_web_client_id))
                         .requestEmail()
                         .requestProfile()
                         .build()
-                    android.util.Log.d("GoogleSignIn", "GSO configurado correctamente (Login)")
-                    com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(context, gso)
+                    Log.d("GoogleSignIn", "GSO configurado correctamente (Login)")
+                    GoogleSignIn.getClient(context, gso)
                 } catch (e: Exception) {
-                    android.util.Log.e("GoogleSignIn", "Error al configurar GSO (Login)", e)
+                    Log.e("GoogleSignIn", "Error al configurar GSO (Login)", e)
                     throw e
                 }
             }
@@ -292,34 +328,34 @@ fun MathRacerNavGraph(
             val launcher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.StartActivityForResult()
             ) { result ->
-                android.util.Log.d("GoogleSignIn", "Resultado recibido (Login): ${result.resultCode}")
+                Log.d("GoogleSignIn", "Resultado recibido (Login): ${result.resultCode}")
                 when (result.resultCode) {
-                    android.app.Activity.RESULT_OK -> {
-                        android.util.Log.d("GoogleSignIn", "Result OK, procesando resultado... (Login)")
+                    Activity.RESULT_OK -> {
+                        Log.d("GoogleSignIn", "Result OK, procesando resultado... (Login)")
                         try {
                             if (result.data == null) {
-                                android.util.Log.e("GoogleSignIn", "Intent de resultado es null (Login)")
+                                Log.e("GoogleSignIn", "Intent de resultado es null (Login)")
                                 return@rememberLauncherForActivityResult
                             }
-                            val task = com.google.android.gms.auth.api.signin.GoogleSignIn
+                            val task = GoogleSignIn
                                 .getSignedInAccountFromIntent(result.data)
                             try {
                                 val account = task.result
-                                android.util.Log.d("GoogleSignIn", "Cuenta obtenida (Login): ${account.email}, ID: ${account.id}")
+                                Log.d("GoogleSignIn", "Cuenta obtenida (Login): ${account.email}, ID: ${account.id}")
                             } catch (e: Exception) {
-                                android.util.Log.e("GoogleSignIn", "Error al obtener cuenta de manera síncrona (Login)", e)
+                                Log.e("GoogleSignIn", "Error al obtener cuenta de manera síncrona (Login)", e)
                             }
                             loginViewModel.handleGoogleSignInResult(result.data)
                         } catch (e: Exception) {
-                            android.util.Log.e("GoogleSignIn", "Error al procesar resultado (Login)", e)
+                            Log.e("GoogleSignIn", "Error al procesar resultado (Login)", e)
                             e.printStackTrace()
                         }
                     }
-                    android.app.Activity.RESULT_CANCELED -> {
-                        android.util.Log.d("GoogleSignIn", "Usuario canceló el inicio de sesión (Login)")
+                    Activity.RESULT_CANCELED -> {
+                        Log.d("GoogleSignIn", "Usuario canceló el inicio de sesión (Login)")
                     }
                     else -> {
-                        android.util.Log.e("GoogleSignIn", "Error desconocido: ${result.resultCode} (Login)")
+                        Log.e("GoogleSignIn", "Error desconocido: ${result.resultCode} (Login)")
                     }
                 }
             }
@@ -335,7 +371,7 @@ fun MathRacerNavGraph(
                     val isFirstLogin = metadata != null &&
                             metadata.creationTimestamp == metadata.lastSignInTimestamp
                     if (isFirstLogin) {
-                        context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                        context.getSharedPreferences("app_prefs", MODE_PRIVATE)
                             .edit()
                             .putBoolean("show_tutorial_on_next_launch", true)
                             .apply()
@@ -353,20 +389,20 @@ fun MathRacerNavGraph(
             val context = LocalContext.current
             val registerViewModel: RegisterViewModel = hiltViewModel()
 
-            android.util.Log.d("GoogleSignIn", "Configurando cliente de Google Sign-In")
+            Log.d("GoogleSignIn", "Configurando cliente de Google Sign-In")
             val googleSignInClient = remember {
                 try {
-                    val gso = com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(
-                        com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN
+                    val gso = GoogleSignInOptions.Builder(
+                        GoogleSignInOptions.DEFAULT_SIGN_IN
                     )
                         .requestIdToken(context.getString(R.string.default_web_client_id))
                         .requestEmail()
                         .requestProfile()
                         .build()
-                    android.util.Log.d("GoogleSignIn", "GSO configurado correctamente")
-                    com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(context, gso)
+                    Log.d("GoogleSignIn", "GSO configurado correctamente")
+                    GoogleSignIn.getClient(context, gso)
                 } catch (e: Exception) {
-                    android.util.Log.e("GoogleSignIn", "Error al configurar GSO", e)
+                    Log.e("GoogleSignIn", "Error al configurar GSO", e)
                     throw e
                 }
             }
@@ -374,37 +410,37 @@ fun MathRacerNavGraph(
             val launcher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.StartActivityForResult()
             ) { result ->
-                android.util.Log.d("GoogleSignIn", "Resultado recibido: ${result.resultCode}")
+                Log.d("GoogleSignIn", "Resultado recibido: ${result.resultCode}")
                 when (result.resultCode) {
-                    android.app.Activity.RESULT_OK -> {
-                        android.util.Log.d("GoogleSignIn", "Result OK, procesando resultado...")
+                    Activity.RESULT_OK -> {
+                        Log.d("GoogleSignIn", "Result OK, procesando resultado...")
                         try {
                             if (result.data == null) {
-                                android.util.Log.e("GoogleSignIn", "Intent de resultado es null")
+                                Log.e("GoogleSignIn", "Intent de resultado es null")
                                 return@rememberLauncherForActivityResult
                             }
 
-                            val task = com.google.android.gms.auth.api.signin.GoogleSignIn
+                            val task = GoogleSignIn
                                 .getSignedInAccountFromIntent(result.data)
 
                             try {
                                 val account = task.result
-                                android.util.Log.d("GoogleSignIn", "Cuenta obtenida: ${account.email}, ID: ${account.id}")
+                                Log.d("GoogleSignIn", "Cuenta obtenida: ${account.email}, ID: ${account.id}")
                             } catch (e: Exception) {
-                                android.util.Log.e("GoogleSignIn", "Error al obtener cuenta de manera síncrona", e)
+                                Log.e("GoogleSignIn", "Error al obtener cuenta de manera síncrona", e)
                             }
 
                             registerViewModel.handleGoogleSignInResult(result.data)
                         } catch (e: Exception) {
-                            android.util.Log.e("GoogleSignIn", "Error al procesar resultado", e)
+                            Log.e("GoogleSignIn", "Error al procesar resultado", e)
                             e.printStackTrace()
                         }
                     }
-                    android.app.Activity.RESULT_CANCELED -> {
-                        android.util.Log.d("GoogleSignIn", "Usuario canceló el inicio de sesión")
+                    Activity.RESULT_CANCELED -> {
+                        Log.d("GoogleSignIn", "Usuario canceló el inicio de sesión")
                     }
                     else -> {
-                        android.util.Log.e("GoogleSignIn", "Error desconocido: ${result.resultCode}")
+                        Log.e("GoogleSignIn", "Error desconocido: ${result.resultCode}")
                     }
                 }
             }
@@ -414,7 +450,7 @@ fun MathRacerNavGraph(
                 onGoogleSignIn = { launcher.launch(googleSignInClient.signInIntent) },
                 onNavigateToLogin = { navController.navigate(Routes.LOGIN) },
                 onRegisterSuccess = {
-                    context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                    context.getSharedPreferences("app_prefs", MODE_PRIVATE)
                         .edit()
                         .putBoolean("show_tutorial_on_next_launch", true)
                         .apply()
@@ -456,14 +492,14 @@ fun MathRacerNavGraph(
                 onWorldClick = { world ->
                     try {
                         val opsPlain = world.operations.joinToString(",")
-                        val ops = android.util.Base64.encodeToString(
+                        val ops = Base64.encodeToString(
                             opsPlain.toByteArray(Charsets.UTF_8),
-                            android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING
+                            Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING
                         )
-                        val name = java.net.URLEncoder.encode(world.name, "UTF-8")
+                        val name = URLEncoder.encode(world.name, "UTF-8")
                         navController.navigate("levels/${world.id}/$name/$ops")
                     } catch (e: Exception) {
-                        val name = java.net.URLEncoder.encode(world.name, "UTF-8")
+                        val name = URLEncoder.encode(world.name, "UTF-8")
                         navController.navigate("levels/${world.id}/$name/")
                     }
                 }
@@ -600,7 +636,7 @@ fun MathRacerNavGraph(
             val levelId = backStackEntry.arguments?.getInt("levelId") ?: 0
             val resultType = backStackEntry.arguments?.getString("resultType") ?: ""
 
-            val playerName = com.google.firebase.auth.FirebaseAuth.getInstance()
+            val playerName = FirebaseAuth.getInstance()
                 .currentUser?.displayName ?: "Jugador"
             
             HistoryGameScreen(
