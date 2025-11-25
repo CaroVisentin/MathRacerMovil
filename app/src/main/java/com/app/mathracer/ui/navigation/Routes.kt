@@ -29,10 +29,12 @@ object Routes {
     const val SHOP = "shop"
     const val HISTORY_GAME = "history_game"
     const val CHEST = "chest"
+    const val CHEST_WITH_PARAM = "chest/{type}"
     const val INSUFFICIENT_ENERGY = "insufficient_energy"
 
     // Rutas con argumentos
     fun gameWithIdAndPlayer(gameId: String, playerName: String) = "game/$gameId/$playerName"
     fun historyGameWithLevelId(levelId: Int, resultType: String) = "history_game/$levelId/$resultType"
     fun infiniteGameWithId(gameId: String) = "infinite_game/$gameId"
+    fun chestWithType(type: String) = "chest/$type"
 }

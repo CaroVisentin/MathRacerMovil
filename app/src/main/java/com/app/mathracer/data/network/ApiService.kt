@@ -255,6 +255,9 @@ interface ApiService {
     @POST("Chest/complete-tutorial")
     suspend fun completeTutorial(@Header("Authorization") authorization: String?): Response<com.app.mathracer.data.model.ChestResponse>
 
+    @POST("Chest/open")
+    suspend fun openChest(@Header("Authorization") authorization: String?): Response<com.app.mathracer.data.model.ChestResponse>
+
     @GET("ranking")
     suspend fun getRanking(
         @Query("playerId") playerId: Int? = null

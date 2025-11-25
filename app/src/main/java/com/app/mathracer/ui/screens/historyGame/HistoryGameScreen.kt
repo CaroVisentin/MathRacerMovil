@@ -81,12 +81,10 @@ fun HistoryGameScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val coroutineScope = rememberCoroutineScope()
-    // Inicializar el juego
     LaunchedEffect(levelId, playerName) {
         viewModel.initializeGame(levelId, playerName)
     }
 
-    // Limpiar feedback automáticamente después de mostrar resultado
     LaunchedEffect(uiState.showFeedback) {
         if (uiState.showFeedback) {
             if (uiState.isLastAnswerCorrect == true) {
@@ -104,14 +102,13 @@ fun HistoryGameScreen(
         timeLabel = "10 seg",
         coins = 123_000,
         rivalTrackRes = R.drawable.track_city,
-        youTrackRes = R.drawable.track_cake,
-        rivalCarRes = R.drawable.car_game,
+        youTrackRes = uiState.playerTrackRes,//R.drawable.track_cake,
+        rivalCarRes = 1, //R.drawable.car_game,
         opponentName = uiState.machineName,
         playerName = uiState.playerName,
-        youCarRes = R.drawable.car_game,
+        youCarRes = uiState.playerCarRes,
         livesRemaining = uiState.livesRemaining,
         timePerEquation = uiState.timePerEquation,
-        // Determinar si cada wildcard está disponible para mostrar el chip habilitado/deshabilitado
         powerUps = listOf(
             PowerUp(
                 R.drawable.ic_shield,
@@ -167,25 +164,20 @@ fun HistoryGameScreen(
         uiState = uiState
     )
 
-    // Modal de resultado del juego
     if (uiState.gameEnded) {
         HistoryGameResultModal(
             isWinner = uiState.winner?.contains("Ganaste") == true,
-            reward = uiState.playerScore,
+            reward = uiState.coinsAwarded,
             levelNumber = levelId,
             onBack = {
-                // Regresar a la pantalla anterior
                 onNavigateBack()
             },
             onDismiss = {
-                // Cerrar modal (sin acción adicional)
             },
             onNext = {
-                    // Si ganó, ir al siguiente nivel; si perdió, repetir el mismo nivel
                     if (uiState.winner?.contains("Ganaste") == true) {
                         onPlayAgain(levelId + 1)
                     } else {
-                        // Antes de volver a jugar, validar energía disponible (reusar lógica similar a LevelsScreen)
                         coroutineScope.launch {
                             try {
                                 val resp = UserRemoteRepository.getEnergy()
@@ -194,11 +186,9 @@ fun HistoryGameScreen(
                                     val energy = dto?.currentAmount ?: 0
                                     if (energy > 0) onPlayAgain(levelId) else onNoEnergy()
                                 } else {
-                                    // En caso de error al consultar energía, prevenir y mostrar pantalla de energy insuficiente
                                     onNoEnergy()
                                 }
                             } catch (e: Exception) {
-                                // Fallback: dirigir a pantalla de energy insuficiente
                                 onNoEnergy()
                             }
                         }
@@ -230,7 +220,6 @@ fun GamePlayScreen(
     lastAnswerWasCorrect: Boolean? = null,
     showAnswerFeedback: Boolean = false,
     isPenalized: Boolean = false,
-    // controla si los botones de opción muestran sombra/relieve
     optionsHaveShadows: Boolean = true,
     expectedResult: String = "",
     onBack: () -> Unit,
@@ -255,7 +244,6 @@ fun GamePlayScreen(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.Top
         ) {
-            // ====== TRACK RIVAL ======
             TrackCard(
                 title = opponentName,
                 titleColor = Color.White.copy(alpha = 0.65f),
@@ -266,7 +254,6 @@ fun GamePlayScreen(
             )
             Spacer(Modifier.height(10.dp))
 
-            // ====== TRACK VOS ======
             TrackCard(
                 title = playerName,
                 titleColor = LabelBlue,
@@ -278,7 +265,6 @@ fun GamePlayScreen(
 
             Spacer(Modifier.height(30.dp))
 
-            // ====== POWER UPS ======
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -299,7 +285,6 @@ fun GamePlayScreen(
 
             Spacer(Modifier.height(30.dp))
 
-            // ====== EXPRESIÓN ======
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -334,7 +319,6 @@ fun GamePlayScreen(
 
             Spacer(Modifier.height(60.dp))
 
-            // ====== OPCIONES (2 x 2) ======
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -570,7 +554,6 @@ fun OptionsColumn(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        // Un solo for para crear todos los botones
         for (i in options.indices) {
             val option = options[i]
             OptionButton(
@@ -602,16 +585,12 @@ private fun getOptionButtonState(
     correctAnswer: Int? = null
 ): OptionButtonState {
     return when {
-        // ✅ Correcta → verde
         !canAnswer && option == correctAnswer -> OptionButtonState.CORRECT
 
-        // ❌ Incorrecta elegida → roja
         !canAnswer && option == lastAnswerGiven && lastAnswerWasCorrect == false -> OptionButtonState.INCORRECT
 
-        // 🕐 Durante feedback, las demás → grises
         !canAnswer && (option != correctAnswer || option == lastAnswerGiven && lastAnswerWasCorrect == false) -> OptionButtonState.DISABLED
 
-        // 🔘 Normal
         else -> OptionButtonState.NORMAL
     }
 }
@@ -625,8 +604,8 @@ fun OptionButton(
     onClick: () -> Unit
 ) {
     val configuration = LocalConfiguration.current
-    val screenWidthPx = configuration.screenWidthDp.dp // ancho de pantalla en dp
-    val buttonWidth = screenWidthPx / 2 // mitad de la pantalla
+    val screenWidthPx = configuration.screenWidthDp.dp
+    val buttonWidth = screenWidthPx / 2
 
     val (backgroundColor, borderColor, symbol) = when (state) {
         OptionButtonState.NORMAL    -> Triple(OptionTeal, Color.White, "")
