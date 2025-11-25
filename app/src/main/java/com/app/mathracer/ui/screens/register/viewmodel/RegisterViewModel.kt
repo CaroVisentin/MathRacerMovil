@@ -1,15 +1,13 @@
 package com.app.mathracer.ui.screens.register.viewmodel
 
 import android.content.Intent
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.app.mathracer.data.model.User
-import com.app.mathracer.data.repository.UserRemoteRepository
+import com.app.mathracer.data.repositories.UserRemoteRepository
 import com.app.mathracer.data.CurrentUser
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.flow.MutableStateFlow

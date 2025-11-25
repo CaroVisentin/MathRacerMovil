@@ -1,4 +1,4 @@
-package com.app.mathracer.data.repository
+package com.app.mathracer.data.repositories
 
 import com.app.mathracer.data.model.User
 import com.app.mathracer.data.model.UserGoogle

@@ -6,7 +6,7 @@ import com.app.mathracer.data.network.ApiService
 import com.app.mathracer.data.network.InfiniteAnswerRequest
 import com.app.mathracer.data.network.InfiniteQuestionDto
 import com.app.mathracer.data.network.RetrofitClient
-import com.app.mathracer.data.repository.UserRemoteRepository
+import com.app.mathracer.data.repositories.UserRemoteRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch

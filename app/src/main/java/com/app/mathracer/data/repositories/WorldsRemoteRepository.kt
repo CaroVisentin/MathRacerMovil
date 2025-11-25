@@ -1,15 +1,14 @@
-package com.app.mathracer.data.repository
+package com.app.mathracer.data.repositories
 
 import com.app.mathracer.data.model.Worlds
 import com.app.mathracer.data.network.RetrofitClient.api
-import com.app.mathracer.data.repository.UserRemoteRepository.getIdToken
 import retrofit2.Response
 
 object WorldsRemoteRepository {
 
     suspend fun getWorlds(): Response<Worlds> {
         val token = try {
-            getIdToken()
+            UserRemoteRepository.getIdToken()
         } catch (e: Exception) {
             null
         }

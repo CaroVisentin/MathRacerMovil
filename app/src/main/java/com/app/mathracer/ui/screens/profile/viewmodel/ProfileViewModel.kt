@@ -3,7 +3,7 @@ package com.app.mathracer.ui.screens.profile.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.mathracer.data.CurrentUser
-import com.app.mathracer.data.repository.FriendRepository
+import com.app.mathracer.data.repositories.FriendRepository
 import com.app.mathracer.ui.screens.profile.components.Friend as FriendUi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

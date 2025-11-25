@@ -1,4 +1,4 @@
-package com.app.mathracer.data.repository
+package com.app.mathracer.data.repositories
 
 import com.app.mathracer.data.network.RankingResponseDto
 import com.app.mathracer.data.network.RetrofitClient

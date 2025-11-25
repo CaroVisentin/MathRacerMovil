@@ -1,6 +1,5 @@
 package com.app.mathracer.ui.screens.historyGame
 
-import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -33,14 +32,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -52,13 +49,12 @@ import com.app.mathracer.ui.screens.game.OptionButton
 import com.app.mathracer.ui.screens.game.OptionButtonState
 import com.app.mathracer.ui.screens.game.PowerUpChip
 import com.app.mathracer.ui.screens.game.TrackCard
-import com.app.mathracer.ui.screens.game.components.GameResultModal
 import com.app.mathracer.ui.screens.historyGame.viewmodel.HistoryGameViewModel
 import kotlinx.coroutines.delay
 import androidx.compose.runtime.*
 import com.app.mathracer.ui.screens.historyGame.components.HistoryGameResultModal
 import com.app.mathracer.ui.screens.historyGame.viewmodel.HistoryGameUiState
-import com.app.mathracer.data.repository.UserRemoteRepository
+import com.app.mathracer.data.repositories.UserRemoteRepository
 import kotlinx.coroutines.launch
 
 private val BgDark        = Color(0xFF222224)

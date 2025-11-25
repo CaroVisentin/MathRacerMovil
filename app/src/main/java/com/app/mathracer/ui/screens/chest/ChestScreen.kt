@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.app.mathracer.data.model.ChestItem
-import com.app.mathracer.data.repository.ChestRepository
+import com.app.mathracer.data.repositories.ChestRepository
 import com.app.mathracer.R
 
 @Composable
