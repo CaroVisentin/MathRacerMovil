@@ -16,6 +16,7 @@ data class Player(
     val score: Int = 0
 )
 
+
 data class Question(
     val id: String,
     val text: String,

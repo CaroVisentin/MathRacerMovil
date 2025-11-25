@@ -145,12 +145,18 @@ class GameViewModel @Inject constructor(
                         android.util.Log.d("GameViewModel", "🆕 New question detected: '$newQuestion'")
                     }
 
-                    // Por ahora lo puse asi nomas, dps se puede mejorar
-                    val myPlayerScore = myPlayer?.score ?: 0
-                    val opponentScore = opponent?.score ?: 0
+                    // Preserve optimistic local score when possible (avoid server update overwriting +2)
+                    val incomingMyPlayerScore = myPlayer?.score ?: 0
+                    val incomingOpponentScore = opponent?.score ?: 0
+
+                    // Use the higher of the current local optimistic score and the incoming server score
+                    val myPlayerScore = maxOf(stateBefore.playerScore, incomingMyPlayerScore)
+                    val opponentScore = incomingOpponentScore
 
                     val myPlayerPosition = minOf(myPlayerScore, 10)
                     val opponentPosition = minOf(opponentScore, 10)
+
+                    android.util.Log.d("GameViewModel", "SignalR incoming scores - incomingMy=$incomingMyPlayerScore, incomingOpp=$incomingOpponentScore | appliedMy=$myPlayerScore")
 
                     val gameFinished = myPlayerPosition >= 10 || opponentPosition >= 10
                     val winner = when {
@@ -262,6 +268,54 @@ class GameViewModel @Inject constructor(
         )
     }
 
+    /**
+     * Use a generic power-up by type.
+     * powerUpType: 1 = lightning (double progress on correct answer)
+     *              2 = shuffle (swap/shuffle opponent's options)
+     */
+    fun usePowerUp(type: Int) {
+        val currentState = _uiState.value
+        if (currentState.gameEnded || currentState.options.isEmpty() || currentState.myPlayerId == null || currentState.gameId.isBlank()) return
+
+        viewModelScope.launch {
+            try {
+                val result = usePowerUpUseCase(
+                    gameId = currentState.gameId,
+                    playerId = currentState.myPlayerId!!,
+                    powerUpType = type
+                )
+
+                result.fold(
+                    onSuccess = {
+                            android.util.Log.d("GameViewModel", "✨ Power-up $type used successfully")
+                            // Apply optimistic local effects for certain power-ups
+                            when (type) {
+                                1 -> {
+                                    // Lightning: next correct answer counts double
+                                    _uiState.value = _uiState.value.copy(doubleProgressActive = true, lastPowerUpMessage = "Rayo activado: siguiente respuesta vale x2")
+                                    android.util.Log.d("GameViewModel", "✨ doubleProgressActive set = ${_uiState.value.doubleProgressActive}")
+                                }
+                                2 -> {
+                                    // Shuffle: inform user that opponent's options will be shuffled
+                                    _uiState.value = _uiState.value.copy(lastPowerUpMessage = "Shuffle enviado al rival")
+                                }
+                                else -> {
+                                    _uiState.value = _uiState.value.copy(lastPowerUpMessage = "Power-up usado")
+                                }
+                            }
+                        },
+                    onFailure = { ex ->
+                        android.util.Log.e("GameViewModel", "❌ Failed to use power-up $type: ${ex.message}")
+                        _uiState.value = _uiState.value.copy(error = "Error al usar power-up: ${ex.message}")
+                    }
+                )
+            } catch (e: Exception) {
+                android.util.Log.e("GameViewModel", "Exception using power-up $type: ${e.message}", e)
+                _uiState.value = _uiState.value.copy(error = "Excepción al usar power-up: ${e.message}")
+            }
+        }
+    }
+
     fun submitAnswer(selectedOption: Int?) {
         val currentState = _uiState.value
         
@@ -270,8 +324,8 @@ class GameViewModel @Inject constructor(
         viewModelScope.launch {
              
             val isCorrect = selectedOption == currentState.correctAnswer
-            
-            android.util.Log.d("GameViewModel", "🎯 Checking answer: selected=$selectedOption, correct=${currentState.correctAnswer}, isCorrect=$isCorrect")
+
+            android.util.Log.d("GameViewModel", "🎯 Checking answer: selected=$selectedOption, correct=${currentState.correctAnswer}, isCorrect=$isCorrect, doubleProgressActive=${currentState.doubleProgressActive}")
             
             
             _uiState.value = currentState.copy(
@@ -305,9 +359,11 @@ class GameViewModel @Inject constructor(
                     
                     if (isCorrect) {
                         android.util.Log.d("GameViewModel", "✅ Correct answer! Applying optimistic local progress and waiting for server update...")
-                        
+
                         val current = _uiState.value
-                        val newScore = current.playerScore + 1
+                        // If a double-progress power-up is active, count this correct answer as +2
+                        val increment = if (current.doubleProgressActive) 2 else 1
+                        val newScore = current.playerScore + increment
                         val newProgress = minOf(newScore, 10)
                         val reachedEnd = newProgress >= 10
 
@@ -315,7 +371,10 @@ class GameViewModel @Inject constructor(
                             playerScore = newScore,
                             playerProgress = newProgress,
                             gameEnded = reachedEnd || current.gameEnded,
-                            winner = if (reachedEnd) "¡Ganaste!" else current.winner
+                            winner = if (reachedEnd) "¡Ganaste!" else current.winner,
+                            // consume the double-progress power-up when applied
+                            doubleProgressActive = false,
+                            lastPowerUpMessage = if (increment == 2) "Rayo aplicado: siguiente respuesta vale x2" else current.lastPowerUpMessage
                         )
                     } else {
                         android.util.Log.d("GameViewModel", "❌ Wrong answer. Applying penalty, waiting for server to send new question...")

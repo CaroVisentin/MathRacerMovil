@@ -744,7 +744,8 @@ fun GameScreen(
         onPowerUpClick = { index -> 
             when (index) {
                 0 -> viewModel.useFireExtinguisher() // Matafuegos
-                // Agregar otros power-ups aquí cuando se implementen
+                1 -> viewModel.usePowerUp(1) // Rayo: doble avance en respuesta correcta
+                2 -> viewModel.usePowerUp(2) // Shuffle: cambia opciones del rival
             }
         },
         onOptionClick = { index, value ->
