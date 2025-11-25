@@ -80,6 +80,19 @@ class LoginViewModel : ViewModel() {
                                                                 com.app.mathracer.data.UserState.setActiveCharacter(activeChar?.productId)
                                                                 com.app.mathracer.data.UserState.setActiveBackground(activeBg?.productId)
                                                                 com.app.mathracer.data.UserState.setActiveVehicle(activeCar?.productId)
+                                                                // Determine if any products are assigned (chars, backgrounds or cars)
+                                                                val charsList = charsRes.getOrNull()?.items ?: emptyList()
+                                                                val bgsList = bgsRes.getOrNull()?.items ?: emptyList()
+                                                                val carsList = carsRes.getOrNull()?.items ?: emptyList()
+                                                                val hasProducts = activeChar != null || activeBg != null || activeCar != null
+
+                                                        Log.d("hasProducts", "$hasProducts")
+                                                        Log.d("hasProducts chars", "$charsList")
+                                                        Log.d("hasProducts active chars", "$activeChar")
+                                                        Log.d("hasProducts bgs", "$bgsList")
+                                                        Log.d("hasProducts cars", "$carsList")
+                                                                _uiState.update { it.copy(hasProductsAssigned = hasProducts) }
+                                                                Log.d("hasProducts", "$hasProducts")
                                                     } catch (_: Exception) { }
                                                 }
                                             }
@@ -169,6 +182,18 @@ class LoginViewModel : ViewModel() {
                                                         com.app.mathracer.data.UserState.setActiveCharacter(activeChar?.productId)
                                                         com.app.mathracer.data.UserState.setActiveBackground(activeBg?.productId)
                                                         com.app.mathracer.data.UserState.setActiveVehicle(activeCar?.productId)
+                                                        // Determine if any products are assigned (chars, backgrounds or cars)
+                                                        val charsList = charsRes.getOrNull()?.items ?: emptyList()
+                                                        val bgsList = bgsRes.getOrNull()?.items ?: emptyList()
+                                                        val carsList = carsRes.getOrNull()?.items ?: emptyList()
+                                                        val hasProducts = activeChar != null || activeBg != null || activeCar != null
+
+                                                Log.d("hasProducts", "$hasProducts")
+                                                Log.d("hasProducts chars", "$charsList")
+                                                Log.d("hasProducts bgs", "$bgsList")
+                                                Log.d("hasProducts cars", "$carsList")
+                                                        _uiState.update { it.copy(hasProductsAssigned = hasProducts) }
+                                                Log.d("hasProducts", "$hasProducts")
                                             } catch (_: Exception) { }
                                         }
                                     }
