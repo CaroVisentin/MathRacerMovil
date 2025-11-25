@@ -119,7 +119,7 @@ class ShopViewModel @Inject constructor(
                     .onSuccess { json: JsonObject ->
                         // Intentamos extraer un URL de redirección común (init_point / sandbox_init_point / url / preferenceUrl)
                         var url: String? = when {
-                            json.has("init_point") -> json.get("init_point").asString
+                            json.has("initPoint") -> json.get("initPoint").asString
                             json.has("sandbox_init_point") -> json.get("sandbox_init_point").asString
                             json.has("url") -> json.get("url").asString
                             json.has("preferenceUrl") -> json.get("preferenceUrl").asString
@@ -306,6 +306,28 @@ class ShopViewModel @Inject constructor(
 
     fun clearPurchaseMessage() {
         _uiState.update { it.copy(purchaseMessage = null) }
+    }
+
+    // Manejar resultado del pago desde deep link
+    fun handlePaymentResult(status: String, playerId: Int) {
+        viewModelScope.launch {
+            when (status) {
+                "success" -> {
+                    Log.d("ShopViewModel", "✅ Pago exitoso - Recargando monedas del jugador")
+                    _uiState.update { it.copy(purchaseMessage = "¡Pago exitoso! Recargando monedas...") }
+                    // Recargar los datos del jugador para actualizar las monedas
+                    loadAll(playerId)
+                }
+                "failure" -> {
+                    Log.d("ShopViewModel", "❌ Pago fallido")
+                    _uiState.update { it.copy(purchaseMessage = "El pago no se pudo completar. Intenta nuevamente.") }
+                }
+                "pending" -> {
+                    Log.d("ShopViewModel", "⏳ Pago pendiente")
+                    _uiState.update { it.copy(purchaseMessage = "Tu pago está pendiente de confirmación.") }
+                }
+            }
+        }
     }
 }
 

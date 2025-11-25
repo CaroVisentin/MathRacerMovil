@@ -43,4 +43,21 @@ object ChestRepository {
             throw e
         }
     }
+
+    suspend fun openChest(): Response<ChestResponse> {
+        val token = try { getIdToken() } catch (e: Exception) { Log.e("openChest","Failed to get idToken", e); null }
+        return try {
+            val resp = api.openChest(authHeader(token))
+            if (!resp.isSuccessful) {
+                val err = resp.errorBody()?.string()
+                Log.e("ChestRepo","openChest failed: code=${resp.code()} err=$err")
+            } else {
+                Log.d("ChestRepo","openChest success: code=${resp.code()}")
+            }
+            resp
+        } catch (e: Exception) {
+            Log.e("ChestRepo","Exception in openChest", e)
+            throw e
+        }
+    }
 }

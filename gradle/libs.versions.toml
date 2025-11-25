@@ -1,5 +1,6 @@
 [versions]
 agp = "8.10.1"
+browser = "1.4.0"
 kotlin = "2.0.21"
 kover = "0.8.3"
 coreKtx = "1.16.0"
@@ -29,6 +30,7 @@ googleid = "1.1.1"
 
 [libraries]
 androidx-animation = { module = "androidx.compose.animation:animation" }
+androidx-browser = { module = "androidx.browser:browser", version.ref = "browser" }
 androidx-compose-material3-material3 = { module = "androidx.compose.material3:material3" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-foundation = { module = "androidx.compose.foundation:foundation" }

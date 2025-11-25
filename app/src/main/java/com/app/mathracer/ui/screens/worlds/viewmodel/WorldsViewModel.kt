@@ -3,7 +3,6 @@ package com.app.mathracer.ui.screens.worlds.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.app.mathracer.data.CurrentUser
 import com.app.mathracer.data.model.WorldDto
 import com.app.mathracer.data.repository.LevelsRemoteRepository
 import com.app.mathracer.data.model.Worlds
