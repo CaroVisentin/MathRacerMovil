@@ -171,6 +171,9 @@ interface ApiService {
 
     @GET("player/uid/{uid}")
     suspend fun getUserByUid(@Header("Authorization") authorization: String?, @Path("uid") uid: String): Response<User>
+
+    @GET("players/{playerId}")
+    suspend fun getUserByPlayerId(@Header("Authorization") authorization: String?, @Path("playerId") playerId: Int): Response<User>
     
     @GET("Friendship/{playerId}/friends")
     suspend fun getFriends(@Header("Authorization") authorization: String?, @Path("playerId") playerId: Int): Response<List<com.app.mathracer.data.model.Friend>>

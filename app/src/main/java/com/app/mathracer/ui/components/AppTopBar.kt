@@ -39,12 +39,13 @@ import com.app.mathracer.data.CurrentUser
 import com.app.mathracer.data.UserState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
+import android.util.Log
 import com.app.mathracer.ui.screens.home.RechargeStatus
 import com.app.mathracer.ui.screens.home.viewmodel.HomeViewModel
 
 @Composable
 fun AppTopBar(
-    coins: Int = CurrentUser.user?.coins ?: 0,
     energyState: HomeViewModel.EnergyState = HomeViewModel.EnergyState(),
     onShopClick: () -> Unit = {},
     onEnergyClick: () -> Unit = {},
@@ -110,7 +111,11 @@ fun AppTopBar(
                             modifier = Modifier.size(22.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(text = "${coins}", color = Color.Yellow, fontSize = 16.sp)
+                        val coinsState by com.app.mathracer.data.UserState.coins.collectAsState()
+                        LaunchedEffect(coinsState) {
+                            Log.d("AppTopBar", "coinsState changed: $coinsState | CurrentUser=${CurrentUser.user?.coins}")
+                        }
+                        Text(text = "${coinsState}", color = Color.Yellow, fontSize = 16.sp)
                     }
                 }
                 Spacer(modifier = Modifier.width(8.dp))

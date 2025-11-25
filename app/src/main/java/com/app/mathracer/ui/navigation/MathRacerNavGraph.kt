@@ -122,7 +122,6 @@ fun MathRacerNavGraph(
             val hideTop = route.contains("game") || route.contains("infinite_game") || route.contains(Routes.LOGIN) || route.contains(Routes.REGISTER)
             if (!hideTop) {
                 AppTopBar(
-                    coins = com.app.mathracer.data.CurrentUser.user?.coins ?: 0,
                     energyState = homeState.energy,
                     onShopClick = { navController.navigate(Routes.SHOP) },
                     onEnergyClick = { navController.navigate(Routes.INSUFFICIENT_ENERGY) },

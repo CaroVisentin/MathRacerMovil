@@ -69,6 +69,7 @@ class RegisterViewModel : ViewModel() {
                             try {
                                 val resp = UserRemoteRepository.createUser(createdUser)
                                 if (resp.isSuccessful) CurrentUser.user = resp.body() else CurrentUser.user = createdUser
+                                com.app.mathracer.data.UserState.setCoins(CurrentUser.user?.coins ?: 0)
                                  
                                 try {
                                     val playerId = CurrentUser.user?.id ?: 0
@@ -95,6 +96,7 @@ class RegisterViewModel : ViewModel() {
                             } catch (e: Exception) {
                                 android.util.Log.e("Register", "Error creando usuario en backend", e)
                                 CurrentUser.user = createdUser
+                                com.app.mathracer.data.UserState.setCoins(CurrentUser.user?.coins ?: 0)
                             }
                             _uiState.value = _uiState.value.copy(
                                 isLoading = false,
@@ -139,9 +141,11 @@ class RegisterViewModel : ViewModel() {
                                     try {
                                     val resp = UserRemoteRepository.createUser(createdUser)
                                     if (resp.isSuccessful) CurrentUser.user = resp.body() else CurrentUser.user = createdUser
+                                    com.app.mathracer.data.UserState.setCoins(CurrentUser.user?.coins ?: 0)
                                 } catch (e: Exception) {
                                     android.util.Log.e("Register", "Error creando usuario en backend", e)
                                     CurrentUser.user = createdUser
+                                    com.app.mathracer.data.UserState.setCoins(CurrentUser.user?.coins ?: 0)
                                 }
                                  
                                 try {

@@ -59,6 +59,7 @@ class LoginViewModel : ViewModel() {
                                     Log.d("Login response", "getUser response: $response")
                                     if (response.isSuccessful) {
                                         CurrentUser.user = response.body()
+                                        com.app.mathracer.data.UserState.setCoins(CurrentUser.user?.coins ?: 0)
                                         Log.d("Login", "Usuario obtenido del backend: ${CurrentUser.user}")
                                          
                                         try {
@@ -144,6 +145,7 @@ class LoginViewModel : ViewModel() {
                                     val resp = UserRemoteRepository.google(createdUserGoogle)
                                     Log.d("Firebase",  "Usuario Firebase:${firebaseUser} ${authResult}")
                                     if (resp.isSuccessful) CurrentUser.user = resp.body() else CurrentUser.user = createdUser
+                                    com.app.mathracer.data.UserState.setCoins(CurrentUser.user?.coins ?: 0)
                                 } catch (e: Exception) {
                                     android.util.Log.e("Register", "Error creando usuario en backend", e)
                                     CurrentUser.user = createdUser
