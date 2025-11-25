@@ -50,6 +50,14 @@ class GameRepositoryImpl(
         }
     }
 
+    override suspend fun findMatchWithMatchmaking(playerName: String): Result<Unit> {
+        return if (signalRRemoteDataSource.isConnected()) {
+            signalRRemoteDataSource.findMatchWithMatchmaking(playerName)
+        } else {
+            Result.failure(Exception("Not connected to game server"))
+        }
+    }
+
     override suspend fun joinGame(gameId: Int, password: String?): Result<Unit> {
         return try {
             android.util.Log.d("GameRepository", "joinGame requested for id=$gameId, hasPassword=${password != null}")
@@ -144,6 +152,10 @@ class GameRepositoryImpl(
             )
             Result.failure(Exception("Not connected to game server"))
         }
+    }
+
+    override suspend fun leaveGame(gameId: String, playerId: String): Result<Unit> {
+        return signalRRemoteDataSource.leaveGame(gameId, playerId)
     }
 
 

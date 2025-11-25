@@ -9,6 +9,7 @@ import com.app.mathracer.domain.usecases.SubmitAnswerUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import com.app.mathracer.data.repository.UserRemoteRepository
 import com.app.mathracer.domain.usecases.UsePowerUpUseCase
+import com.app.mathracer.domain.usecases.LeaveGameUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,7 +20,8 @@ import javax.inject.Inject
 class GameViewModel @Inject constructor(
     private val observeGameUpdatesUseCase: ObserveGameUpdatesUseCase,
     private val submitAnswerUseCase: SubmitAnswerUseCase,
-    private val usePowerUpUseCase: UsePowerUpUseCase
+    private val usePowerUpUseCase: UsePowerUpUseCase,
+    private val leaveGameUseCase: LeaveGameUseCase
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(GameUiState())
@@ -389,6 +391,31 @@ class GameViewModel @Inject constructor(
                     )
                 }
             )
+        }
+    }
+
+
+    fun leaveCurrentGame() {
+        val currentState = _uiState.value
+        val gid = currentState.gameId
+        val pid = currentState.myPlayerId
+        if (gid.isBlank() || pid.isNullOrBlank()) {
+            android.util.Log.d("GameViewModel", "leaveCurrentGame: no gameId or playerId available, skipping")
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                android.util.Log.d("GameViewModel", "Leaving game from client: gameId=$gid, playerId=$pid")
+                val result = leaveGameUseCase(gid, pid)
+                if (result.isSuccess) {
+                    android.util.Log.d("GameViewModel", "leaveCurrentGame: success")
+                } else {
+                    android.util.Log.w("GameViewModel", "leaveCurrentGame: failure - ${result.exceptionOrNull()?.message}")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("GameViewModel", "Exception while leaving game: ${e.message}", e)
+            }
         }
     }
 

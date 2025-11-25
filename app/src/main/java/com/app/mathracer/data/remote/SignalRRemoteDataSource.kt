@@ -117,10 +117,9 @@ class SignalRRemoteDataSource @Inject constructor() {
                     }
                 }
             }
-            
-            // Connection settings for stability
-            hubConnection?.setServerTimeout(30000) // 30 segundos timeout
-            hubConnection?.setKeepAliveInterval(15000) // 15 segundos keep alive
+
+            hubConnection?.setServerTimeout(30000)
+            hubConnection?.setKeepAliveInterval(15000)
             
             android.util.Log.d("SignalR", "All GameUpdate listeners configured with fallback")
             
@@ -171,7 +170,6 @@ class SignalRRemoteDataSource @Inject constructor() {
                 return@withContext Result.failure(Exception("Not connected to SignalR hub"))
             }
 
-            // The server expects the player's Firebase UID so it can resolve the real display name
             try {
                 hubConnection?.invoke("FindMatch", playerUid)
                 android.util.Log.d("SignalR", "FindMatch invoked (uid)")
@@ -182,6 +180,29 @@ class SignalRRemoteDataSource @Inject constructor() {
             Result.success(Unit)
         } catch (e: Exception) {
             android.util.Log.e("SignalR", "Failed to find match", e)
+            Result.failure(e)
+        }
+    }
+
+    suspend fun findMatchWithMatchmaking(playerUid: String): Result<Unit> = withContext(Dispatchers.IO) {
+        return@withContext try {
+            android.util.Log.d("SignalR", "Finding match with matchmaking for UID: $playerUid")
+
+            if (!isConnected()) {
+                return@withContext Result.failure(Exception("Not connected to SignalR hub"))
+            }
+
+            try {
+                hubConnection?.invoke("FindMatchWithMatchmaking", playerUid)
+                android.util.Log.d("SignalR", "FindMatchWithMatchmaking invoked (uid)")
+            } catch (e: Exception) {
+                android.util.Log.e("SignalR", "FindMatchWithMatchmaking invocation failed", e)
+                return@withContext Result.failure(e)
+            }
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            android.util.Log.e("SignalR", "Failed to call FindMatchWithMatchmaking", e)
             Result.failure(e)
         }
     }
@@ -255,7 +276,6 @@ class SignalRRemoteDataSource @Inject constructor() {
                 return@withContext Result.failure(Exception("Not connected to SignalR hub"))
             }
 
-            // Invoke hub method JoinGame(gameId, password) and wait for completion
             try {
                  
                 lastRequestedJoinGameId = gameId
@@ -341,6 +361,45 @@ class SignalRRemoteDataSource @Inject constructor() {
             _connectionState.value = HubConnectionState.DISCONNECTED
         } catch (e: Exception) {
             android.util.Log.e("SignalR", "Failed to disconnect", e)
+        }
+    }
+
+    suspend fun leaveGame(gameId: String, playerId: String): Result<Unit> = withContext(Dispatchers.IO) {
+        return@withContext try {
+            android.util.Log.d("SignalR", "Leaving game: gameId=$gameId, playerId=$playerId")
+
+            if (!isConnected()) {
+                android.util.Log.d("SignalR", "Hub not connected, nothing to leave")
+                return@withContext Result.success(Unit)
+            }
+
+            try {
+                val gameIdNum = gameId.toDoubleOrNull()?.toInt()
+                val playerIdNum = playerId.toDoubleOrNull()?.toInt()
+                if (gameIdNum != null && playerIdNum != null) {
+                    val future = hubConnection?.invoke("LeaveGame", gameIdNum, playerIdNum)
+                    (future as? java.util.concurrent.CompletableFuture<Any?>)?.get()
+                } else {
+                    val future = hubConnection?.invoke("LeaveGame", gameId, playerId)
+                    (future as? java.util.concurrent.CompletableFuture<Any?>)?.get()
+                }
+                android.util.Log.d("SignalR", "LeaveGame invoked on server (if implemented)")
+            } catch (invokeEx: Exception) {
+                android.util.Log.w("SignalR", "LeaveGame invoke failed or not implemented on server", invokeEx)
+            }
+
+            try {
+                hubConnection?.stop()
+                _connectionState.value = HubConnectionState.DISCONNECTED
+                android.util.Log.d("SignalR", "Hub connection stopped locally")
+            } catch (stopEx: Exception) {
+                android.util.Log.w("SignalR", "Error stopping hub connection", stopEx)
+            }
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            android.util.Log.e("SignalR", "Failed to leave game", e)
+            Result.failure(e)
         }
     }
     

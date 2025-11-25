@@ -51,9 +51,10 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.runtime.DisposableEffect
 import com.app.mathracer.data.CurrentUser
 
-private val PanelColor  = Color(0xE62C2C2C) // #2C2C2C con 90% alpha
+private val PanelColor  = Color(0xE62C2C2C)
 private val BorderLight = Color(0x66FFFFFF)
 private val NextTeal    = Color(0xFF2EB7A7)
 private val GreyTitle   = Color.White.copy(alpha = 0.35f)
@@ -106,7 +107,6 @@ fun GamePlayScreen(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.Top
         ) {
-            // ====== TRACK RIVAL ======
             TrackCard(
                 title = opponentName,
                 titleColor = Color.White.copy(alpha = 0.65f),
@@ -117,7 +117,6 @@ fun GamePlayScreen(
             )
             Spacer(Modifier.height(10.dp))
 
-            // ====== TRACK VOS ======
             TrackCard(
                 title = playerName,
                 titleColor = LabelBlue,
@@ -128,8 +127,6 @@ fun GamePlayScreen(
             )
 
             Spacer(Modifier.height(30.dp))
-
-            // ====== POWER UPS ======
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -150,7 +147,6 @@ fun GamePlayScreen(
 
             Spacer(Modifier.height(30.dp))
 
-            // ====== EXPRESIÓN ======
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -257,46 +253,6 @@ public fun TopBar(timeLabel: String, coins: Int, onBack: () -> Unit) {
             Icon(Icons.Filled.ArrowBack, contentDescription = "Atrás", tint = Color.White)
         }
         Spacer(Modifier.width(4.dp))
-        /*
-        Text(
-            text = timeLabel,
-            color = Color.White,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Black,
-            modifier = Modifier.weight(1f),
-            textAlign = TextAlign.Center
-        )
-        // Indicadores / monedas (simplificado)
-        Spacer(Modifier.width(6.dp))
-        // Icono de combustible
-
-        Icon(
-            painter = painterResource(R.drawable.ic_fuel), // tu drawable
-            contentDescription = "Combustible",
-            tint = Color(0xFFFFD600),
-            modifier = Modifier.size(20.dp)
-        )
-        Spacer(Modifier.width(8.dp))
-
-        // Indicadores (2 amarillos + 1 gris)
-        Box(
-            modifier = Modifier
-                .size(16.dp)
-                .background(Color(0xFFFFD600), RoundedCornerShape(4.dp))
-        )
-        Spacer(Modifier.width(4.dp))
-        Box(
-            modifier = Modifier
-                .size(16.dp)
-                .background(Color(0xFFFFD600), RoundedCornerShape(4.dp))
-        )
-        Spacer(Modifier.width(4.dp))
-        Box(
-            modifier = Modifier
-                .size(16.dp)
-                .background(Color(0xFF555555), RoundedCornerShape(4.dp))
-        )
-        */
     }
 }
 
@@ -322,10 +278,9 @@ public fun TrackCard(
             ScrollingTrack(
                 trackRes = trackRes,
                 height = 120.dp,
-                speedDpPerSec = 90.dp  // prueba distintas velocidades
+                speedDpPerSec = 90.dp
             )
 
-            // Etiqueta esquina sup-izq
             Box(
                 modifier = Modifier
                     .padding(start = 10.dp, top = 8.dp)
@@ -560,7 +515,7 @@ fun OptionButton(
 @Composable
 fun ResultsModal(
     open: Boolean,
-    results: List<PlayerResult>,      // ej: 2 jugadores
+    results: List<PlayerResult>,
     carImageRes: Int,
     medalGoldRes: Int,
     medalSilverRes: Int,
@@ -684,24 +639,23 @@ fun GameScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    // Inicializar el juego
     LaunchedEffect(gameId, playerName) {
         viewModel.initializeGame(gameId, CurrentUser.user?.name.toString())
     }
 
-    // Limpiar feedback automáticamente después de mostrar resultado
-    // Si la respuesta fue correcta, preparar la siguiente pregunta inmediatamente.
-    // Si fue incorrecta, el ViewModel realizará la preparación después de la penalización.
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.leaveCurrentGame()
+        }
+    }
+
     LaunchedEffect(uiState.showFeedback) {
         if (uiState.showFeedback) {
             if (uiState.isLastAnswerCorrect == true) {
-                // Respuesta correcta: mostrar un pequeño feedback y preparar la siguiente pregunta YA
-                kotlinx.coroutines.delay(200) // parpadeo rápido para el feedback
+                kotlinx.coroutines.delay(200)
                 viewModel.clearFeedback()
                 viewModel.prepareForNextQuestion()
             } else {
-                // Respuesta incorrecta: el ViewModel aplica penalización y se encargará de preparar la siguiente pregunta.
-                // Aquí solo mostramos el feedback durante 1s y lo limpiamos para que la penalización (si existe) se vea.
                 kotlinx.coroutines.delay(1000)
                 viewModel.clearFeedback()
             }
@@ -723,7 +677,7 @@ fun GameScreen(
                 uiState.fireExtinguisherCount,
                 Color(0xFFFF6B6B),
                 enabled = uiState.fireExtinguisherCount > 0 && !uiState.powerUpsLocked && !uiState.fireExtinguisherActive
-            ), // Matafuegos
+            ),
             PowerUp(
                 R.drawable.ic_shuffle,
                 uiState.shuffleRivalCount,
@@ -756,7 +710,10 @@ fun GameScreen(
         showAnswerFeedback = uiState.showFeedback,
         isPenalized = uiState.isPenalized,
         expectedResult = uiState.expectedResult,
-        onBack = onNavigateBack,
+        onBack = {
+            viewModel.leaveCurrentGame()
+            onNavigateBack()
+        },
         onPowerUpClick = { index -> 
             when (index) {
                 0 -> viewModel.useFireExtinguisher()

@@ -3,6 +3,8 @@ package com.app.mathracer.di
 import com.app.mathracer.domain.repositories.GameRepository
 import com.app.mathracer.domain.repositories.SoloGameRepository
 import com.app.mathracer.domain.usecases.FindMatchUseCase
+import com.app.mathracer.domain.usecases.FindMatchWithMatchmakingUseCase
+import com.app.mathracer.domain.usecases.LeaveGameUseCase
 import com.app.mathracer.domain.usecases.InitializeGameConnectionUseCase
 import com.app.mathracer.domain.usecases.ObserveGameUpdatesUseCase
 import com.app.mathracer.domain.usecases.ObserveSoloGameUpdatesUseCase
@@ -38,6 +40,20 @@ object DomainModule {
         gameRepository: GameRepository
     ): FindMatchUseCase {
         return FindMatchUseCase(gameRepository)
+    }
+
+    @Provides
+    fun provideFindMatchWithMatchmakingUseCase(
+        gameRepository: GameRepository
+    ): FindMatchWithMatchmakingUseCase {
+        return FindMatchWithMatchmakingUseCase(gameRepository)
+    }
+
+    @Provides
+    fun provideLeaveGameUseCase(
+        gameRepository: GameRepository
+    ): LeaveGameUseCase {
+        return LeaveGameUseCase(gameRepository)
     }
     
     @Provides

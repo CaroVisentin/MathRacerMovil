@@ -15,6 +15,7 @@ interface GameRepository {
      * Find a match for the given player
      */
     suspend fun findMatch(playerName: String): Result<Unit>
+    suspend fun findMatchWithMatchmaking(playerName: String): Result<Unit>
     
     /**
      * Send answer for a specific game and player
@@ -46,6 +47,11 @@ interface GameRepository {
      * Disconnect from game server
      */
     suspend fun disconnect()
+
+    /**
+     * Gracefully leave a game from the client side (notify server and disconnect).
+     */
+    suspend fun leaveGame(gameId: String, playerId: String): Result<Unit>
     
     /**
      * Test server health
