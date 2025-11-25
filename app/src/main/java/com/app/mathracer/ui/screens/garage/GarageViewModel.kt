@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import com.app.mathracer.data.repositories.GarageRepository
+import com.app.mathracer.data.repository.GarageRepository
 import com.app.mathracer.data.network.GarageItemDto
 import com.app.mathracer.data.network.GarageResponseDto
 import com.app.mathracer.data.CurrentUser

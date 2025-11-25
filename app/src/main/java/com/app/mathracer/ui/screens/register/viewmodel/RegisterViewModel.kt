@@ -7,7 +7,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.app.mathracer.data.model.User
-import com.app.mathracer.data.repositories.UserRemoteRepository
+import com.app.mathracer.data.repository.UserRemoteRepository
 import com.app.mathracer.data.CurrentUser
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -54,7 +54,7 @@ import kotlinx.coroutines.delay
 import androidx.compose.runtime.*
 import com.app.mathracer.ui.screens.historyGame.components.HistoryGameResultModal
 import com.app.mathracer.ui.screens.historyGame.viewmodel.HistoryGameUiState
-import com.app.mathracer.data.repositories.UserRemoteRepository
+import com.app.mathracer.data.repository.UserRemoteRepository
 import kotlinx.coroutines.launch
 
 private val BgDark        = Color(0xFF222224)

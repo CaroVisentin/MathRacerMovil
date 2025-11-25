@@ -1,18 +1,18 @@
-package com.app.mathracer.data.repositories
+package com.app.mathracer.data.repository
 
-import com.app.mathracer.data.model.Worlds
+import com.app.mathracer.data.model.Levels
 import com.app.mathracer.data.network.RetrofitClient.api
 import retrofit2.Response
 
-object WorldsRemoteRepository {
+object LevelsRemoteRepository {
 
-    suspend fun getWorlds(): Response<Worlds> {
+    suspend fun getLevels(worldId: Int): Response<Levels> {
         val token = try {
             UserRemoteRepository.getIdToken()
         } catch (e: Exception) {
             null
         }
         val header = token?.let { "Bearer $it" }
-        return api.getWorlds(header)
+        return api.getLevels(header, worldId)
     }
 }

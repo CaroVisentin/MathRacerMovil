@@ -4,8 +4,8 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.mathracer.data.model.Levels
-import com.app.mathracer.data.repositories.LevelsRemoteRepository
-import com.app.mathracer.data.repositories.UserRemoteRepository
+import com.app.mathracer.data.repository.LevelsRemoteRepository
+import com.app.mathracer.data.repository.UserRemoteRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch

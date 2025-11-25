@@ -8,7 +8,7 @@ import com.app.mathracer.data.network.ItemDto
 import com.app.mathracer.data.network.ShopResponse
 import com.app.mathracer.data.network.ShopResponseEnergies
 import com.app.mathracer.data.network.ShopResponseWildcards
-import com.app.mathracer.data.repositories.ShopRepository
+import com.app.mathracer.data.repository.ShopRepository
 import com.app.mathracer.data.network.CoinPackageDto
 import com.app.mathracer.BuildConfig
 import com.google.gson.JsonObject

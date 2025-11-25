@@ -3,7 +3,7 @@ package com.app.mathracer.ui.screens.ranking.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.mathracer.data.CurrentUser
-import com.app.mathracer.data.repositories.RankingRepository
+import com.app.mathracer.data.repository.RankingRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch

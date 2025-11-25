@@ -1,4 +1,4 @@
-package com.app.mathracer.data.repositories
+package com.app.mathracer.data.repository
 
 import android.util.Log
 import com.app.mathracer.data.network.CoinPackageDto
