@@ -38,8 +38,10 @@ import com.app.mathracer.ui.screens.multiplayer.MultiplayerOptionsScreen
 import com.app.mathracer.ui.screens.multiplayer.CreateMatchScreen
 import com.app.mathracer.ui.screens.multiplayer.JoinMatchesScreen
 import com.app.mathracer.ui.screens.multiplayer.InviteFriendsScreen
+import com.app.mathracer.ui.screens.multiplayer.InvitationsScreen
 import com.app.mathracer.ui.screens.ranking.RankingScreen
 import com.app.mathracer.ui.screens.ranking.viewmodel.RankingViewModel
+import kotlinx.coroutines.launch
 import com.app.mathracer.ui.screens.worlds.WorldsScreen
 import com.app.mathracer.ui.screens.worlds.WorldsScreenRoute
 import com.app.mathracer.ui.screens.rules.RulesScreen
@@ -162,6 +164,9 @@ fun MathRacerNavGraph(
                 onInviteFriend = {
                     navController.navigate(Routes.INVITE_FRIENDS)
                 },
+                onInvitationInbox = {
+                    navController.navigate(Routes.INVITATION_INBOX)
+                },
                 onCompetitiveMatch = {
                     navController.navigate(Routes.WAITING_OPPONENT)
                 },
@@ -187,6 +192,19 @@ fun MathRacerNavGraph(
             InfiniteGameScreen(gameId = gameId, onExit = { navController.navigateUp() })
         }
 
+        composable(Routes.INVITATION_INBOX) {
+            HandleBackNavigation(
+                navController = navController,
+                currentRoute = currentRoute,
+                onBackPressed = { navController.navigateUp() }
+            )
+
+            InvitationsScreen(
+                onJoinAndWait = { navController.navigate(Routes.WAITING_OPPONENT) },
+                onBack = { navController.navigateUp() }
+            )
+        }
+
         composable(Routes.INVITE_FRIENDS) {
             HandleBackNavigation(
                 navController = navController,
@@ -196,16 +214,30 @@ fun MathRacerNavGraph(
 
             val profileViewModel: ProfileViewModel = hiltViewModel()
             val profileState by profileViewModel.uiState.collectAsState()
+            val scope = rememberCoroutineScope()
 
-             
-            val inviteList = profileState.friends.mapIndexed { index, f ->
-                FriendItem(id = "${index}", name = f.name, points = f.score.toIntOrNull() ?: 0)
+            val inviteList = profileState.remoteFriends.map { remote ->
+                com.app.mathracer.ui.screens.multiplayer.FriendItem(id = "${remote.id}", name = remote.name, points = remote.points)
             }
 
             InviteFriendsScreen(
                 friends = inviteList,
                 onInvite = { friendId, difficulty, resultType ->
-                    navController.navigateUp()
+                    scope.launch {
+                        try {
+                            val idInt = friendId.toIntOrNull() ?: return@launch
+                            val resp = com.app.mathracer.data.repository.GameInvitationRepository.sendInvitation(idInt, difficulty, resultType)
+                            if (resp.isSuccessful) {
+                                navController.navigate(Routes.WAITING_OPPONENT) {
+                                    popUpTo(Routes.INVITE_FRIENDS) { inclusive = true }
+                                }
+                            } else {
+                                android.util.Log.e("InviteFriends", "Failed to send invitation: ${resp.code()} ${resp.errorBody()?.string()}")
+                            }
+                        } catch (e: Exception) {
+                            android.util.Log.e("InviteFriends", "Exception sending invitation", e)
+                        }
+                    }
                 },
                 onBack = { navController.navigateUp() }
             )
