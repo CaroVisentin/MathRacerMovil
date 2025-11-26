@@ -109,10 +109,15 @@ fun JoinMatchesScreen(
     var selectedMatch by remember { mutableStateOf<MatchItem?>(null) }
     var password by remember { mutableStateOf("") }
 
-    Scaffold(snackbarHost = { SnackbarHost(hostState = snackbarHostState) }) { innerPadding ->
-        Surface(modifier = Modifier
-            .fillMaxSize()
-            .padding(innerPadding), color = MaterialTheme.colorScheme.background) {
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        containerColor = Color.Transparent,
+        modifier = Modifier.fillMaxSize()
+    ) { innerPadding ->
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding), color = Color.Transparent) {
             Box(modifier = Modifier.fillMaxSize()) {
             
             Image(
