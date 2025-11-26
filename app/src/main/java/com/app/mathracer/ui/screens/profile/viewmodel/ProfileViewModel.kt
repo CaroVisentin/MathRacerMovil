@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.mathracer.R
+import com.app.mathracer.audio.MusicManager
 import com.app.mathracer.data.CurrentUser
 import com.app.mathracer.data.model.Player
 import com.app.mathracer.data.repository.FriendRepository
@@ -19,13 +20,18 @@ class ProfileViewModel : ViewModel() {
     val uiState: StateFlow<ProfileUiState> = _uiState
 
     init {
+        val initialMusicVolume = 0.5f
+        _uiState.update {
+            it.copy(
+                userName = CurrentUser.user?.name ?: "",
+                userEmail = CurrentUser.user?.email,
+                points = CurrentUser.user?.points ?: 0,
+                actualLevel = CurrentUser.user?.lastLevelId ?: 0,
+                musicVolume = initialMusicVolume
+            )
+        }
+        MusicManager.setMusicVolume(initialMusicVolume)
         refreshAll()
-        _uiState.update { it.copy(
-            userName = CurrentUser.user?.name ?: "",
-            userEmail = CurrentUser.user?.email,
-            points = CurrentUser.user?.points ?: 0,
-            actualLevel = CurrentUser.user?.lastLevelId ?: 0
-            ) }
     }
 
     fun refreshAll() {
@@ -106,11 +112,14 @@ class ProfileViewModel : ViewModel() {
     }
 
     fun onSoundVolumeChange(value: Float) {
-        _uiState.update { it.copy(soundVolume = value) }
+        _uiState.update { it.copy(soundVolume = value.coerceIn(0f, 1f)) }
     }
 
     fun onMusicVolumeChange(value: Float) {
-        _uiState.update { it.copy(musicVolume = value) }
+        val clamped = value.coerceIn(0f, 1f)
+        _uiState.update { it.copy(musicVolume = clamped) }
+
+        MusicManager.setMusicVolume(clamped)
     }
 
     fun searchPlayer(email: String) {

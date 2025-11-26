@@ -64,7 +64,7 @@ fun Settings(
                 )
                 Slider(
                     value = soundVolume,
-                    onValueChange = onSoundVolumeChange,
+                    onValueChange = onMusicVolumeChange,
                     colors = SliderDefaults.colors(
                         thumbColor = Color.Cyan,
                         activeTrackColor = Color.Cyan

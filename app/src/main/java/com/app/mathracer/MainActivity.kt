@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.core.view.WindowCompat
 import android.graphics.drawable.ColorDrawable
 import androidx.compose.ui.graphics.toArgb
+import com.app.mathracer.audio.AppBackgroundMusic
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -54,6 +55,9 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MathRacerTheme {
+
+                AppBackgroundMusic()
+
                 val navController = rememberNavController()
                 MathRacerNavGraph(navController = navController)
             }
