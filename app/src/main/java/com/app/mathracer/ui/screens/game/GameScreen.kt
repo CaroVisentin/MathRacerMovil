@@ -691,12 +691,12 @@ fun GameScreen(
     GamePlayScreen(
         timeLabel = "10 seg",
         coins = 123_000,
-        rivalTrackRes = R.drawable.track_city,
-        youTrackRes = R.drawable.track_cake,
-        rivalCarRes = R.drawable.car_game,
+        rivalTrackRes = uiState.opponentTrackRes,
+        youTrackRes =  uiState.playerTrackRes,
+        rivalCarRes = uiState.opponentCarRes,
         opponentName = uiState.opponentName,
         playerName = uiState.playerName,
-        youCarRes = 5,//R.drawable.car_game,
+        youCarRes = uiState.playerCarRes,
         powerUps = listOf(
             PowerUp(
                 R.drawable.ic_shield,
