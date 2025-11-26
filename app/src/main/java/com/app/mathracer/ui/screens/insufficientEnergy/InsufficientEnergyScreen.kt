@@ -36,7 +36,7 @@ fun InsufficientEnergyScreen(
             modifier = Modifier.padding(24.dp)
         ) {
             Text(
-                text = "Sin energía ⚡",
+                text = "Sin energía",
                 color = Color.Cyan,
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold
@@ -44,7 +44,6 @@ fun InsufficientEnergyScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 👉 Imagen agregada aquí
             Image(
                 painter = painterResource(R.drawable.mathi_insufficient_energy),
                 contentDescription = "Sin energía",

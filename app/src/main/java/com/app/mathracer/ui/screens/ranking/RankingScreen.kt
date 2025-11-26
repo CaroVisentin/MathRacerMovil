@@ -23,8 +23,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.mathracer.R
+import com.app.mathracer.ui.components.StarryBackground
 import com.app.mathracer.ui.screens.ranking.viewmodel.PlayerRanking
 import com.app.mathracer.ui.screens.ranking.viewmodel.RankingViewModel
+import com.app.mathracer.ui.theme.DarkPurpleMR
 
 @Composable
 fun RankingScreen(viewModel: RankingViewModel) {
@@ -33,9 +35,10 @@ fun RankingScreen(viewModel: RankingViewModel) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0B032D))
+            .background(DarkPurpleMR)
             .padding(16.dp)
     ) {
+        StarryBackground()
         if (uiState.isLoading) {
             CircularProgressIndicator(
                 color = Color.Magenta,

@@ -27,7 +27,9 @@ import androidx.compose.ui.unit.sp
 import com.app.mathracer.data.model.LevelDto
 import java.net.URLDecoder
 import android.util.Base64
+import com.app.mathracer.ui.components.StarryBackground
 import com.app.mathracer.ui.screens.levels.viewmodel.LevelsViewModel
+import com.app.mathracer.ui.theme.DarkPurpleMR
 
 @Composable
 fun LevelsScreen(
@@ -47,7 +49,7 @@ fun LevelsScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0B032D))
+            .background(DarkPurpleMR)
     ) {
         StarryBackground()
 
@@ -233,24 +235,6 @@ fun LevelCard(
             } else {
                 Spacer(modifier = Modifier.height(10.dp))
             }
-        }
-    }
-}
-
-
-@Composable
-fun StarryBackground() {
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        val stars = 120
-        repeat(stars) {
-            drawCircle(
-                color = Color.White.copy(alpha = 0.8f),
-                radius = 1.5f,
-                center = Offset(
-                    x = (0..size.width.toInt()).random().toFloat(),
-                    y = (0..size.height.toInt()).random().toFloat()
-                )
-            )
         }
     }
 }
