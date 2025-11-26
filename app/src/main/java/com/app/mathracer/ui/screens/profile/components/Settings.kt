@@ -38,40 +38,12 @@ fun Settings(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF101010))
+            //.background(Color(0xFF101010))
             .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
 
         Column {
-            Text(
-                text = "Sonido",
-                color = Color.White,
-                fontSize = 20.sp,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.VolumeDown,
-                    contentDescription = "Volumen sonido",
-                    tint = Color.White,
-                    modifier = Modifier.size(28.dp)
-                )
-                Slider(
-                    value = soundVolume,
-                    onValueChange = onMusicVolumeChange,
-                    colors = SliderDefaults.colors(
-                        thumbColor = Color.Cyan,
-                        activeTrackColor = Color.Cyan
-                    ),
-                    modifier = Modifier.weight(1f)
-                )
-            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -140,6 +112,5 @@ fun Settings(
 //            }
         }
 
-        // Help button removed from Settings — it's provided globally by ProfileScreen
     }
 }

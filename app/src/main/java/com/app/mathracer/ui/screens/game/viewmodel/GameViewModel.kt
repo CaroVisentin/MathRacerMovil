@@ -10,6 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import com.app.mathracer.data.repository.UserRemoteRepository
 import com.app.mathracer.domain.usecases.UsePowerUpUseCase
 import com.app.mathracer.domain.usecases.LeaveGameUseCase
+import com.app.mathracer.data.repository.GarageRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -182,8 +183,51 @@ class GameViewModel @Inject constructor(
                         powerUpsLocked = if (hasNewQuestion) false else stateBefore.powerUpsLocked,
                         fireExtinguisherActive = if (hasNewQuestion) false else stateBefore.fireExtinguisherActive,
                         showShuffleMessage = if (hasNewQuestion) false else stateBefore.showShuffleMessage,
-                        expectedResult = game.expectedResult ?: "" // <-- NUEVO
+                        expectedResult = game.expectedResult ?: ""
                     )
+
+                    val needProducts = (stateBefore.playerCarRes == 0 && stateBefore.myPlayerId != null)
+                    if (needProducts) {
+                        viewModelScope.launch {
+                            try {
+                                val repo = GarageRepository()
+                                val myIdInt = myPlayer?.id?.toIntOrNull() ?: stateBefore.myPlayerId?.toIntOrNull()
+                                val oppIdInt = opponent?.id?.toIntOrNull()
+
+                                var myCarRes = stateBefore.playerCarRes
+                                var myTrackRes = stateBefore.playerTrackRes
+                                var oppCarRes = stateBefore.opponentCarRes
+                                var oppTrackRes = stateBefore.opponentTrackRes
+
+                                if (myIdInt != null && myIdInt > 0) {
+                                    try {
+                                        val carsRes = repo.getCars(myIdInt)
+                                        val bgsRes = repo.getBackgrounds(myIdInt)
+                                        myCarRes = carsRes.getOrNull()?.activeItem?.productId ?: myCarRes
+                                        myTrackRes = bgsRes.getOrNull()?.activeItem?.productId ?: myTrackRes
+                                    } catch (_: Exception) { }
+                                }
+
+                                if (oppIdInt != null && oppIdInt > 0) {
+                                    try {
+                                        val oppCars = repo.getCars(oppIdInt)
+                                        val oppBgs = repo.getBackgrounds(oppIdInt)
+                                        oppCarRes = oppCars.getOrNull()?.activeItem?.productId ?: oppCarRes
+                                        oppTrackRes = oppBgs.getOrNull()?.activeItem?.productId ?: oppTrackRes
+                                    } catch (_: Exception) { }
+                                }
+
+                                _uiState.value = _uiState.value.copy(
+                                    playerCarRes = myCarRes,
+                                    playerTrackRes = myTrackRes,
+                                    opponentCarRes = oppCarRes,
+                                    opponentTrackRes = oppTrackRes
+                                )
+                            } catch (e: Exception) {
+                                android.util.Log.w("GameViewModel", "Failed to fetch player products: ${e.message}")
+                            }
+                        }
+                    }
 
                     if (hasNewQuestion) {
                         android.util.Log.d("GameViewModel", "✅ New question loaded and UI updated!")
@@ -356,7 +400,6 @@ class GameViewModel @Inject constructor(
                         android.util.Log.d("GameViewModel", "✅ Correct answer! Applying optimistic local progress and waiting for server update...")
 
                         val current = _uiState.value
-                        // If a double-progress power-up is active, count this correct answer as +2
                         val increment = if (current.doubleProgressActive) 2 else 1
                         val newScore = current.playerScore + increment
                         val newProgress = minOf(newScore, 10)
@@ -367,7 +410,6 @@ class GameViewModel @Inject constructor(
                             playerProgress = newProgress,
                             gameEnded = reachedEnd || current.gameEnded,
                             winner = if (reachedEnd) "¡Ganaste!" else current.winner,
-                            // consume the double-progress power-up when applied
                             doubleProgressActive = false,
                             lastPowerUpMessage = if (increment == 2) "Rayo aplicado: siguiente respuesta vale x2" else current.lastPowerUpMessage
                         )

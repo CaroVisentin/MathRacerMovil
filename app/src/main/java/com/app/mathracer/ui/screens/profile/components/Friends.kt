@@ -42,8 +42,8 @@ fun Friends(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp)
-            .background(Color(0xFF101010)),
+            .padding(horizontal = 16.dp),
+         //   .background(Color(0xFF101010)),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(16.dp))

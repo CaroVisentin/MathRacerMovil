@@ -29,15 +29,15 @@ data class HistoryGameUiState(
     val totalQuestions: Int = 10,
     val timeLeft: Int = 10,
     val canAnswer: Boolean = true,
-    val isWaitingNext: Boolean = false
-    ,
-    val doubleProgressActive: Boolean = false
-    ,
+    val isWaitingNext: Boolean = false,
+    val doubleProgressActive: Boolean = false,
     val wildcard1Available: Boolean = true,
     val wildcard2Available: Boolean = true,
     val wildcard3Available: Boolean = true,
-    val wildcardsLocked: Boolean = false
-    ,
+    val wildcardsLocked: Boolean = false,
+    val wildcard1Used: Boolean = false,
+    val wildcard2Used: Boolean = false,
+    val wildcard3Used: Boolean = false,
     val wildcard1Quantity: Int = 0,
     val wildcard2Quantity: Int = 0,
     val wildcard3Quantity: Int = 0,

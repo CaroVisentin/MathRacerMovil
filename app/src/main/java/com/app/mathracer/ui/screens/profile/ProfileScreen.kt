@@ -44,9 +44,11 @@ import com.app.mathracer.ui.screens.profile.viewmodel.ProfileViewModel
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.draw.clip
 import com.app.mathracer.data.model.Player
+import com.app.mathracer.ui.components.StarryBackground
 import com.app.mathracer.ui.screens.profile.components.Friends
 import com.app.mathracer.ui.screens.profile.components.Profile
 import com.app.mathracer.ui.screens.profile.components.Settings
+import com.app.mathracer.ui.theme.DarkPurpleMR
 
 @Composable
 fun ProfileScreen(
@@ -60,9 +62,11 @@ fun ProfileScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF101010))
+            .background(DarkPurpleMR)
             .padding(top = 24.dp)
     ) {
+        StarryBackground()
+
         var showAddDialog by remember { mutableStateOf(false) }
         var showDeleteDialog by remember { mutableStateOf(false) }
         var newFriendIdText by remember { mutableStateOf("") }

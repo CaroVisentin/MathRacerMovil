@@ -20,6 +20,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import com.app.mathracer.R
+import com.app.mathracer.ui.theme.DarkPurpleMR
 
 @Composable
 fun InsufficientEnergyScreen(
@@ -28,7 +29,7 @@ fun InsufficientEnergyScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0B032D)),
+            .background(DarkPurpleMR),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -36,7 +37,7 @@ fun InsufficientEnergyScreen(
             modifier = Modifier.padding(24.dp)
         ) {
             Text(
-                text = "Sin energía ⚡",
+                text = "Sin energía",
                 color = Color.Cyan,
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold
@@ -44,7 +45,6 @@ fun InsufficientEnergyScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 👉 Imagen agregada aquí
             Image(
                 painter = painterResource(R.drawable.mathi_insufficient_energy),
                 contentDescription = "Sin energía",

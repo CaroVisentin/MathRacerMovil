@@ -18,7 +18,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -50,10 +49,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import android.content.Context
 import android.util.Log
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -378,7 +375,7 @@ fun HomeScreen(
                                         .size(64.dp)
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Filled.Star,
+                                        imageVector = Icons.Filled.EmojiEvents,
                                         contentDescription = "Estadísticas",
                                         tint = CyanMR,
                                         modifier = Modifier.size(32.dp)
@@ -447,6 +444,7 @@ fun PlayerSummaryCard(
                 verticalArrangement = Arrangement.Center,
                 modifier = Modifier.weight(1f)
             ) {
+
                 Text(
                     text = playerName,
                     color = Color.White,
@@ -456,6 +454,8 @@ fun PlayerSummaryCard(
                         shadow = Shadow(color = Color.Black.copy(alpha = 0.8f), offset = Offset(2f, 2f), blurRadius = 6f)
                     )
                 )
+
+
                 Spacer(modifier = Modifier.height(40.dp))
                 Row(
                     verticalAlignment = Alignment.CenterVertically
@@ -492,7 +492,7 @@ fun PlayerSummaryCard(
                 verticalAlignment = Alignment.Bottom,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                 
+                 /*
                 com.app.mathracer.ui.components.ProductImage(
                     productId = activeChar,
                     fallbackRes = R.drawable.avatar,
@@ -500,7 +500,7 @@ fun PlayerSummaryCard(
                         .height(50.dp),
                     contentScale = ContentScale.Fit
                 )
-
+*/
                 
                 com.app.mathracer.ui.components.ProductImage(
                     productId = activeVehicle,

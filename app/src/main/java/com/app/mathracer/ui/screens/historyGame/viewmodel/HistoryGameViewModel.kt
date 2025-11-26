@@ -56,11 +56,11 @@ class HistoryGameViewModel @Inject constructor(
                     val w3 = gameStart.availableWildcards.firstOrNull { it.wildcardId == 3 }?.quantity ?: 0
 
                     val carProductId = gameStart.playerProducts
-                        ?.firstOrNull { it.productTypeId == 1 } // 1 = Auto
+                        ?.firstOrNull { it.productTypeId == 1 }
                         ?.productId
 
                     val trackProductId = gameStart.playerProducts
-                        ?.firstOrNull { it.productTypeId == 3 } // 3 = Pista
+                        ?.firstOrNull { it.productTypeId == 3 }
                         ?.productId
 
                     _uiState.value = _uiState.value.copy(
@@ -147,9 +147,12 @@ class HistoryGameViewModel @Inject constructor(
                             wildcard1Quantity = wc.remainingQuantity.takeIf { wildcardId == 1 } ?: cur.wildcard1Quantity,
                             wildcard2Quantity = wc.remainingQuantity.takeIf { wildcardId == 2 } ?: cur.wildcard2Quantity,
                             wildcard3Quantity = wc.remainingQuantity.takeIf { wildcardId == 3 } ?: cur.wildcard3Quantity,
-                            wildcard1Available = if (wildcardId == 1) (wc.remainingQuantity > 0) else cur.wildcard1Available,
-                            wildcard2Available = if (wildcardId == 2) (wc.remainingQuantity > 0) else cur.wildcard2Available,
-                            wildcard3Available = if (wildcardId == 3) (wc.remainingQuantity > 0) else cur.wildcard3Available
+                            wildcard1Available = if (wildcardId == 1) false else cur.wildcard1Available,
+                            wildcard2Available = if (wildcardId == 2) false else cur.wildcard2Available,
+                            wildcard3Available = if (wildcardId == 3) false else cur.wildcard3Available,
+                            wildcard1Used = if (wildcardId == 1) true else cur.wildcard1Used,
+                            wildcard2Used = if (wildcardId == 2) true else cur.wildcard2Used,
+                            wildcard3Used = if (wildcardId == 3) true else cur.wildcard3Used
                         )
 
                         _uiState.value = updated
@@ -417,11 +420,6 @@ class HistoryGameViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(
                         isLastAnswerCorrect = false,
                         showFeedback = true,
-//                        correctAnswer = answerResult.correctAnswer, // por si vuelve
-//                        playerScore = answerResult.playerScore,
-//                        machineScore = answerResult.machineScore,
-//                        playerProgress = minOf(answerResult.playerScore, state.totalQuestions),
-//                        machineProgress = minOf(answerResult.machineScore, state.totalQuestions),
                         livesRemaining = _uiState.value.livesRemaining,
                         canAnswer = false,
                         isPenalized = true

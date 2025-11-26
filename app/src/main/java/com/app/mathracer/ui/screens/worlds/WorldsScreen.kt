@@ -38,7 +38,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.mathracer.data.CurrentUser
 import com.app.mathracer.data.model.WorldDto
+import com.app.mathracer.ui.components.StarryBackground
 import com.app.mathracer.ui.screens.worlds.viewmodel.WorldsViewModel
+import com.app.mathracer.ui.theme.DarkPurpleMR
 
 @Composable
 fun WorldsScreenRoute(
@@ -87,7 +89,7 @@ fun WorldsScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0B032D))
+            .background(DarkPurpleMR)
     ) {
         StarryBackground()
 
@@ -277,21 +279,4 @@ fun operationsToText(ops: List<String>?): String {
         }
     }
     return seen.joinToString(" - ")
-}
-
-@Composable
-fun StarryBackground() {
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        val stars = 120
-        repeat(stars) {
-            drawCircle(
-                color = Color.White.copy(alpha = 0.8f),
-                radius = 1.5f,
-                center = Offset(
-                    x = (0..size.width.toInt()).random().toFloat(),
-                    y = (0..size.height.toInt()).random().toFloat()
-                )
-            )
-        }
-    }
 }

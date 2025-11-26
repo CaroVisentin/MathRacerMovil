@@ -12,3 +12,4 @@ val Pink40 = Color(0xFF7D5260)
 
 val CyanMR = Color(0xFF5df9f9)
 val MagentaMR = Color(0xFFf95ec8)
+val DarkPurpleMR = Color(0xFF1C092D)

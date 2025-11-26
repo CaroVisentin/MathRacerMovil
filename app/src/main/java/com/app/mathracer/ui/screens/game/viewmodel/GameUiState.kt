@@ -27,7 +27,10 @@ data class GameUiState(
     val shuffleRivalCount: Int = 1,
     val powerUpsLocked: Boolean = false,
     val lastPowerUpMessage: String? = null,
-    val doubleProgressActive: Boolean = false
-    ,
-    val showShuffleMessage: Boolean = false
+    val doubleProgressActive: Boolean = false,
+    val showShuffleMessage: Boolean = false,
+    val playerCarRes: Int = 0,
+    val playerTrackRes: Int = 0,
+    val opponentCarRes: Int = 0,
+    val opponentTrackRes: Int = 0
 )

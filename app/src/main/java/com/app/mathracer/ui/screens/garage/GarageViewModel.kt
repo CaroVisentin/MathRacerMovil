@@ -45,7 +45,6 @@ class GarageViewModel @Inject constructor(
                 val charsRes = repository.getCharacters(playerId)
                 val bgsRes = repository.getBackgrounds(playerId)
 
-               
                 val activeCar = carsRes.getOrNull()?.activeItem
                 val activeChar = charsRes.getOrNull()?.activeItem
                 val activeBg = bgsRes.getOrNull()?.activeItem

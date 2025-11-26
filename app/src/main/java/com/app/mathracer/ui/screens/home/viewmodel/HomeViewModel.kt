@@ -1,8 +1,13 @@
 package com.app.mathracer.ui.screens.home.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.app.mathracer.data.CurrentUser
+import com.app.mathracer.data.network.GarageResponseDto
+import com.app.mathracer.data.repository.GarageRepository
 import com.app.mathracer.data.repository.UserRemoteRepository
+import com.app.mathracer.ui.screens.garage.GarageUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -15,9 +20,8 @@ import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
 @HiltViewModel
-class HomeViewModel @Inject constructor() : ViewModel() {
+class HomeViewModel @Inject constructor(private val repository: GarageRepository) : ViewModel() {
 
-    // ----- DATA CLASSES -----
     data class EnergyState(
         val secondsLeft: Int = 0,
         val currentAmount: Int = 0,
@@ -28,17 +32,49 @@ class HomeViewModel @Inject constructor() : ViewModel() {
 
     data class HomeUiState(
         val navigateToWaiting: Boolean = false,
-        val energy: EnergyState = EnergyState()
+        val energy: EnergyState = EnergyState(),
+        val loading: Boolean = false,
+        val error: String? = null
     )
 
-    // ----- STATE -----
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     private var countdownJob: Job? = null
     private var refreshing = false
 
-    // ----- NAVEGACIÓN -----
+    init {
+        val playerId = CurrentUser.user?.id ?: 0
+        if (playerId > 0) loadUserData(playerId)
+    }
+
+    fun loadUserData(playerId: Int) {
+        _uiState.value = _uiState.value.copy(loading = true, error = null)
+        viewModelScope.launch {
+            try {
+                val carsRes = repository.getCars(playerId)
+                val charsRes = repository.getCharacters(playerId)
+                val bgsRes = repository.getBackgrounds(playerId)
+
+                val activeCar = carsRes.getOrNull()?.activeItem
+                val activeChar = charsRes.getOrNull()?.activeItem
+                val activeBg = bgsRes.getOrNull()?.activeItem
+
+                try {
+                    com.app.mathracer.data.CurrentUser.activeCharacterProductId = activeChar?.productId
+                    com.app.mathracer.data.CurrentUser.activeBackgroundProductId = activeBg?.productId
+                    com.app.mathracer.data.CurrentUser.activeVehicleProductId = activeCar?.productId
+                    com.app.mathracer.data.UserState.setActiveCharacter(activeChar?.productId)
+                    com.app.mathracer.data.UserState.setActiveBackground(activeBg?.productId)
+                    com.app.mathracer.data.UserState.setActiveVehicle(activeCar?.productId)
+                } catch (e: Exception) { /* ignore */ }
+            } catch (e: Exception) {
+                Log.e("GarageViewModel", "loadAll failed", e)
+                _uiState.value = _uiState.value.copy(loading = false, error = e.localizedMessage)
+            }
+        }
+    }
+
     fun navigateToMultiplayer() {
         _uiState.update { it.copy(navigateToWaiting = true) }
     }
@@ -47,14 +83,12 @@ class HomeViewModel @Inject constructor() : ViewModel() {
         _uiState.update { it.copy(navigateToWaiting = false) }
     }
 
-    // ----- CICLO DE VIDA -----
     fun onEnterHome() = refreshEnergy()
 
     fun onResume() {
         if (_uiState.value.energy.secondsLeft <= 0) refreshEnergy()
     }
 
-    // ----- LLAMADA A /api/energy (directo al object repo) -----
     fun refreshEnergy() {
         if (refreshing) return
         refreshing = true
@@ -96,7 +130,6 @@ class HomeViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    // ----- COUNTDOWN -----
     private fun startCountdown() {
         countdownJob?.cancel()
         val start = _uiState.value.energy.secondsLeft

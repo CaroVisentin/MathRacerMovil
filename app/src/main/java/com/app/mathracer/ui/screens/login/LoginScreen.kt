@@ -36,7 +36,6 @@ fun LoginScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
-    // Mostrar errores o éxito
     LaunchedEffect(uiState.errorMessage) {
         uiState.errorMessage?.let {
             Toast.makeText(context, it, Toast.LENGTH_LONG).show()
@@ -66,12 +65,11 @@ fun LoginScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 🔹 Contenedor que envuelve todo el contenido del login
             Box(
                 modifier = Modifier
                     .background(Color.Black.copy(alpha = 0.8f), RoundedCornerShape(16.dp))
                     .padding(horizontal = 24.dp, vertical = 28.dp)
-                    .wrapContentSize() // se ajusta al contenido, no llena pantalla
+                    .wrapContentSize()
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
