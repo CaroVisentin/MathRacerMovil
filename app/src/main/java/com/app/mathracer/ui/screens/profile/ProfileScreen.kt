@@ -64,8 +64,11 @@ fun ProfileScreen(
             .padding(top = 24.dp)
     ) {
         var showAddDialog by remember { mutableStateOf(false) }
+        var showDeleteDialog by remember { mutableStateOf(false) }
         var newFriendIdText by remember { mutableStateOf("") }
         var inviteResultMsg by remember { mutableStateOf<String?>(null) }
+        var deleteResultMsg by remember { mutableStateOf<String?>(null) }
+        var friendToDeleteName by remember { mutableStateOf<String?>(null) }
         Column(
             modifier = Modifier
                 .fillMaxSize(),
@@ -148,10 +151,8 @@ fun ProfileScreen(
                         friends = uiState.friends,
                         onAddFriend = { showAddDialog = true },
                         onDeleteFriend = { friend ->
-
-                            val remote =
-                                uiState.remoteFriends.firstOrNull { it.name == friend.name }
-                            remote?.let { viewModel.deleteFriend(it.id) }
+                            friendToDeleteName = friend.name
+                            showDeleteDialog = true
                         }
                     )
                 }
@@ -333,6 +334,63 @@ fun ProfileScreen(
                     }
 
                     inviteResultMsg?.let { msg ->
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(text = msg, color = Color.White)
+                    }
+                }
+            }
+        }
+
+        if (showDeleteDialog) {
+            Dialog(onDismissRequest = { showDeleteDialog = false; friendToDeleteName = null; deleteResultMsg = null }) {
+                Column(
+                    modifier = Modifier
+                        .background(Color(0xFF07112B), shape = RoundedCornerShape(12.dp))
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = "Eliminar amigo",
+                        color = Color.Cyan,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "¿Estás seguro que querés eliminar a ${friendToDeleteName ?: "este amigo"}? Esta acción no se puede deshacer.",
+                        color = Color.White
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        TextButton(onClick = { showDeleteDialog = false; friendToDeleteName = null; deleteResultMsg = null }) {
+                            Text("Cancelar", color = Color.White)
+                        }
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        TextButton(onClick = {
+                            val name = friendToDeleteName
+                            if (name != null) {
+                                val remote = uiState.remoteFriends.firstOrNull { it.name == name }
+                                remote?.let {
+                                    viewModel.deleteFriend(it.id) { success ->
+                                        deleteResultMsg = if (success) "Amigo eliminado" else "Error al eliminar amigo"
+                                    }
+                                } ?: run { deleteResultMsg = "No se encontró el amigo" }
+                            }
+                            showDeleteDialog = false
+                            friendToDeleteName = null
+                        }) {
+                            Text("Eliminar", color = Color.Red)
+                        }
+                    }
+
+                    deleteResultMsg?.let { msg ->
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(text = msg, color = Color.White)
                     }
