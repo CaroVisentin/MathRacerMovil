@@ -3,6 +3,7 @@ package com.app.mathracer.data.repository
 import com.app.mathracer.data.model.Friend
 import android.util.Log
 import com.app.mathracer.data.model.FriendshipActionRequest
+import com.app.mathracer.data.model.Player
 import com.app.mathracer.data.network.RetrofitClient
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -36,6 +37,11 @@ object FriendRepository {
     suspend fun getPending(playerId: Int): Response<List<Friend>> {
         val token = try { getIdToken() } catch (e: Exception) { null }
         return api.getPending(authHeader(token), playerId)
+    }
+
+    suspend fun getPlayer(email: String): Response<Player> {
+        val token = try { getIdToken() } catch (e: Exception) { null }
+        return api.getPlayer(authHeader(token), email)
     }
 
     suspend fun sendRequest(fromPlayerId: Int, toPlayerId: Int): Response<Unit> {

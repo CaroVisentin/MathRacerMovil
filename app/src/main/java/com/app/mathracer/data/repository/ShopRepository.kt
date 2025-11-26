@@ -1,6 +1,8 @@
 package com.app.mathracer.data.repository
 
 import android.util.Log
+import com.app.mathracer.data.network.CoinPackageDto
+import com.app.mathracer.data.network.PaymentPreferenceRequestDto
 import com.app.mathracer.data.network.PurchaseEnergyRequestDto
 import com.app.mathracer.data.network.PurchaseEnergyResultDto
 import com.app.mathracer.data.network.PurchaseSuccessResponseDto
@@ -10,7 +12,7 @@ import com.app.mathracer.data.network.RetrofitClient
 import com.app.mathracer.data.network.ShopResponse
 import com.app.mathracer.data.network.ShopResponseEnergies
 import com.app.mathracer.data.network.ShopResponseWildcards
-import com.app.mathracer.data.repository.UserRemoteRepository.getIdToken
+import com.google.gson.JsonObject
 import javax.inject.Inject
 
 class ShopRepository @Inject constructor() {
@@ -50,7 +52,9 @@ class ShopRepository @Inject constructor() {
 
     suspend fun getEneries(playerId: Int): Result<ShopResponseEnergies> {
         return try {
-            val token = try { getIdToken() } catch (e: Exception) { null }
+            val token = try {
+                UserRemoteRepository.getIdToken()
+            } catch (e: Exception) { null }
             val header = token?.let { "Bearer $it" }
             val resp = RetrofitClient.api.getShopEnergies(header, playerId)
             Log.d("Energies", resp.body().toString())
@@ -63,7 +67,9 @@ class ShopRepository @Inject constructor() {
 
     suspend fun getComodines(playerId: Int): Result<List<ShopResponseWildcards>> {
         return try {
-            val token = try { getIdToken() } catch (e: Exception) { null }
+            val token = try {
+                UserRemoteRepository.getIdToken()
+            } catch (e: Exception) { null }
             val header = token?.let { "Bearer $it" }
             val resp = RetrofitClient.api.getShopWildcards(header, playerId)
             Log.d("Wildcards", resp.body().toString())
@@ -72,6 +78,41 @@ class ShopRepository @Inject constructor() {
         } catch (e: Exception) {
             Result.failure(e)
         } as Result<List<ShopResponseWildcards>>
+    }
+
+    suspend fun getCoinPackages(): Result<List<CoinPackageDto>> {
+        return try {
+            val resp = RetrofitClient.api.getCoinPackages()
+            Log.d("CoinPackages", resp.body().toString())
+            if (resp.isSuccessful) Result.success(resp.body() ?: emptyList())
+            else Result.failure(Exception("getCoinPackages failed ${resp.code()}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun createPaymentPreference(
+        playerId: Int,
+        coinPackageId: Int,
+        successUrl: String,
+        failureUrl: String,
+        pendingUrl: String
+    ): Result<JsonObject> {
+        return try {
+            val body = PaymentPreferenceRequestDto(
+                playerId = playerId,
+                coinPackageId = coinPackageId,
+                successUrl = successUrl,
+                failureUrl = failureUrl,
+                pendingUrl = pendingUrl
+            )
+            val resp = RetrofitClient.api.createPaymentPreference(body)
+            Log.d("Payments", resp.toString())
+            if (resp.isSuccessful && resp.body() != null) Result.success(resp.body()!!)
+            else Result.failure(Exception("createPaymentPreference failed ${resp.code()} - ${resp.message()}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
 
@@ -136,7 +177,9 @@ class ShopRepository @Inject constructor() {
     suspend fun purchaseEnergy(playerId: Int, quantity: Int): Result<PurchaseEnergyResultDto> {
         return try {
             Log.d("ShopRepository", "purchaseEnergy: playerId=$playerId, quantity=$quantity")
-            val token = try { getIdToken() } catch (e: Exception) { null }
+            val token = try {
+                UserRemoteRepository.getIdToken()
+            } catch (e: Exception) { null }
             val header = token?.let { "Bearer $it" }
             val body = PurchaseEnergyRequestDto(quantity = quantity)
             val response = RetrofitClient.api.purchaseEnergy(

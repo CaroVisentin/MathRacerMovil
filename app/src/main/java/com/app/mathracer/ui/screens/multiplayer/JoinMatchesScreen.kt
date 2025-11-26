@@ -179,7 +179,12 @@ fun JoinMatchesScreen(
                                         onClick = {
                                             selectedMatch = match
                                             password = ""
-                                            showPasswordDialog = true
+                                            if (match.requiresPassword) {
+                                                showPasswordDialog = true
+                                            } else {
+                                                onJoinConfirmed(match.id, null)
+                                                selectedMatch = null
+                                            }
                                         },
                                         modifier = Modifier.widthIn(min = 88.dp),
                                         colors = ButtonDefaults.buttonColors(containerColor = CyanMR)

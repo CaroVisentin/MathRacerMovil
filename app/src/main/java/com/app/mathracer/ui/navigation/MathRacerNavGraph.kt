@@ -1,9 +1,11 @@
 package com.app.mathracer.ui.navigation
 
 import LoginScreen
+import android.app.Activity
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.content.Intent
+import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -46,8 +48,10 @@ import com.app.mathracer.ui.screens.multiplayer.MultiplayerOptionsScreen
 import com.app.mathracer.ui.screens.multiplayer.CreateMatchScreen
 import com.app.mathracer.ui.screens.multiplayer.JoinMatchesScreen
 import com.app.mathracer.ui.screens.multiplayer.InviteFriendsScreen
+import com.app.mathracer.ui.screens.multiplayer.InvitationsScreen
 import com.app.mathracer.ui.screens.ranking.RankingScreen
 import com.app.mathracer.ui.screens.ranking.viewmodel.RankingViewModel
+import kotlinx.coroutines.launch
 import com.app.mathracer.ui.screens.worlds.WorldsScreen
 import com.app.mathracer.ui.screens.worlds.WorldsScreenRoute
 import com.app.mathracer.ui.screens.rules.RulesScreen
@@ -55,11 +59,20 @@ import com.app.mathracer.ui.screens.historyGame.HistoryGameScreen
 import com.app.mathracer.data.model.User
 import android.util.Log
 import androidx.compose.foundation.background
+import com.app.mathracer.ui.screens.chest.ChestScreen
+import com.app.mathracer.ui.screens.garage.GarageScreen
+import com.app.mathracer.ui.screens.garage.GarageViewModel
 import com.app.mathracer.ui.screens.insufficientEnergy.InsufficientEnergyScreen
+import com.app.mathracer.ui.screens.login.viewmodel.LoginViewModel
+import com.app.mathracer.ui.screens.multiplayer.FriendItem
+import com.app.mathracer.ui.screens.profile.viewmodel.ProfileViewModel
 import com.app.mathracer.ui.screens.shop.ShopScreen
 import com.app.mathracer.ui.screens.shop.viewmodel.ShopViewModel
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.app.mathracer.data.repository.GarageRepository
+import java.net.URLEncoder
 
 
 @Composable
@@ -133,10 +146,11 @@ fun MathRacerNavGraph(
         }
     , containerColor = androidx.compose.ui.graphics.Color.Transparent
     ) { innerPadding ->
-        Box(modifier = Modifier
-            .padding(innerPadding)
-            .navigationBarsPadding()
-            .background(androidx.compose.ui.graphics.Color(0xFF1E1E1E))
+        Box(
+            modifier = Modifier
+                .padding(innerPadding)
+                .navigationBarsPadding()
+                .background(androidx.compose.ui.graphics.Color(0xFF1E1E1E))
         ) {
             NavHost(
                 navController = navController,
@@ -198,6 +212,29 @@ fun MathRacerNavGraph(
                     )
                 }
 
+                composable(
+                    route = "chest_world/{worldId}",
+                    arguments = listOf(navArgument("worldId") { type = NavType.IntType })
+                ) { backStackEntry ->
+                    HandleBackNavigation(
+                        navController = navController,
+                        currentRoute = currentRoute,
+                        onBackPressed = { navController.navigateUp() }
+                    )
+
+                    val worldIdArg = backStackEntry.arguments?.getInt("worldId") ?: 0
+                    val ctx = LocalContext.current
+
+                    ChestScreen(onContinue = {
+                        try {
+                            ctx.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                                .edit().putBoolean("world_reward_claimed_$worldIdArg", true).apply()
+                        } catch (_: Exception) {
+                        }
+                        navController.navigateUp()
+                    }, chestType = "world")
+                }
+
                 composable(Routes.CHEST) {
                     HandleBackNavigation(
                         navController = navController,
@@ -205,11 +242,14 @@ fun MathRacerNavGraph(
                         onBackPressed = { navController.navigateUp() }
                     )
 
-                    com.app.mathracer.ui.screens.chest.ChestScreen(onContinue = {
-                        navController.navigate(Routes.HOME) {
-                            popUpTo(Routes.HOME) { inclusive = true }
-                        }
-                    })
+                    ChestScreen(
+                        onContinue = {
+                            navController.navigate(Routes.HOME) {
+                                popUpTo(Routes.HOME) { inclusive = true }
+                            }
+                        },
+                        chestType = "tutorial"
+                    )
                 }
 
                 composable(Routes.MULTIPLAYER_OPTIONS) {
@@ -228,6 +268,9 @@ fun MathRacerNavGraph(
                         },
                         onInviteFriend = {
                             navController.navigate(Routes.INVITE_FRIENDS)
+                        },
+                        onInvitationInbox = {
+                            navController.navigate(Routes.INVITATION_INBOX)
                         },
                         onCompetitiveMatch = {
                             navController.navigate(Routes.WAITING_OPPONENT)
@@ -254,6 +297,19 @@ fun MathRacerNavGraph(
                     InfiniteGameScreen(gameId = gameId, onExit = { navController.navigateUp() })
                 }
 
+                composable(Routes.INVITATION_INBOX) {
+                    HandleBackNavigation(
+                        navController = navController,
+                        currentRoute = currentRoute,
+                        onBackPressed = { navController.navigateUp() }
+                    )
+
+                    InvitationsScreen(
+                        onJoinAndWait = { navController.navigate(Routes.WAITING_OPPONENT) },
+                        onBack = { navController.navigateUp() }
+                    )
+                }
+
                 composable(Routes.INVITE_FRIENDS) {
                     HandleBackNavigation(
                         navController = navController,
@@ -261,23 +317,50 @@ fun MathRacerNavGraph(
                         onBackPressed = { navController.navigateUp() }
                     )
 
-                    val profileViewModel: com.app.mathracer.ui.screens.profile.viewmodel.ProfileViewModel =
-                        hiltViewModel()
+                    val profileViewModel: ProfileViewModel = hiltViewModel()
                     val profileState by profileViewModel.uiState.collectAsState()
+                    val scope = rememberCoroutineScope()
 
-
-                    val inviteList = profileState.friends.mapIndexed { index, f ->
+                    val inviteList = profileState.remoteFriends.map { remote ->
                         com.app.mathracer.ui.screens.multiplayer.FriendItem(
-                            id = "${index}",
-                            name = f.name,
-                            points = f.score.toIntOrNull() ?: 0
+                            id = "${remote.id}",
+                            name = remote.name,
+                            points = remote.points
                         )
                     }
 
                     InviteFriendsScreen(
                         friends = inviteList,
                         onInvite = { friendId, difficulty, resultType ->
-                            navController.navigateUp()
+                            scope.launch {
+                                try {
+                                    val idInt = friendId.toIntOrNull() ?: return@launch
+                                    val resp =
+                                        com.app.mathracer.data.repository.GameInvitationRepository.sendInvitation(
+                                            idInt,
+                                            difficulty,
+                                            resultType
+                                        )
+                                    if (resp.isSuccessful) {
+                                        navController.navigate(Routes.WAITING_OPPONENT) {
+                                            popUpTo(Routes.INVITE_FRIENDS) { inclusive = true }
+                                        }
+                                    } else {
+                                        android.util.Log.e(
+                                            "InviteFriends",
+                                            "Failed to send invitation: ${resp.code()} ${
+                                                resp.errorBody()?.string()
+                                            }"
+                                        )
+                                    }
+                                } catch (e: Exception) {
+                                    android.util.Log.e(
+                                        "InviteFriends",
+                                        "Exception sending invitation",
+                                        e
+                                    )
+                                }
+                            }
                         },
                         onBack = { navController.navigateUp() }
                     )
@@ -312,11 +395,8 @@ fun MathRacerNavGraph(
                         onBackPressed = { navController.navigateUp() }
                     )
 
-                    val viewModel: com.app.mathracer.ui.screens.garage.GarageViewModel =
-                        hiltViewModel()
-                    com.app.mathracer.ui.screens.garage.GarageScreen(
-                        viewModel = viewModel,
-                        onBack = { navController.navigateUp() })
+                    val viewModel: GarageViewModel = hiltViewModel()
+                    GarageScreen(viewModel = viewModel, onBack = { navController.navigateUp() })
                 }
 
 
@@ -342,8 +422,31 @@ fun MathRacerNavGraph(
                         onBackPressed = { navController.navigateUp() }
                     )
 
+                    val joinViewModel: com.app.mathracer.ui.screens.multiplayer.viewmodel.JoinMatchesViewModel =
+                        hiltViewModel()
+                    val gamesState by joinViewModel.games.collectAsState()
+                    val isLoading by joinViewModel.isLoading.collectAsState()
+
+                    LaunchedEffect(Unit) {
+                        // Fetch available games when entering the screen
+                        joinViewModel.fetchAvailableGames(publicOnly = false)
+                    }
+
+                    // Map API DTOs into local MatchItem for the composable
+                    val matches = gamesState.map { dto ->
+                        com.app.mathracer.ui.screens.multiplayer.MatchItem(
+                            id = dto.gameId.toString(),
+                            name = dto.gameName,
+                            difficulty = dto.difficulty ?: "",
+                            privacy = if (dto.isPrivate) "Privada" else "Pública",
+                            requiresPassword = dto.requiresPassword
+                        )
+                    }
+
                     JoinMatchesScreen(
+                        matches = matches,
                         onJoinConfirmed = { matchId, password ->
+                            // When user joins, navigate to waiting opponent screen
                             navController.navigate(Routes.WAITING_OPPONENT)
                         },
                         onBack = { navController.navigateUp() }
@@ -462,11 +565,14 @@ fun MathRacerNavGraph(
                             val metadata = firebaseUser?.metadata
                             val isFirstLogin = metadata != null &&
                                     metadata.creationTimestamp == metadata.lastSignInTimestamp
-                            val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                            val prefs =
+                                context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
                             if (!hasProductsAssigned) {
-                                prefs.edit().putBoolean("show_tutorial_on_next_launch", true).apply()
+                                prefs.edit().putBoolean("show_tutorial_on_next_launch", true)
+                                    .apply()
                             } else {
-                                prefs.edit().putBoolean("show_tutorial_on_next_launch", false).apply()
+                                prefs.edit().putBoolean("show_tutorial_on_next_launch", false)
+                                    .apply()
                             }
 
                             navController.navigate(Routes.homeWithUser(displayName, email)) {
@@ -506,36 +612,27 @@ fun MathRacerNavGraph(
                     val launcher = rememberLauncherForActivityResult(
                         contract = ActivityResultContracts.StartActivityForResult()
                     ) { result ->
-                        android.util.Log.d(
-                            "GoogleSignIn",
-                            "Resultado recibido: ${result.resultCode}"
-                        )
+                        Log.d("GoogleSignIn", "Resultado recibido: ${result.resultCode}")
                         when (result.resultCode) {
-                            android.app.Activity.RESULT_OK -> {
-                                android.util.Log.d(
-                                    "GoogleSignIn",
-                                    "Result OK, procesando resultado..."
-                                )
+                            Activity.RESULT_OK -> {
+                                Log.d("GoogleSignIn", "Result OK, procesando resultado...")
                                 try {
                                     if (result.data == null) {
-                                        android.util.Log.e(
-                                            "GoogleSignIn",
-                                            "Intent de resultado es null"
-                                        )
+                                        Log.e("GoogleSignIn", "Intent de resultado es null")
                                         return@rememberLauncherForActivityResult
                                     }
 
-                                    val task = com.google.android.gms.auth.api.signin.GoogleSignIn
+                                    val task = GoogleSignIn
                                         .getSignedInAccountFromIntent(result.data)
 
                                     try {
                                         val account = task.result
-                                        android.util.Log.d(
+                                        Log.d(
                                             "GoogleSignIn",
                                             "Cuenta obtenida: ${account.email}, ID: ${account.id}"
                                         )
                                     } catch (e: Exception) {
-                                        android.util.Log.e(
+                                        Log.e(
                                             "GoogleSignIn",
                                             "Error al obtener cuenta de manera síncrona",
                                             e
@@ -544,27 +641,17 @@ fun MathRacerNavGraph(
 
                                     registerViewModel.handleGoogleSignInResult(result.data)
                                 } catch (e: Exception) {
-                                    android.util.Log.e(
-                                        "GoogleSignIn",
-                                        "Error al procesar resultado",
-                                        e
-                                    )
+                                    Log.e("GoogleSignIn", "Error al procesar resultado", e)
                                     e.printStackTrace()
                                 }
                             }
 
-                            android.app.Activity.RESULT_CANCELED -> {
-                                android.util.Log.d(
-                                    "GoogleSignIn",
-                                    "Usuario canceló el inicio de sesión"
-                                )
+                            Activity.RESULT_CANCELED -> {
+                                Log.d("GoogleSignIn", "Usuario canceló el inicio de sesión")
                             }
 
                             else -> {
-                                android.util.Log.e(
-                                    "GoogleSignIn",
-                                    "Error desconocido: ${result.resultCode}"
-                                )
+                                Log.e("GoogleSignIn", "Error desconocido: ${result.resultCode}")
                             }
                         }
                     }
@@ -574,7 +661,7 @@ fun MathRacerNavGraph(
                         onGoogleSignIn = { launcher.launch(googleSignInClient.signInIntent) },
                         onNavigateToLogin = { navController.navigate(Routes.LOGIN) },
                         onRegisterSuccess = {
-                            context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                            context.getSharedPreferences("app_prefs", MODE_PRIVATE)
                                 .edit()
                                 .putBoolean("show_tutorial_on_next_launch", true)
                                 .apply()
@@ -616,14 +703,14 @@ fun MathRacerNavGraph(
                         onWorldClick = { world ->
                             try {
                                 val opsPlain = world.operations.joinToString(",")
-                                val ops = android.util.Base64.encodeToString(
+                                val ops = Base64.encodeToString(
                                     opsPlain.toByteArray(Charsets.UTF_8),
-                                    android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING
+                                    Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING
                                 )
-                                val name = java.net.URLEncoder.encode(world.name, "UTF-8")
+                                val name = URLEncoder.encode(world.name, "UTF-8")
                                 navController.navigate("levels/${world.id}/$name/$ops")
                             } catch (e: Exception) {
-                                val name = java.net.URLEncoder.encode(world.name, "UTF-8")
+                                val name = URLEncoder.encode(world.name, "UTF-8")
                                 navController.navigate("levels/${world.id}/$name/")
                             }
                         }
@@ -665,6 +752,7 @@ fun MathRacerNavGraph(
 
                     LevelsScreen(
                         viewModel = viewModel,
+                        worldId = worldId,
                         worldOperationsEncoded = encodedOps,
                         onLevelClick = { levelId, resultType ->
                             viewModel.checkEnergyBeforePlay(
@@ -677,6 +765,9 @@ fun MathRacerNavGraph(
                                     navController.navigate("insufficient_energy")
                                 }
                             )
+                        },
+                        onObtenerRecompensaClick = { wid ->
+                            navController.navigate("chest_world/$wid")
                         }
                     )
 
@@ -760,7 +851,7 @@ fun MathRacerNavGraph(
                     val levelId = backStackEntry.arguments?.getInt("levelId") ?: 0
                     val resultType = backStackEntry.arguments?.getString("resultType") ?: ""
 
-                    val playerName = com.google.firebase.auth.FirebaseAuth.getInstance()
+                    val playerName = FirebaseAuth.getInstance()
                         .currentUser?.displayName ?: "Jugador"
 
                     HistoryGameScreen(
@@ -787,4 +878,5 @@ fun MathRacerNavGraph(
                 }
             }
         }
-    } }
+    }
+}

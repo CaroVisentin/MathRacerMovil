@@ -3,6 +3,8 @@ package com.app.mathracer.ui.screens.infinite.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.mathracer.data.network.ApiService
+import com.app.mathracer.data.network.InfiniteQuestionDto
+import com.app.mathracer.data.network.InfiniteAnswerRequest
 import com.app.mathracer.data.network.RetrofitClient
 import com.app.mathracer.data.repository.UserRemoteRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -49,7 +51,7 @@ class InfiniteGameViewModel : ViewModel() {
     private val _abandonResult = MutableStateFlow<InfiniteAbandonResult?>(null)
     val abandonResult: StateFlow<InfiniteAbandonResult?> = _abandonResult
 
-    private val questions = ArrayList<ApiService.InfiniteQuestionDto>()
+    private val questions = ArrayList<InfiniteQuestionDto>()
 
     fun start(gameIdString: String) {
         viewModelScope.launch {
@@ -168,7 +170,7 @@ class InfiniteGameViewModel : ViewModel() {
             try {
                 val token = try { UserRemoteRepository.getIdToken() } catch (e: Exception) { null }
                 val header = token?.let { "Bearer $it" }
-                val resp = api.submitInfiniteAnswer(header, gid, ApiService.InfiniteAnswerRequest(selected))
+                val resp = api.submitInfiniteAnswer(header, gid, InfiniteAnswerRequest(selected))
                 if (resp.isSuccessful) {
                     resp.body()?.let { body ->
                         val newBatch = _state.value.currentBatch

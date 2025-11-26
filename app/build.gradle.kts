@@ -116,4 +116,7 @@ dependencies {
     implementation(libs.androidx.animation)
     
     implementation("androidx.datastore:datastore-preferences:1.0.0")
+
+    //mp
+    implementation (libs.androidx.browser)
 }

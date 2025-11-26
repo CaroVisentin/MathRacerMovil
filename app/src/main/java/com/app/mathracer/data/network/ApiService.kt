@@ -1,6 +1,8 @@
 package com.app.mathracer.data.network
 
+import com.app.mathracer.data.model.Friend
 import com.app.mathracer.data.model.Levels
+import com.app.mathracer.data.model.Player
 import com.app.mathracer.data.model.SoloAnswerResponse
 import com.app.mathracer.data.model.SoloGameStartResponse
 import com.app.mathracer.data.model.SoloGameUpdateResponse
@@ -12,11 +14,12 @@ import com.app.mathracer.data.model.Worlds
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.Query
 import retrofit2.http.Header
-import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
+import com.google.gson.JsonObject
 
 
 data class RankingPlayerDto(
@@ -120,6 +123,68 @@ data class PurchaseWildscardResultDto(
     val remainingCoins: Int?
 )
 
+data class CoinPackageDto(
+    val id: Int = 0,
+    val coinAmount: Int = 0,
+    val price: Int = 0,
+    val description: String? = null
+)
+
+data class PaymentPreferenceRequestDto(
+    val playerId: Int,
+    val coinPackageId: Int,
+    val successUrl: String,
+    val failureUrl: String,
+    val pendingUrl: String
+)
+
+data class InfiniteQuestionDto(
+        val questionId: Int = 0,
+        val equation: String = "",
+        val options: List<Int> = emptyList(),
+        val correctAnswer: Int = 0,
+        val expectedResult: String? = null
+    )
+
+    data class InfiniteStartResponse(
+        val gameId: Int = 0,
+        val playerName: String = "",
+        val questions: List<InfiniteQuestionDto> = emptyList(),
+        val totalCorrectAnswers: Int = 0,
+        val currentBatch: Int = 0
+    )
+
+    data class InfiniteAnswerRequest(
+        val selectedAnswer: Int
+    )
+
+    data class InfiniteAnswerResponse(
+        val isCorrect: Boolean,
+        val correctAnswer: Int,
+        val totalCorrectAnswers: Int,
+        val currentQuestionIndex: Int,
+        val needsNewBatch: Boolean
+    )
+
+    data class InfiniteLoadBatchResponse(
+        val gameId: Int,
+        val questions: List<InfiniteQuestionDto>,
+        val currentBatch: Int,
+        val totalCorrectAnswers: Int
+    )
+
+    data class InfiniteStatusResponse(
+        val gameId: Int,
+        val playerName: String,
+        val totalCorrectAnswers: Int,
+        val currentQuestionIndex: Int,
+        val currentBatch: Int,
+        val isActive: Boolean,
+        val gameStartedAt: String?,
+        val abandonedAt: String?
+    )
+
+
 
 interface ApiService {
     @POST("player/register")
@@ -176,10 +241,13 @@ interface ApiService {
     suspend fun getUserByPlayerId(@Header("Authorization") authorization: String?, @Path("playerId") playerId: Int): Response<User>
     
     @GET("Friendship/{playerId}/friends")
-    suspend fun getFriends(@Header("Authorization") authorization: String?, @Path("playerId") playerId: Int): Response<List<com.app.mathracer.data.model.Friend>>
+    suspend fun getFriends(@Header("Authorization") authorization: String?, @Path("playerId") playerId: Int): Response<List<Friend>>
+
+    @GET("Player/email/{email}")
+    suspend fun getPlayer(@Header("Authorization") authorization: String?, @Path("email") email: String): Response<Player>
 
     @GET("Friendship/{playerId}/pending")
-    suspend fun getPending(@Header("Authorization") authorization: String?, @Path("playerId") playerId: Int): Response<List<com.app.mathracer.data.model.Friend>>
+    suspend fun getPending(@Header("Authorization") authorization: String?, @Path("playerId") playerId: Int): Response<List<Friend>>
 
     @POST("Friendship/request")
     suspend fun sendFriendRequest(@Header("Authorization") authorization: String?, @Body body: com.app.mathracer.data.model.FriendshipActionRequest): Response<Unit>
@@ -195,6 +263,9 @@ interface ApiService {
 
     @POST("Chest/complete-tutorial")
     suspend fun completeTutorial(@Header("Authorization") authorization: String?): Response<com.app.mathracer.data.model.ChestResponse>
+
+    @POST("Chest/open")
+    suspend fun openChest(@Header("Authorization") authorization: String?): Response<com.app.mathracer.data.model.ChestResponse>
 
     @GET("ranking")
     suspend fun getRanking(
@@ -219,6 +290,56 @@ interface ApiService {
 
     @GET("energy")
     suspend fun getEnergy(@Header("Authorization") authorization: String?): Response<EnergyDto>
+
+    // --- Online multiplayer endpoints ---
+
+    data class AvailableGameDto(
+        val gameId: Int = 0,
+        val gameName: String = "",
+        val isPrivate: Boolean = false,
+        val requiresPassword: Boolean = false,
+        val currentPlayers: Int = 0,
+        val maxPlayers: Int = 0,
+        val difficulty: String? = null,
+        val expectedResult: String? = null,
+        val createdAt: String? = null,
+        val creatorName: String? = null,
+        val isFull: Boolean = false,
+        val status: String? = null
+    )
+
+    data class AvailableGamesResponse(
+        val games: List<AvailableGameDto> = emptyList(),
+        val totalGames: Int = 0,
+        val publicGames: Int = 0,
+        val privateGames: Int = 0,
+        val timestamp: String? = null
+    )
+
+    data class ConnectionInfoDto(
+        val hubUrl: String? = null,
+        val events: List<String>? = null
+    )
+
+    data class CreateGameRequest(
+        val gameName: String,
+        val isPrivate: Boolean,
+        val password: String? = null,
+        val difficulty: String,
+        val expectedResult: String
+    )
+
+    @GET("/api/Online/games/available")
+    suspend fun getAvailableGames(@Query("publicOnly") publicOnly: Boolean = false): Response<AvailableGamesResponse>
+
+    @GET("/api/Online/game/{gameId}")
+    suspend fun getGameById(@Path("gameId") gameId: Int): Response<AvailableGameDto>
+
+    @POST("/api/Online/create")
+    suspend fun createOnlineGame(@Header("Authorization") authorization: String?, @Body body: CreateGameRequest): Response<Unit>
+
+    @GET("/api/Online/connection-info")
+    suspend fun getConnectionInfo(): Response<ConnectionInfoDto>
 
     @GET("cars")
     suspend fun getShopCars(@Query("playerId") playerId: Int): Response<ShopResponse>
@@ -257,52 +378,11 @@ interface ApiService {
         @Body body: PurchaseWildscardRequestDto
     ): Response<PurchaseWildscardResultDto>
 
- 
-    data class InfiniteQuestionDto(
-        val questionId: Int = 0,
-        val equation: String = "",
-        val options: List<Int> = emptyList(),
-        val correctAnswer: Int = 0,
-        val expectedResult: String? = null
-    )
+    @GET("Coins/packages")
+    suspend fun getCoinPackages(): Response<List<CoinPackageDto>>
 
-    data class InfiniteStartResponse(
-        val gameId: Int = 0,
-        val playerName: String = "",
-        val questions: List<InfiniteQuestionDto> = emptyList(),
-        val totalCorrectAnswers: Int = 0,
-        val currentBatch: Int = 0
-    )
-
-    data class InfiniteAnswerRequest(
-        val selectedAnswer: Int
-    )
-
-    data class InfiniteAnswerResponse(
-        val isCorrect: Boolean,
-        val correctAnswer: Int,
-        val totalCorrectAnswers: Int,
-        val currentQuestionIndex: Int,
-        val needsNewBatch: Boolean
-    )
-
-    data class InfiniteLoadBatchResponse(
-        val gameId: Int,
-        val questions: List<InfiniteQuestionDto>,
-        val currentBatch: Int,
-        val totalCorrectAnswers: Int
-    )
-
-    data class InfiniteStatusResponse(
-        val gameId: Int,
-        val playerName: String,
-        val totalCorrectAnswers: Int,
-        val currentQuestionIndex: Int,
-        val currentBatch: Int,
-        val isActive: Boolean,
-        val gameStartedAt: String?,
-        val abandonedAt: String?
-    )
+    @POST("Payments/create-preference")
+    suspend fun createPaymentPreference(@Body body: PaymentPreferenceRequestDto): Response<JsonObject>
 
     @POST("/api/Infinite/start")
     suspend fun startInfinite(@Header("Authorization") authorization: String?): Response<InfiniteStartResponse>
@@ -331,5 +411,60 @@ interface ApiService {
         @Header("Authorization") authorization: String?,
         @Path("gameId") gameId: Int
     ): Response<InfiniteStatusResponse>
+
+    // Game Invitation endpoints
+    data class GameInvitationSendRequest(
+        val invitedFriendId: Int,
+        val difficulty: String,
+        val expectedResult: String
+    )
+
+    data class GameInvitationDto(
+        val id: Int,
+        val gameId: Int? = null,
+        val inviterId: Int? = null,
+        val inviterName: String? = null,
+        // backend may return inviterPlayerName
+        val inviterPlayerName: String? = null,
+        val invitedFriendId: Int? = null,
+        val gameName: String? = null,
+        val difficulty: String? = null,
+        val expectedResult: String? = null,
+        val status: String? = null,
+        val createdAt: String? = null
+    )
+
+    data class GameInvitationRespondRequest(
+        val invitationId: Int,
+        val accept: Boolean
+    )
+
+    data class GameInvitationRespondResponse(
+        val accepted: Boolean,
+        val gameId: Int?,
+        val message: String?
+    )
+
+    @POST("/api/GameInvitation/send")
+    suspend fun sendGameInvitation(
+        @Header("Authorization") authorization: String?,
+        @Body request: GameInvitationSendRequest
+    ): Response<Unit>
+
+    data class GameInvitationInboxResponse(
+        val totalInvitations: Int = 0,
+        val invitations: List<GameInvitationDto> = emptyList()
+    )
+
+    @GET("/api/GameInvitation/inbox")
+    suspend fun getGameInvitationInbox(
+        @Header("Authorization") authorization: String?
+    ): Response<GameInvitationInboxResponse>
+
+    @POST("/api/GameInvitation/respond")
+    suspend fun respondGameInvitation(
+        @Header("Authorization") authorization: String?,
+        @Body request: GameInvitationRespondRequest
+    ): Response<GameInvitationRespondResponse>
 
 }

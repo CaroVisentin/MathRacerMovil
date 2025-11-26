@@ -1,8 +1,8 @@
 package com.app.mathracer.di
 
 import com.app.mathracer.data.remote.SignalRRemoteDataSource
-import com.app.mathracer.data.repositories.GameRepositoryImpl
-import com.app.mathracer.data.repositories.SoloGameRepositoryImpl
+import com.app.mathracer.data.repository.GameRepositoryImpl
+import com.app.mathracer.data.repository.SoloGameRepositoryImpl
 import com.app.mathracer.domain.repositories.GameRepository
 import com.app.mathracer.domain.repositories.SoloGameRepository
 import dagger.Module
