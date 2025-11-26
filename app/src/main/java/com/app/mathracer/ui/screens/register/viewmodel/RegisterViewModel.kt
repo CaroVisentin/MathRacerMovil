@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
 import com.app.mathracer.data.model.User
 import com.app.mathracer.data.repository.UserRemoteRepository
 import com.app.mathracer.data.CurrentUser
@@ -102,9 +103,10 @@ class RegisterViewModel : ViewModel() {
                             )
                         }
                     } else {
+                        val friendlyMessage = mapRegisterError(task.exception)
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
-                            errorMessage = task.exception?.localizedMessage ?: "Error desconocido"
+                            errorMessage = friendlyMessage
                         )
                     }
                 }
@@ -204,5 +206,23 @@ class RegisterViewModel : ViewModel() {
 
     fun resetSuccess() {
         _uiState.value = _uiState.value.copy(isSuccess = false)
+    }
+
+    private fun mapRegisterError(ex: Exception?): String {
+        val defaultMessage = "No se pudo crear la cuenta. Intentalo nuevamente."
+
+        val fb = ex as? FirebaseAuthException ?: return ex?.localizedMessage ?: defaultMessage
+        return when (fb.errorCode) {
+            "ERROR_INVALID_EMAIL" ->
+                "El correo no tiene un formato válido."
+            "ERROR_EMAIL_ALREADY_IN_USE" ->
+                "Ya existe una cuenta registrada con este correo."
+            "ERROR_WEAK_PASSWORD" ->
+                "La contraseña es demasiado débil. Usa al menos 6 caracteres."
+            "ERROR_OPERATION_NOT_ALLOWED" ->
+                "El registro con email y contraseña está deshabilitado."
+            else ->
+                defaultMessage
+        }
     }
 }

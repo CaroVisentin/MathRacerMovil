@@ -10,6 +10,7 @@ import android.util.Log
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.GoogleAuthProvider
 import com.app.mathracer.data.repository.UserRemoteRepository
 import com.app.mathracer.data.CurrentUser
@@ -106,9 +107,10 @@ class LoginViewModel : ViewModel() {
                             )
                         }
                     } else {
+                        val friendlyMessage = mapLoginError(task.exception)
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
-                            errorMessage = task.exception?.localizedMessage ?: "Error desconocido"
+                            errorMessage = friendlyMessage
                         )
                     }
                 }
@@ -137,7 +139,7 @@ class LoginViewModel : ViewModel() {
                             val createdUser = User(
                                 uid = firebaseUser.uid,
                                 email = firebaseUser.email,
-                                username = firebaseUser.displayName //_uiState.value.use
+                                username = firebaseUser.displayName
                             )
                             val createdUserGoogle = UserGoogle(
                                 idToken = firebaseUser.uid,
@@ -216,5 +218,26 @@ class LoginViewModel : ViewModel() {
 
     fun resetSuccess() {
         _uiState.value = _uiState.value.copy(isSuccess = false)
+    }
+    private fun mapLoginError(ex: Exception?): String {
+        val defaultMessage = "Error al iniciar sesión. Verificá tus datos e intentá nuevamente."
+
+        val fb = ex as? FirebaseAuthException ?: return ex?.localizedMessage ?: defaultMessage
+        return when (fb.errorCode) {
+            "ERROR_INVALID_EMAIL" ->
+                "El correo no tiene un formato válido."
+            "ERROR_USER_NOT_FOUND" ->
+                "No existe un usuario registrado con ese correo."
+            "ERROR_WRONG_PASSWORD" ->
+                "La contraseña es incorrecta."
+            "ERROR_USER_DISABLED" ->
+                "La cuenta de usuario fue deshabilitada."
+            "ERROR_TOO_MANY_REQUESTS" ->
+                "Demasiados intentos fallidos. Espera unos minutos e intenta de nuevo."
+            "ERROR_OPERATION_NOT_ALLOWED" ->
+                "El inicio de sesión con email y contraseña está deshabilitado."
+            else ->
+                defaultMessage
+        }
     }
 }
