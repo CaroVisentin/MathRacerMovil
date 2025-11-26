@@ -26,6 +26,8 @@ class SignalRRemoteDataSource @Inject constructor() {
 
     private val _gameEvents = MutableStateFlow<GameUpdateEntity?>(null)
     val gameEvents: StateFlow<GameUpdateEntity?> = _gameEvents
+    private val _hubError = MutableStateFlow<String?>(null)
+    val hubError: StateFlow<String?> = _hubError
     @Volatile
     var lastRequestedJoinGameId: Int? = null
     
@@ -122,6 +124,16 @@ class SignalRRemoteDataSource @Inject constructor() {
             hubConnection?.setKeepAliveInterval(15000)
             
             android.util.Log.d("SignalR", "All GameUpdate listeners configured with fallback")
+
+           
+            hubConnection?.on("Error", { err: String ->
+                try {
+                    android.util.Log.w("SignalR", "Hub reported Error: $err")
+                    _hubError.value = err
+                } catch (e: Exception) {
+                    android.util.Log.w("SignalR", "Failed to process Hub Error", e)
+                }
+            }, String::class.java)
             
             Result.success(Unit)
         } catch (e: Exception) {
@@ -281,13 +293,98 @@ class SignalRRemoteDataSource @Inject constructor() {
                 lastRequestedJoinGameId = gameId
 
                 try {
-                    if (password != null) {
+                    
+                    _hubError.value = null
+                    val future = if (password != null) {
                         hubConnection?.invoke("JoinGame", gameId, password)
                     } else {
                         hubConnection?.invoke("JoinGame", gameId)
                     }
-                    android.util.Log.d("SignalR", "JoinGame invoked for gameId=$gameId")
-                    Result.success(Unit)
+
+                    try {
+                        val res = (future as? java.util.concurrent.CompletableFuture<Any?>)?.get(8000, java.util.concurrent.TimeUnit.MILLISECONDS)
+                        android.util.Log.d("SignalR", "JoinGame invoke completed for gameId=$gameId, result=$res")
+
+                        
+                        var denied = false
+                        try {
+                            when (res) {
+                                is Boolean -> if (!res) denied = true
+                                is String -> if (res.equals("false", ignoreCase = true) || res.equals("denied", ignoreCase = true) || res.equals("unauthorized", ignoreCase = true)) denied = true
+                                is Number -> if (res.toInt() == 0) denied = true
+                                is java.util.Map<*, *> -> {
+                                    
+                                    val keysToCheck = listOf("success", "joined", "ok", "allowed", "result", "isSuccess")
+                                    for (k in keysToCheck) {
+                                        if (res.containsKey(k)) {
+                                            val v = res[k]
+                                            when (v) {
+                                                is Boolean -> if (!v) denied = true
+                                                is Number -> if (v.toInt() == 0) denied = true
+                                                is String -> if (v.equals("false", ignoreCase = true)) denied = true
+                                            }
+                                            
+                                            break
+                                        }
+                                    }
+                                }
+                                else -> {
+                                    
+                                    val s = try { res?.toString() } catch (_: Exception) { null }
+                                    if (s != null && (s.equals("false", ignoreCase = true) || s.equals("denied", ignoreCase = true))) {
+                                        denied = true
+                                    }
+                                }
+                            }
+                        } catch (e: Exception) {
+                            android.util.Log.w("SignalR", "Error interpreting JoinGame result", e)
+                        }
+
+                        if (denied) {
+                            android.util.Log.w("SignalR", "JoinGame denied by server for gameId=$gameId (interpreted response)")
+                            return@withContext Result.failure(Exception("Join denied by server"))
+                        }
+                        if (res == null) {
+                            try {
+                                val firebaseUid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
+                                if (firebaseUid == null) {
+                                    android.util.Log.w("SignalR", "No firebase user UID available to confirm join")
+                                    return@withContext Result.failure(Exception("Authentication required to confirm join"))
+                                }
+
+                                val timeoutMs = 5000L
+                                val start = System.currentTimeMillis()
+                                var confirmed = false
+                                while (System.currentTimeMillis() - start < timeoutMs) {
+                                    val hubErr = _hubError.value
+                                    if (!hubErr.isNullOrBlank()) {
+                                        android.util.Log.w("SignalR", "JoinGame denied by hub Error event: $hubErr")
+                                        return@withContext Result.failure(Exception(hubErr))
+                                    }
+
+                                    val ge = _gameEvents.value
+                                    if (ge != null && (ge.gameId.toInt() == gameId)) {
+                                        confirmed = true
+                                        break
+                                    }
+                                    kotlinx.coroutines.delay(200)
+                                }
+
+                                if (!confirmed) {
+                                    android.util.Log.w("SignalR", "JoinGame not confirmed by GameUpdate for gameId=$gameId (timeout)")
+                                    return@withContext Result.failure(Exception("Join not confirmed by server"))
+                                }
+                            } catch (e: Exception) {
+                                android.util.Log.e("SignalR", "Error while waiting for GameUpdate confirmation", e)
+                                return@withContext Result.failure(e)
+                            }
+                        }
+
+                        Result.success(Unit)
+                    } catch (e: Exception) {
+                        android.util.Log.e("SignalR", "JoinGame invocation failed or timed out", e)
+                        Result.failure(e)
+                    }
                 } catch (e: Exception) {
                     android.util.Log.e("SignalR", "JoinGame invocation failed", e)
                     Result.failure(e)
