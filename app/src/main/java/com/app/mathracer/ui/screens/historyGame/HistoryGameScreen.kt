@@ -105,26 +105,26 @@ fun HistoryGameScreen(
         youCarRes = uiState.playerCarRes,
         livesRemaining = uiState.livesRemaining,
         timePerEquation = uiState.timePerEquation,
-        powerUps = listOf(
-            PowerUp(
-                R.drawable.ic_shield,
-                uiState.wildcard1Quantity,
-                Color(0xFFFF6B6B),
-                enabled = uiState.wildcard1Available && !uiState.wildcardsLocked
+            powerUps = listOf(
+                PowerUp(
+                    R.drawable.ic_shield,
+                    uiState.wildcard1Quantity,
+                    Color(0xFFFF6B6B),
+                    enabled = uiState.wildcard1Available && !uiState.wildcardsLocked && !uiState.wildcard1Used
+                ),
+                PowerUp(
+                    R.drawable.ic_shuffle,
+                    uiState.wildcard2Quantity,
+                    Color.White,
+                    enabled = uiState.wildcard2Available && !uiState.wildcardsLocked && !uiState.wildcard2Used
+                ),
+                PowerUp(
+                    R.drawable.ic_bolt,
+                    uiState.wildcard3Quantity,
+                    Color(0xFF76E4FF),
+                    enabled = uiState.wildcard3Available && !uiState.wildcardsLocked && !uiState.wildcard3Used
+                )
             ),
-            PowerUp(
-                R.drawable.ic_shuffle,
-                uiState.wildcard2Quantity,
-                Color.White,
-                enabled = uiState.wildcard2Available && !uiState.wildcardsLocked
-            ),
-            PowerUp(
-                R.drawable.ic_bolt,
-                uiState.wildcard3Quantity,
-                Color(0xFF76E4FF),
-                enabled = uiState.wildcard3Available && !uiState.wildcardsLocked
-            )
-        ),
         expression = uiState.currentQuestion.ifEmpty { 
             when {
                 uiState.isLoading -> "Conectando al juego..."
