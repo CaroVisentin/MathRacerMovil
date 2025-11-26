@@ -81,6 +81,7 @@ fun MathRacerNavGraph(
 ) {
     val currentBackStackEntry = navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry.value?.destination?.route
+    val context = LocalContext.current
     val homeViewModel: HomeViewModel = hiltViewModel()
     val homeState by homeViewModel.uiState.collectAsState()
     LaunchedEffect(Unit) {
@@ -132,7 +133,21 @@ fun MathRacerNavGraph(
     Scaffold(
         topBar = {
             val route = currentRoute ?: ""
-            val hideTop = route.contains("game") || route.contains("infinite_game") || route.contains(Routes.LOGIN) || route.contains(Routes.REGISTER)
+            val showTutorialFlag = try {
+                val prefs = context.getSharedPreferences("app_prefs", MODE_PRIVATE)
+                prefs.getBoolean("show_tutorial_on_next_launch", false)
+            } catch (_: Throwable) {
+                false
+            }
+
+            val hideTop =
+                route.contains("game") ||
+                route.contains("infinite_game") ||
+                route.contains(Routes.LOGIN) ||
+                route.contains(Routes.REGISTER) ||
+                route.contains(Routes.CHEST) ||
+                route.contains("chest_world") ||
+                showTutorialFlag
             if (!hideTop) {
                 AppTopBar(
                     energyState = homeState.energy,
