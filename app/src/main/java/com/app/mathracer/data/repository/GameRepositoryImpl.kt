@@ -1,6 +1,7 @@
 package com.app.mathracer.data.repository
 
 import android.util.Log
+import com.app.mathracer.BuildConfig
 import com.app.mathracer.data.mappers.GameMapper
 import com.app.mathracer.data.network.RetrofitClient
 import com.app.mathracer.data.remote.SignalRRemoteDataSource
@@ -14,11 +15,10 @@ class GameRepositoryImpl(
     private val signalRRemoteDataSource: SignalRRemoteDataSource
 ) : GameRepository {
 
-    private val hubUrl = "http://10.0.2.2:5153" // Android emulator localhost
+    private val hubUrl = BuildConfig.HUB_URL
 
     override suspend fun initializeConnection(): Result<Unit> {
         return try {
-            // Try to fetch hub URL from server's connection-info endpoint. Fallback to emulator localhost.
             val api = RetrofitClient.api
             val hubToUse = try {
                 val resp = api.getConnectionInfo()
@@ -65,7 +65,6 @@ class GameRepositoryImpl(
 
             if (!signalRRemoteDataSource.isConnected()) {
                 android.util.Log.d("GameRepository", "Not connected, initializing connection before joinGame")
-                // Attempt to initialize and connect
                 val init = initializeConnection()
                 if (init.isFailure) {
                     android.util.Log.e("GameRepository", "Failed to initialize connection before joinGame: ${init.exceptionOrNull()?.message}")
