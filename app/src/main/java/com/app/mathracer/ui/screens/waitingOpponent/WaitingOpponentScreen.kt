@@ -54,8 +54,7 @@ fun WaitingOpponentScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val navigationEvent by viewModel.navigationEvent.collectAsState()
-    
-    // Auto-inicializar conexión cuando se abre la pantalla
+
     LaunchedEffect(Unit) {
         val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
         val uid = firebaseUser?.uid ?: "anon_${System.currentTimeMillis()}"
@@ -76,11 +75,9 @@ fun WaitingOpponentScreen(
         } catch (e: Exception) {
             android.util.Log.w("WaitingOpponentScreen", "No pending game id in holder: ${e.message}")
         }
-        // Pass both uid (for server) and displayName (for local UI comparisons)
         viewModel.startConnection(uid, displayName)
     }
-    
-    // Manejar navegación al juego
+
     LaunchedEffect(navigationEvent) {
         navigationEvent?.let { event ->
             when (event) {
@@ -103,7 +100,7 @@ fun WaitingOpponentScreen(
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
         )
-
+/*
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -119,7 +116,7 @@ fun WaitingOpponentScreen(
                     .height(100.dp)
             )
         }
-
+*/
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -165,16 +162,6 @@ fun WaitingOpponentScreen(
                             fontSize = 14.sp
                         )
                     }
-                    /*
-                    if (uiState.error != null) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = uiState.error!!,
-                            color = Color.Red,
-                            fontSize = 12.sp
-                        )
-                    }
-                     */
                     Spacer(modifier = Modifier.height(24.dp))
 
                     if (!uiState.gameFound) {
@@ -216,8 +203,3 @@ fun HourGlassRow() {
     }
 }
 
-@Preview
-@Composable
-fun WaitingOpponentScreenPreview() {
-    WaitingOpponentScreen()
-}

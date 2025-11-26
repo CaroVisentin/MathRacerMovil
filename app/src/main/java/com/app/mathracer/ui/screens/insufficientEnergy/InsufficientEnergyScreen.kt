@@ -20,6 +20,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import com.app.mathracer.R
+import com.app.mathracer.ui.theme.DarkPurpleMR
 
 @Composable
 fun InsufficientEnergyScreen(
@@ -28,7 +29,7 @@ fun InsufficientEnergyScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0B032D)),
+            .background(DarkPurpleMR),
         contentAlignment = Alignment.Center
     ) {
         Column(
