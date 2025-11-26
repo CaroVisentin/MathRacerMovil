@@ -370,12 +370,12 @@ fun MathRacerNavGraph(
                     val metadata = firebaseUser?.metadata
                     val isFirstLogin = metadata != null &&
                             metadata.creationTimestamp == metadata.lastSignInTimestamp
-//                    if (isFirstLogin) {
-//                        context.getSharedPreferences("app_prefs", MODE_PRIVATE)
-//                            .edit()
-//                            .putBoolean("show_tutorial_on_next_launch", true)
-//                            .apply()
-//                    }
+                    if (isFirstLogin) {
+                        context.getSharedPreferences("app_prefs", MODE_PRIVATE)
+                            .edit()
+                            .putBoolean("show_tutorial_on_next_launch", true)
+                            .apply()
+                    }
 
                     navController.navigate(Routes.homeWithUser(displayName, email)) {
                         popUpTo(Routes.LOGIN) { inclusive = true }
