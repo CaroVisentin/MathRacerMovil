@@ -30,7 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 fun LoginScreen(
     onLoginWithGoogle: () -> Unit,
     onRegisterClick: () -> Unit,
-    onLoginSuccess: () -> Unit,
+    onLoginSuccess: (hasProductsAssigned: Boolean) -> Unit,
     viewModel: LoginViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -47,7 +47,7 @@ fun LoginScreen(
         if (uiState.isSuccess) {
             Toast.makeText(context, "Login exitoso", Toast.LENGTH_SHORT).show()
             viewModel.resetSuccess()
-            onLoginSuccess()
+            onLoginSuccess(uiState.hasProductsAssigned)
         }
     }
 

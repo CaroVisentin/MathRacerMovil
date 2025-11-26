@@ -455,18 +455,18 @@ fun MathRacerNavGraph(
                     LoginScreen(
                         onLoginWithGoogle = { launcher.launch(googleSignInClient.signInIntent) },
                         onRegisterClick = { navController.navigate(Routes.REGISTER) },
-                        onLoginSuccess = {
+                        onLoginSuccess = { hasProductsAssigned ->
                             val firebaseUser = FirebaseAuth.getInstance().currentUser
                             val displayName = firebaseUser?.displayName ?: ""
                             val email = firebaseUser?.email ?: ""
                             val metadata = firebaseUser?.metadata
                             val isFirstLogin = metadata != null &&
                                     metadata.creationTimestamp == metadata.lastSignInTimestamp
-                            if (isFirstLogin) {
-                                context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-                                    .edit()
-                                    .putBoolean("show_tutorial_on_next_launch", true)
-                                    .apply()
+                            val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                            if (!hasProductsAssigned) {
+                                prefs.edit().putBoolean("show_tutorial_on_next_launch", true).apply()
+                            } else {
+                                prefs.edit().putBoolean("show_tutorial_on_next_launch", false).apply()
                             }
 
                             navController.navigate(Routes.homeWithUser(displayName, email)) {
