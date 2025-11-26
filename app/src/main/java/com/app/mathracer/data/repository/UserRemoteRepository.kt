@@ -55,6 +55,12 @@ object UserRemoteRepository {
         return api.getUserByUid(header, uid)
     }
 
+    suspend fun getUserByPlayerId(playerId: Int): Response<User> {
+        val token = try { getIdToken() } catch (e: Exception) { null }
+        val header = token?.let { "Bearer $it" }
+        return api.getUserByPlayerId(header, playerId)
+    }
+
     suspend fun getEnergy(): Response<EnergyDto> {
         val token = try { getIdToken() } catch (e: Exception) { null }
         val header = token?.let { "Bearer $it" }

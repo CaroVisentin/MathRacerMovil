@@ -4,6 +4,8 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.mathracer.data.CurrentUser
+import com.app.mathracer.data.UserState
+import com.app.mathracer.data.repository.UserRemoteRepository
 import com.app.mathracer.data.network.ItemDto
 import com.app.mathracer.data.network.ShopResponse
 import com.app.mathracer.data.network.ShopResponseEnergies
@@ -196,10 +198,41 @@ class ShopViewModel @Inject constructor(
                     // update CurrentUser and ui state if backend returned remainingCoins
                     try {
                         response.remainingCoins?.let { rc ->
-                            CurrentUser.user?.coins = rc
+                            Log.d("ShopViewModel", "purchase success remainingCoins from backend: $rc")
+                            UserState.setCoins(rc)
+                            Log.d("ShopViewModel", "UserState.coins after set: ${com.app.mathracer.data.UserState}")
                             _uiState.update { it.copy(coins = rc, purchaseMessage = "Compra exitosa. Monedas restantes: $rc") }
+                        } ?: run {
+                            Log.d("ShopViewModel", "purchase success but remainingCoins is null")
                         }
-                    } catch (_: Exception) {}
+                    } catch (e: Exception) {
+                        Log.e("ShopViewModel", "Error updating coins after purchase", e)
+                    }
+
+                    try {
+                        viewModelScope.launch {
+                            try {
+                                Log.d("ShopViewModel", "Refreshing user after purchase by playerId=$playerId")
+                                val userResp = UserRemoteRepository.getUserByPlayerId(playerId)
+                                if (userResp.isSuccessful) {
+                                    val u = userResp.body()
+                                    u?.let {
+                                        CurrentUser.user = it
+                                        UserState.setCoins(it.coins ?: 0)
+                                        _uiState.update { st -> st.copy(coins = it.coins ?: st.coins) }
+                                        Log.d("ShopViewModel", "User refreshed after purchase: coins=${it.coins}")
+                                    }
+                                } else {
+                                    Log.w("ShopViewModel", "Failed to refresh user after purchase by playerId: ${userResp.code()}")
+                                }
+                            } catch (e: Exception) {
+                                Log.e("ShopViewModel", "Error fetching user after purchase by playerId", e)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e("ShopViewModel", "Unexpected error scheduling user refresh by playerId", e)
+                    }
+
                     loadAll(playerId)
                 }
                 .onFailure { e ->
@@ -232,12 +265,38 @@ class ShopViewModel @Inject constructor(
                     try {
                         val msg = response.message ?: "Compra exitosa"
                         response.remainingCoins?.let { rc ->
-                            CurrentUser.user?.coins = rc
+                            Log.d("ShopViewModel", "buyEnergy remainingCoins: $rc")
+                            UserState.setCoins(rc)
                             _uiState.update { it.copy(coins = rc, purchaseMessage = "$msg. Monedas restantes: $rc") }
                         } ?: run {
                             _uiState.update { it.copy(purchaseMessage = response.message ?: "Compra exitosa") }
                         }
-                    } catch (_: Exception) {}
+                    } catch (e: Exception) {
+                        Log.e("ShopViewModel", "Error in buyEnergy handling", e)
+                    }
+                    try {
+                        viewModelScope.launch {
+                            try {
+                                Log.d("ShopViewModel", "Refreshing user after buyEnergy by playerId=$playerId")
+                                val userResp = UserRemoteRepository.getUserByPlayerId(playerId)
+                                if (userResp.isSuccessful) {
+                                    val u = userResp.body()
+                                    u?.let {
+                                        CurrentUser.user = it
+                                        UserState.setCoins(it.coins ?: 0)
+                                        _uiState.update { st -> st.copy(coins = it.coins ?: st.coins) }
+                                        Log.d("ShopViewModel", "User refreshed after buyEnergy: coins=${it.coins}")
+                                    }
+                                } else {
+                                    Log.w("ShopViewModel", "Failed to refresh user after buyEnergy by playerId: ${userResp.code()}")
+                                }
+                            } catch (e: Exception) {
+                                Log.e("ShopViewModel", "Error fetching user after buyEnergy by playerId", e)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e("ShopViewModel", "Unexpected error scheduling user refresh after buyEnergy by playerId", e)
+                    }
                     loadAll(playerId)
                 }
                 .onFailure { e ->
@@ -258,16 +317,37 @@ class ShopViewModel @Inject constructor(
 
             result
                 .onSuccess { response ->
-
                     try {
-                        val msg = response.message ?: "Compra exitosa"
                         response.remainingCoins?.let { rc ->
                             CurrentUser.user?.coins = rc
-                            _uiState.update { it.copy(coins = rc, purchaseMessage = "$msg. Monedas restantes: $rc") }
-                        } ?: run {
-                            _uiState.update { it.copy(purchaseMessage = msg) }
+                            _uiState.update { it.copy(coins = rc, purchaseMessage = "Compra exitosa. Monedas restantes: $rc") }
                         }
-                    } catch (_: Exception) {}
+                    } catch (e: Exception) {
+                        Log.e("ShopViewModel", "Error in buyComodin handling", e)
+                    }
+                    try {
+                        viewModelScope.launch {
+                            try {
+                                Log.d("ShopViewModel", "Refreshing user after buyComodin by playerId=$playerId")
+                                val userResp = UserRemoteRepository.getUserByPlayerId(playerId)
+                                if (userResp.isSuccessful) {
+                                    val u = userResp.body()
+                                    u?.let {
+                                        CurrentUser.user = it
+                                        UserState.setCoins(it.coins ?: 0)
+                                        _uiState.update { st -> st.copy(coins = it.coins ?: st.coins) }
+                                        Log.d("ShopViewModel", "User refreshed after buyComodin: coins=${it.coins}")
+                                    }
+                                } else {
+                                    Log.w("ShopViewModel", "Failed to refresh user after buyComodin by playerId: ${userResp.code()}")
+                                }
+                            } catch (e: Exception) {
+                                Log.e("ShopViewModel", "Error fetching user after buyComodin by playerId", e)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e("ShopViewModel", "Unexpected error scheduling user refresh after buyComodin by playerId", e)
+                    }
                     loadAll(playerId)
                 }
                 .onFailure { e ->
@@ -291,11 +371,34 @@ class ShopViewModel @Inject constructor(
                         val msg = response.message ?: "Compra exitosa"
                         response.remainingCoins?.let { rc ->
                             CurrentUser.user?.coins = rc
-                            _uiState.update { it.copy(coins = rc, purchaseMessage = "$msg. Monedas restantes: $rc") }
-                        } ?: run {
-                            _uiState.update { it.copy(purchaseMessage = msg) }
+                            _uiState.update { it.copy(coins = rc, purchaseMessage = "Compra exitosa. Monedas restantes: $rc") }
                         }
-                    } catch (_: Exception) {}
+                    } catch (e: Exception) {
+                        Log.e("ShopViewModel", "Error in buyWildcardById handling", e)
+                    }
+                    try {
+                        viewModelScope.launch {
+                            try {
+                                Log.d("ShopViewModel", "Refreshing user after buyWildcardById by playerId=$playerId")
+                                val userResp = UserRemoteRepository.getUserByPlayerId(playerId)
+                                if (userResp.isSuccessful) {
+                                    val u = userResp.body()
+                                    u?.let {
+                                        CurrentUser.user = it
+                                        UserState.setCoins(it.coins ?: 0)
+                                        _uiState.update { st -> st.copy(coins = it.coins ?: st.coins) }
+                                        Log.d("ShopViewModel", "User refreshed after buyWildcardById: coins=${it.coins}")
+                                    }
+                                } else {
+                                    Log.w("ShopViewModel", "Failed to refresh user after buyWildcardById by playerId: ${userResp.code()}")
+                                }
+                            } catch (e: Exception) {
+                                Log.e("ShopViewModel", "Error fetching user after buyWildcardById by playerId", e)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e("ShopViewModel", "Unexpected error scheduling user refresh after buyWildcardById by playerId", e)
+                    }
                     loadAll(playerId)
                 }
                 .onFailure { e ->

@@ -58,6 +58,7 @@ import com.app.mathracer.ui.screens.tutorial.TutorialOverlay
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.mathracer.R
 import com.app.mathracer.data.CurrentUser
+import com.app.mathracer.data.UserState
 import com.app.mathracer.ui.theme.CyanMR
 
 @Composable
@@ -127,7 +128,7 @@ fun HomeScreen(
                     containerColor = Color.Transparent,
                     contentColor = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.fillMaxWidth(),
-                    topBar = {
+                   /* topBar = {
                         Column(
                             Modifier
                                 .fillMaxWidth()
@@ -197,16 +198,9 @@ fun HomeScreen(
                                 }
 
                             }
-                            PlayerSummaryCard(
-                                playerName = CurrentUser.user?.name ?: "Jugador",
-                                rankText = "#${CurrentUser.user?.points} - Nivel ${CurrentUser.user?.lastLevelId}",
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding( horizontal = 8.dp)
-
-                            )
+                           
                         }
-                    }
+                    } */
                 ) { innerPadding ->
                     Box(
                         modifier = Modifier
@@ -216,12 +210,31 @@ fun HomeScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .align(Alignment.BottomCenter)
+                                .align(Alignment.TopCenter)
                                 .padding(start = 16.dp, end = 16.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            // Espacio antes del auto grande y botones
-                            Spacer(modifier = Modifier.height(60.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                             PlayerSummaryCard(
+                                playerName = CurrentUser.user?.name ?: "Jugador",
+                                rankText = "#${CurrentUser.user?.points} - Nivel ${CurrentUser.user?.lastLevelId}",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding( horizontal = 8.dp)
+
+                            )
+                            Spacer(modifier = Modifier.height(72.dp))
+                            
+                            Image(
+                                painter = painterResource(id = R.drawable.car),
+                                contentDescription = "Auto grande",
+                                modifier = Modifier
+                                    .height(160.dp)
+                                    .fillMaxWidth(),
+                                contentScale = ContentScale.Fit
+                            )
+                            Spacer(modifier = Modifier.height(24.dp))
 
 
                             Column(
@@ -368,6 +381,7 @@ fun HomeScreen(
                                     )
                                 }
                             }
+                            Spacer(modifier = Modifier.height(48.dp))
                         }
                     }
                 }
@@ -410,13 +424,13 @@ fun PlayerSummaryCard(
                 shape = RoundedCornerShape(16.dp)
             )
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.track_cake),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .matchParentSize()
-                .clip(RoundedCornerShape(16.dp))
+        
+        val activeBg by UserState.activeBackground.collectAsState()
+        com.app.mathracer.ui.components.ProductImage(
+            productId = activeBg,
+            fallbackRes = R.drawable.track_cake,
+            modifier = Modifier.matchParentSize().clip(RoundedCornerShape(16.dp)),
+            contentScale = ContentScale.Crop
         )
         Row(
             modifier = Modifier
@@ -459,14 +473,35 @@ fun PlayerSummaryCard(
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            Image(
-                painter = painterResource(id = R.drawable.car_game),
-                contentDescription = "Auto del jugador",
+            
+            val activeVehicle by UserState.activeVehicle.collectAsState()
+            val activeChar by UserState.activeCharacter.collectAsState()
+
+            Row(
                 modifier = Modifier
-                    .height(50.dp)
+                    .width(140.dp)
                     .align(Alignment.Bottom),
-                contentScale = ContentScale.Fit
-            )
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                 
+                com.app.mathracer.ui.components.ProductImage(
+                    productId = activeChar,
+                    fallbackRes = R.drawable.avatar,
+                    modifier = Modifier
+                        .height(50.dp),
+                    contentScale = ContentScale.Fit
+                )
+
+                
+                com.app.mathracer.ui.components.ProductImage(
+                    productId = activeVehicle,
+                    fallbackRes = R.drawable.car,
+                    modifier = Modifier
+                        .height(60.dp),
+                    contentScale = ContentScale.Fit
+                )
+            }
         }
     }
 }
@@ -504,6 +539,24 @@ fun RechargeStatus(
         horizontalArrangement = Arrangement.spacedBy(3.dp)
     ) {
         // Ícono batería + timer (timer solo cuando corresponde)
+
+        
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            repeat(total) { i ->
+                Image(
+                    painter = painterResource(id = if (i < filled) cellFilledRes else cellEmptyRes),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .height(20.dp)
+                        .width(12.dp),
+                    colorFilter = tintCells?.let { ColorFilter.tint(it) }  
+                )
+            }
+        }
+        Spacer(modifier = Modifier.width(8.dp))
         Column(horizontalAlignment = Alignment.Start) {
             if (showTimer) {
                 Image(
@@ -522,21 +575,5 @@ fun RechargeStatus(
             }
         }
 
-        // Celdas
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            repeat(total) { i ->
-                Image(
-                    painter = painterResource(id = if (i < filled) cellFilledRes else cellEmptyRes),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .height(20.dp)
-                        .width(12.dp),
-                    colorFilter = tintCells?.let { ColorFilter.tint(it) } // aplica sólo si querés tinte
-                )
-            }
-        }
     }
 }

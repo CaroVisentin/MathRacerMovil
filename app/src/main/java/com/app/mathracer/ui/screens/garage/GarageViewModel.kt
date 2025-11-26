@@ -72,6 +72,14 @@ class GarageViewModel @Inject constructor(
                     activeBackground = activeBg,
                     loading = false
                 )
+                try {
+                    com.app.mathracer.data.CurrentUser.activeCharacterProductId = activeChar?.productId
+                    com.app.mathracer.data.CurrentUser.activeBackgroundProductId = activeBg?.productId
+                    com.app.mathracer.data.CurrentUser.activeVehicleProductId = activeCar?.productId
+                    com.app.mathracer.data.UserState.setActiveCharacter(activeChar?.productId)
+                    com.app.mathracer.data.UserState.setActiveBackground(activeBg?.productId)
+                    com.app.mathracer.data.UserState.setActiveVehicle(activeCar?.productId)
+                } catch (e: Exception) { /* ignore */ }
             } catch (e: Exception) {
                 Log.e("GarageViewModel", "loadAll failed", e)
                 _uiState.value = _uiState.value.copy(loading = false, error = e.localizedMessage)
@@ -91,6 +99,10 @@ class GarageViewModel @Inject constructor(
                             .filter { it.isOwned }
                             .distinctBy { it.productId }
                         _uiState.value = _uiState.value.copy(cars = cars, activeCar = activeCar)
+                            try {
+                                com.app.mathracer.data.CurrentUser.activeVehicleProductId = activeCar?.productId
+                                com.app.mathracer.data.UserState.setActiveVehicle(activeCar?.productId)
+                            } catch (_: Exception) {}
                     }
                     "Personaje" -> {
                         val charsRes = repository.getCharacters(playerId)
@@ -99,6 +111,10 @@ class GarageViewModel @Inject constructor(
                             .filter { it.isOwned }
                             .distinctBy { it.productId }
                         _uiState.value = _uiState.value.copy(characters = chars, activeCharacter = activeChar)
+                        try {
+                            com.app.mathracer.data.CurrentUser.activeCharacterProductId = activeChar?.productId
+                            com.app.mathracer.data.UserState.setActiveCharacter(activeChar?.productId)
+                        } catch (e: Exception) { /* ignore */ }
                     }
                     "Fondo" -> {
                         val bgsRes = repository.getBackgrounds(playerId)
@@ -107,6 +123,10 @@ class GarageViewModel @Inject constructor(
                             .filter { it.isOwned }
                             .distinctBy { it.productId }
                         _uiState.value = _uiState.value.copy(backgrounds = bgs, activeBackground = activeBg)
+                        try {
+                            com.app.mathracer.data.CurrentUser.activeBackgroundProductId = activeBg?.productId
+                            com.app.mathracer.data.UserState.setActiveBackground(activeBg?.productId)
+                        } catch (_: Exception) {}
                     }
                     else -> loadAll(playerId)
                 }
