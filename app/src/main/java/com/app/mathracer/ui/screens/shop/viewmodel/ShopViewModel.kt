@@ -258,14 +258,10 @@ class ShopViewModel @Inject constructor(
 
             result
                 .onSuccess { response ->
-
                     try {
-                        val msg = response.message ?: "Compra exitosa"
                         response.remainingCoins?.let { rc ->
                             CurrentUser.user?.coins = rc
-                            _uiState.update { it.copy(coins = rc, purchaseMessage = "$msg. Monedas restantes: $rc") }
-                        } ?: run {
-                            _uiState.update { it.copy(purchaseMessage = msg) }
+                            _uiState.update { it.copy(coins = rc, purchaseMessage = "Compra exitosa. Monedas restantes: $rc") }
                         }
                     } catch (_: Exception) {}
                     loadAll(playerId)
@@ -288,12 +284,9 @@ class ShopViewModel @Inject constructor(
             result
                 .onSuccess { response ->
                     try {
-                        val msg = response.message ?: "Compra exitosa"
                         response.remainingCoins?.let { rc ->
                             CurrentUser.user?.coins = rc
-                            _uiState.update { it.copy(coins = rc, purchaseMessage = "$msg. Monedas restantes: $rc") }
-                        } ?: run {
-                            _uiState.update { it.copy(purchaseMessage = msg) }
+                            _uiState.update { it.copy(coins = rc, purchaseMessage = "Compra exitosa. Monedas restantes: $rc") }
                         }
                     } catch (_: Exception) {}
                     loadAll(playerId)
