@@ -56,7 +56,16 @@ class JoinMatchesViewModel @Inject constructor(
                 // Ensure connection + join over SignalR
                 val result = gameRepository.joinGame(matchId, password)
                 Log.d("MATHI", result.toString())
-                onResult(result)
+                if (result.isSuccess) {
+                    onResult(result)
+                } else {
+                    if (!password.isNullOrBlank()) {
+                        _error.value = "Contraseña incorrecta!"
+                    } else {
+                        _error.value = result.exceptionOrNull()?.message ?: "Error al unirse"
+                    }
+                    onResult(result)
+                }
             } catch (e: Exception) {
                 _error.value = e.message
                 onResult(Result.failure(e))
@@ -64,5 +73,9 @@ class JoinMatchesViewModel @Inject constructor(
                 _isLoading.value = false
             }
         }
+    }
+
+    fun clearError() {
+        _error.value = null
     }
 }

@@ -26,15 +26,13 @@ class CreateMatchViewModel @Inject constructor(
 
     private val api = RetrofitClient.api
 
-    fun createMatch(name: String, privacy: String, difficulty: String, resultType: String, onResult: (Result<Unit>) -> Unit) {
+    fun createMatch(name: String, privacy: String, difficulty: String, resultType: String, password: String? = null, onResult: (Result<Unit>) -> Unit) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
 
             try {
                 val isPrivate = privacy.equals("Privada", ignoreCase = true)
-                val password: String? = null
-
                 val body = ApiService.CreateGameRequest(
                     gameName = name,
                     isPrivate = isPrivate,
