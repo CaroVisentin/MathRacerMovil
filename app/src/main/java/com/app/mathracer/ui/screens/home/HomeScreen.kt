@@ -35,6 +35,10 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.LaunchedEffect
@@ -448,12 +452,13 @@ fun PlayerSummaryCard(
                     color = Color.White,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.background(Color.Black.copy(alpha = 0.8f), RoundedCornerShape(4.dp))
+                    style = LocalTextStyle.current.copy(
+                        shadow = Shadow(color = Color.Black.copy(alpha = 0.8f), offset = Offset(2f, 2f), blurRadius = 6f)
+                    )
                 )
                 Spacer(modifier = Modifier.height(40.dp))
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.background(Color.Black.copy(alpha = 0.8f), RoundedCornerShape(4.dp))
+                    verticalAlignment = Alignment.CenterVertically
                     ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_trophy),
@@ -466,7 +471,10 @@ fun PlayerSummaryCard(
                         text = rankText,
                         color = Color.White,
                         fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        style = LocalTextStyle.current.copy(
+                            shadow = Shadow(color = Color.Black.copy(alpha = 0.8f), offset = Offset(1.5f, 1.5f), blurRadius = 4f)
+                        )
                     )
                 }
             }

@@ -124,7 +124,6 @@ fun AppTopBar(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
-                        .clickable { onEnergyClick() }
                         .padding(end = 6.dp)
                 ) {
                     RechargeStatus(
