@@ -515,7 +515,7 @@ fun ShopItemCard(
             verticalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxSize().alpha(contentAlpha)
         ) {
-                ProductImage(
+            ProductImage(
                 productId = item.id,
                 fallbackRes = R.drawable.mathi,
                 modifier = Modifier.size(80.dp),
