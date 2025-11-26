@@ -19,6 +19,7 @@ import retrofit2.http.Query
 import retrofit2.http.Header
 import retrofit2.http.PUT
 import retrofit2.http.Path
+import retrofit2.http.HTTP
 import com.google.gson.JsonObject
 
 
@@ -258,7 +259,7 @@ interface ApiService {
     @POST("Friendship/reject")
     suspend fun rejectFriendRequest(@Header("Authorization") authorization: String?, @Body body: com.app.mathracer.data.model.FriendshipActionRequest): Response<Unit>
 
-    @POST("Friendship/delete")
+    @HTTP(method = "DELETE", path = "Friendship/delete", hasBody = true)
     suspend fun deleteFriend(@Header("Authorization") authorization: String?, @Body body: com.app.mathracer.data.model.FriendshipActionRequest): Response<Unit>
 
     @POST("Chest/complete-tutorial")

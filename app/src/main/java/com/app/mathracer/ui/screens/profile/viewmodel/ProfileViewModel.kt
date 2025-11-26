@@ -227,13 +227,29 @@ class ProfileViewModel : ViewModel() {
 
     fun deleteFriend(friendRemoteId: Int, onComplete: (Boolean) -> Unit = {}) {
         val currentId = CurrentUser.user?.id ?: run { onComplete(false); return }
+        val previousState = _uiState.value
+        val updatedRemote = previousState.remoteFriends.filterNot { it.id == friendRemoteId }
+        val updatedUi = updatedRemote.map { remote ->
+            FriendUi(
+                name = remote.name,
+                score = remote.points.toString(),
+                avatarRes = R.drawable.avatar,
+                carRes = R.drawable.car
+            )
+        }
+        _uiState.update { it.copy(friends = updatedUi, remoteFriends = updatedRemote) }
+
         viewModelScope.launch {
             try {
                 val resp = FriendRepository.deleteFriend(currentId, friendRemoteId)
+                if (!resp.isSuccessful) {
+                    _uiState.update { previousState }
+                }
                 onComplete(resp.isSuccessful)
                 refreshAll()
             } catch (e: Exception) {
                 e.printStackTrace()
+                _uiState.update { previousState }
                 onComplete(false)
             }
         }
