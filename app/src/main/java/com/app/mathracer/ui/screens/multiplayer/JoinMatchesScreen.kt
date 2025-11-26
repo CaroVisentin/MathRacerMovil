@@ -20,6 +20,12 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -65,6 +71,36 @@ fun JoinMatchesScreen(
     onJoinConfirmed: (matchId: String, password: String?) -> Unit = { _, _ -> },
     onBack: () -> Unit = {}
 ) {
+    // Backwards-compatible overload doesn't expose error handling.
+    JoinMatchesScreen(
+        matches = matches,
+        onJoinConfirmed = onJoinConfirmed,
+        onBack = onBack,
+        errorMessage = null,
+        onClearError = {}
+    )
+}
+
+
+@Composable
+fun JoinMatchesScreen(
+    matches: List<MatchItem>,
+    onJoinConfirmed: (matchId: String, password: String?) -> Unit,
+    onBack: () -> Unit,
+    errorMessage: String?,
+    onClearError: () -> Unit
+) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(errorMessage) {
+        if (!errorMessage.isNullOrBlank()) {
+            scope.launch {
+                snackbarHostState.showSnackbar(errorMessage)
+                onClearError()
+            }
+        }
+    }
     var query by remember { mutableStateOf("") }
     var difficultyFilter by remember { mutableStateOf("") }
     var privacyFilter by remember { mutableStateOf("") }
@@ -73,8 +109,16 @@ fun JoinMatchesScreen(
     var selectedMatch by remember { mutableStateOf<MatchItem?>(null) }
     var password by remember { mutableStateOf("") }
 
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        containerColor = Color.Transparent,
+        modifier = Modifier.fillMaxSize()
+    ) { innerPadding ->
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding), color = Color.Transparent) {
+            Box(modifier = Modifier.fillMaxSize()) {
             
             Image(
                 painter = painterResource(id = com.app.mathracer.R.drawable.background),
@@ -101,7 +145,19 @@ fun JoinMatchesScreen(
                         onValueChange = { query = it },
                         label = { Text("Buscar nombre") },
                         modifier = Modifier.fillMaxWidth(),
-
+                        colors = TextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            cursorColor = CyanMR,
+                            focusedIndicatorColor = CyanMR,
+                            unfocusedIndicatorColor = Color.Gray.copy(alpha = 0.6f),
+                            focusedLabelColor = CyanMR,
+                            unfocusedLabelColor = Color.LightGray,
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            disabledContainerColor = Color.Transparent,
+                            errorContainerColor = Color.Transparent
+                        )
                     )
 
                  
@@ -216,7 +272,19 @@ fun JoinMatchesScreen(
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                                     visualTransformation = PasswordVisualTransformation(),
                                     modifier = Modifier.fillMaxWidth(),
-
+                                    colors = TextFieldDefaults.colors(
+                                        focusedTextColor = Color.White,
+                                        unfocusedTextColor = Color.White,
+                                        cursorColor = CyanMR,
+                                        focusedIndicatorColor = CyanMR,
+                                        unfocusedIndicatorColor = Color.Gray.copy(alpha = 0.6f),
+                                        focusedLabelColor = CyanMR,
+                                        unfocusedLabelColor = Color.LightGray,
+                                        focusedContainerColor = Color.Transparent,
+                                        unfocusedContainerColor = Color.Transparent,
+                                        disabledContainerColor = Color.Transparent,
+                                        errorContainerColor = Color.Transparent
+                                    )
                                 )
 
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
@@ -246,4 +314,4 @@ fun JoinMatchesScreen(
             }
         }
     }
-}
+} }

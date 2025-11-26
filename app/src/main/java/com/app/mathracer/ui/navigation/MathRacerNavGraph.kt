@@ -407,51 +407,79 @@ fun MathRacerNavGraph(
                         onBackPressed = { navController.navigateUp() }
                     )
 
-                    CreateMatchScreen(
-                        onCreateMatch = { name, privacy, difficulty, resultType ->
-                            navController.navigate(Routes.WAITING_OPPONENT)
-                        },
-                        onBack = { navController.navigateUp() }
-                    )
-                }
+            val createMatchViewModel: com.app.mathracer.ui.screens.multiplayer.viewmodel.CreateMatchViewModel = hiltViewModel()
 
-                composable(Routes.JOIN_MATCHES) {
-                    HandleBackNavigation(
-                        navController = navController,
-                        currentRoute = currentRoute,
-                        onBackPressed = { navController.navigateUp() }
-                    )
-
-                    val joinViewModel: com.app.mathracer.ui.screens.multiplayer.viewmodel.JoinMatchesViewModel =
-                        hiltViewModel()
-                    val gamesState by joinViewModel.games.collectAsState()
-                    val isLoading by joinViewModel.isLoading.collectAsState()
-
-                    LaunchedEffect(Unit) {
-                        // Fetch available games when entering the screen
-                        joinViewModel.fetchAvailableGames(publicOnly = false)
+            CreateMatchScreen(
+                onCreateMatch = { name, privacy, difficulty, resultType, password ->
+                    val diffNorm = when (difficulty.lowercase()) {
+                        "fácil", "facil" -> "facil"
+                        "medio" -> "medio"
+                        "difícil", "dificil" -> "dificil"
+                        else -> difficulty.lowercase()
                     }
+                    val resultNorm = if (resultType.equals("Mayor", ignoreCase = true)) "MAYOR" else "MENOR"
 
-                    // Map API DTOs into local MatchItem for the composable
-                    val matches = gamesState.map { dto ->
-                        com.app.mathracer.ui.screens.multiplayer.MatchItem(
-                            id = dto.gameId.toString(),
-                            name = dto.gameName,
-                            difficulty = dto.difficulty ?: "",
-                            privacy = if (dto.isPrivate) "Privada" else "Pública",
-                            requiresPassword = dto.requiresPassword
-                        )
-                    }
-
-                    JoinMatchesScreen(
-                        matches = matches,
-                        onJoinConfirmed = { matchId, password ->
-                            // When user joins, navigate to waiting opponent screen
+                    createMatchViewModel.createMatch(name, privacy, diffNorm, resultNorm, password) { result ->
+                        if (result.isSuccess) {
                             navController.navigate(Routes.WAITING_OPPONENT)
-                        },
-                        onBack = { navController.navigateUp() }
-                    )
-                }
+                        } else {
+                            android.util.Log.e("CreateMatchNav", "Failed to create match: ${result.exceptionOrNull()?.message}")
+                        }
+                    }
+                },
+                onBack = { navController.navigateUp() }
+            )
+        }
+
+        composable(Routes.JOIN_MATCHES) {
+            HandleBackNavigation(
+                navController = navController,
+                currentRoute = currentRoute,
+                onBackPressed = { navController.navigateUp() }
+            )
+
+            val joinViewModel: com.app.mathracer.ui.screens.multiplayer.viewmodel.JoinMatchesViewModel = hiltViewModel()
+            val gamesState by joinViewModel.games.collectAsState()
+            val isLoading by joinViewModel.isLoading.collectAsState()
+            val errorMessage by joinViewModel.error.collectAsState()
+
+            LaunchedEffect(Unit) {
+                // Fetch available games when entering the screen
+                joinViewModel.fetchAvailableGames(publicOnly = false)
+            }
+
+            // Map API DTOs into local MatchItem for the composable
+            val matches = gamesState.map { dto ->
+                com.app.mathracer.ui.screens.multiplayer.MatchItem(
+                    id = dto.gameId.toString(),
+                    name = dto.gameName,
+                    difficulty = dto.difficulty ?: "",
+                    privacy = if (dto.isPrivate) "Privada" else "Pública",
+                    requiresPassword = dto.requiresPassword
+                )
+            }
+
+            JoinMatchesScreen(
+                matches = matches,
+                onJoinConfirmed = { matchId, password ->
+                    val id = matchId.toIntOrNull()
+                    if (id != null) {
+                        joinViewModel.joinGame(id, password) { res ->
+                            if (res.isSuccess) {
+                                navController.navigate(Routes.WAITING_OPPONENT)
+                            } else {
+                                android.util.Log.e("JoinMatchesNav", "Failed to join game ${id}: ${res.exceptionOrNull()?.message}")
+                            }
+                        }
+                    } else {
+                        android.util.Log.e("JoinMatchesNav", "Invalid match id: $matchId")
+                    }
+                },
+                onBack = { navController.navigateUp() },
+                errorMessage = errorMessage,
+                onClearError = { joinViewModel.clearError() }
+            )
+        }
 
                 composable(Routes.LOGIN) {
                     HandleBackNavigation(
