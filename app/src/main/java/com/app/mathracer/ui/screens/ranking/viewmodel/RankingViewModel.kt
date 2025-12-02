@@ -7,6 +7,9 @@ import com.app.mathracer.data.repository.RankingRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import com.app.mathracer.data.repository.GarageRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -33,6 +36,7 @@ class RankingViewModel @Inject constructor() : ViewModel() {
             val result = repository.getRanking(playerId)
             if (result.isSuccess) {
                 val dto = result.getOrNull()!!
+                val repo = GarageRepository()
                 val players = dto.top10.map { p ->
                     PlayerRanking(
                         username = p.name,
@@ -41,27 +45,31 @@ class RankingViewModel @Inject constructor() : ViewModel() {
                         playerId = p.playerId
                     )
                 }
-                _uiState.value = _uiState.value.copy(
-                    topPlayers = players,
-                    userPosition = dto.currentPlayerPosition,
-                    isLoading = false
-                )
-                viewModelScope.launch {
-                    try {
-                        val repo = com.app.mathracer.data.repository.GarageRepository()
-                        val updated = players.map { pl ->
+
+                try {
+                    val updated = players.map { pl ->
+                        async {
                             if (pl.playerId != null && pl.playerId > 0) {
                                 try {
                                     val chars = repo.getCharacters(pl.playerId)
                                     val avatarId = chars.getOrNull()?.activeItem?.productId
                                     pl.copy(avatarProductId = avatarId)
-                                } catch (e: Exception) {
-                                    pl
-                                }
+                                } catch (_: Exception) { pl }
                             } else pl
                         }
-                        _uiState.value = _uiState.value.copy(topPlayers = updated)
-                    } catch (_: Exception) { }
+                    }.awaitAll()
+
+                    _uiState.value = _uiState.value.copy(
+                        topPlayers = updated,
+                        userPosition = dto.currentPlayerPosition,
+                        isLoading = false
+                    )
+                } catch (e: Exception) {
+                    _uiState.value = _uiState.value.copy(
+                        topPlayers = players,
+                        userPosition = dto.currentPlayerPosition,
+                        isLoading = false
+                    )
                 }
             } else {
                 val ex = result.exceptionOrNull()

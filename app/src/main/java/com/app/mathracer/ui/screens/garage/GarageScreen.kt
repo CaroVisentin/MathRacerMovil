@@ -88,7 +88,7 @@ fun GarageScreen(viewModel: GarageViewModel, onBack: () -> Unit = {}) {
     val sheetHeightDp by remember { derivedStateOf { with(density) { sheetHeightPx.toDp() } } }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        
+
         Image(
             painter = painterResource(id = R.drawable.garage_background),
             contentDescription = null,
@@ -102,14 +102,16 @@ fun GarageScreen(viewModel: GarageViewModel, onBack: () -> Unit = {}) {
             Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                 
                 Box(modifier = Modifier.size(120.dp), contentAlignment = Alignment.Center) {
-                    ProductImage(productId = state.activeCharacter?.productId, fallbackRes = R.drawable.avatar, modifier = Modifier.size(120.dp), contentScale = ContentScale.Fit)
+                    val charProduct = state.activeCharacter?.productId ?: CurrentUser.activeCharacterProductId
+                    ProductImage(productId = charProduct, fallbackRes = R.drawable.avatar, modifier = Modifier.size(120.dp), contentScale = ContentScale.Fit)
                 }
 
                 Spacer(modifier = Modifier.width(18.dp))
 
                  
                 Box(modifier = Modifier.size(260.dp), contentAlignment = Alignment.Center) {
-                    ProductImage(productId = state.activeCar?.productId, fallbackRes = R.drawable.car, modifier = Modifier.size(260.dp), contentScale = ContentScale.Fit)
+                    val carProduct = state.activeCar?.productId ?: CurrentUser.activeVehicleProductId
+                    ProductImage(productId = carProduct, fallbackRes = R.drawable.car, modifier = Modifier.size(260.dp), contentScale = ContentScale.Fit)
                 }
             }
         }
