@@ -40,7 +40,9 @@ fun InfiniteTrackCard(
     carRes: Int,
     underlineColor: Color,
     progress: Int = 0,
-    totalAnswered: Int? = null
+    totalAnswered: Int? = null,
+    carProductId: Int? = null,
+    trackProductId: Int? = null
 ) {
     Column(
         modifier = Modifier
@@ -96,16 +98,29 @@ fun InfiniteTrackCard(
                 }
             }
 
-            Image(
-                painter = painterResource(carRes),
-                contentDescription = null,
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .offset(x = startMargin + offsetX, y = 0.dp)
-                    .padding(bottom = 12.dp)
-                    .size(width = carWidth, height = carHeight),
-                contentScale = ContentScale.Fit
-            )
+            if (carProductId != null && carProductId > 0) {
+                com.app.mathracer.ui.components.ProductImage(
+                    productId = carProductId,
+                    fallbackRes = carRes,
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .offset(x = startMargin + offsetX, y = 0.dp)
+                        .padding(bottom = 12.dp)
+                        .size(width = carWidth, height = carHeight),
+                    contentScale = ContentScale.Fit
+                )
+            } else {
+                Image(
+                    painter = painterResource(carRes),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .offset(x = startMargin + offsetX, y = 0.dp)
+                        .padding(bottom = 12.dp)
+                        .size(width = carWidth, height = carHeight),
+                    contentScale = ContentScale.Fit
+                )
+            }
         }
 
         Box(
