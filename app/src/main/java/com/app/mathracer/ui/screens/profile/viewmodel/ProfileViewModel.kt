@@ -144,7 +144,8 @@ class ProfileViewModel : ViewModel() {
         } catch (e: Exception) {
             e.printStackTrace()
             val cached = CurrentUser.cachedFriends
-                if (!cached.isNullOrEmpty()) {
+
+            if (!cached.isNullOrEmpty()) {
                 val repo = GarageRepository()
                 val uiList = cached.map { remote ->
                     FriendUi(
