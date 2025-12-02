@@ -9,6 +9,9 @@ import com.app.mathracer.data.CurrentUser
 import com.app.mathracer.data.model.Player
 import com.app.mathracer.data.repository.FriendRepository
 import com.app.mathracer.ui.screens.profile.components.Friend as FriendUi
+import com.app.mathracer.data.repository.GarageRepository
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -47,27 +50,93 @@ class ProfileViewModel : ViewModel() {
             val resp = FriendRepository.getFriends(currentId)
             if (resp.isSuccessful) {
                 val list = resp.body() ?: emptyList()
-               val uiList = list.map { remote ->
+                val repo = GarageRepository()
+                val uiList = list.map { remote ->
                     FriendUi(
                         name = remote.name,
                         score = remote.points.toString(),
                         avatarRes = R.drawable.avatar,
-                        carRes = R.drawable.car
+                        carRes = R.drawable.car,
+                        avatarProductId = null,
+                        carProductId = null
                     )
                 }
                 _uiState.update { it.copy(friends = uiList, remoteFriends = list) }
+
+                try {
+                    coroutineScope {
+                        val deferred = list.map { remote ->
+                            async {
+                                var avatarId: Int? = null
+                                var carId: Int? = null
+                                try {
+                                    val chars = repo.getCharacters(remote.id)
+                                    avatarId = chars.getOrNull()?.activeItem?.productId
+                                } catch (_: Exception) { }
+                                try {
+                                    val cars = repo.getCars(remote.id)
+                                    carId = cars.getOrNull()?.activeItem?.productId
+                                } catch (_: Exception) { }
+                                Pair(remote.id, Pair(avatarId, carId))
+                            }
+                        }
+
+                        val results = deferred.map { it.await() }.toMap()
+                        val updated = list.map { remote ->
+                            val ids = results[remote.id]
+                            FriendUi(
+                                name = remote.name,
+                                score = remote.points.toString(),
+                                avatarRes = R.drawable.avatar,
+                                carRes = R.drawable.car,
+                                avatarProductId = ids?.first,
+                                carProductId = ids?.second
+                            )
+                        }
+                        _uiState.update { it.copy(friends = updated, remoteFriends = list) }
+                    }
+                } catch (_: Exception) { /* best effort; ignore errors */ }
             } else {
                val cached = CurrentUser.cachedFriends
                 if (!cached.isNullOrEmpty()) {
+                    val repo = GarageRepository()
                     val uiList = cached.map { remote ->
                         FriendUi(
                             name = remote.name,
                             score = remote.points.toString(),
                             avatarRes = R.drawable.avatar,
-                            carRes = R.drawable.car
+                            carRes = R.drawable.car,
+                            avatarProductId = null,
+                            carProductId = null
                         )
                     }
                     _uiState.update { it.copy(friends = uiList, remoteFriends = cached) }
+                    try {
+                        coroutineScope {
+                            val deferred = cached.map { remote ->
+                                async {
+                                    var avatarId: Int? = null
+                                    var carId: Int? = null
+                                    try { avatarId = repo.getCharacters(remote.id).getOrNull()?.activeItem?.productId } catch (_: Exception) {}
+                                    try { carId = repo.getCars(remote.id).getOrNull()?.activeItem?.productId } catch (_: Exception) {}
+                                    Pair(remote.id, Pair(avatarId, carId))
+                                }
+                            }
+                            val results = deferred.map { it.await() }.toMap()
+                            val updated = cached.map { remote ->
+                                val ids = results[remote.id]
+                                FriendUi(
+                                    name = remote.name,
+                                    score = remote.points.toString(),
+                                    avatarRes = R.drawable.avatar,
+                                    carRes = R.drawable.car,
+                                    avatarProductId = ids?.first,
+                                    carProductId = ids?.second
+                                )
+                            }
+                            _uiState.update { it.copy(friends = updated, remoteFriends = cached) }
+                        }
+                    } catch (_: Exception) { }
                 } else {
                     _uiState.update { it.copy(friends = emptyList()) }
                 }
@@ -75,16 +144,45 @@ class ProfileViewModel : ViewModel() {
         } catch (e: Exception) {
             e.printStackTrace()
             val cached = CurrentUser.cachedFriends
-            if (!cached.isNullOrEmpty()) {
+                if (!cached.isNullOrEmpty()) {
+                val repo = GarageRepository()
                 val uiList = cached.map { remote ->
                     FriendUi(
                         name = remote.name,
                         score = remote.points.toString(),
                         avatarRes = R.drawable.avatar,
-                        carRes = R.drawable.car
+                        carRes = R.drawable.car,
+                        avatarProductId = null,
+                        carProductId = null
                     )
                 }
                 _uiState.update { it.copy(friends = uiList, remoteFriends = cached) }
+                try {
+                    coroutineScope {
+                        val deferred = cached.map { remote ->
+                            async {
+                                var avatarId: Int? = null
+                                var carId: Int? = null
+                                try { avatarId = repo.getCharacters(remote.id).getOrNull()?.activeItem?.productId } catch (_: Exception) {}
+                                try { carId = repo.getCars(remote.id).getOrNull()?.activeItem?.productId } catch (_: Exception) {}
+                                Pair(remote.id, Pair(avatarId, carId))
+                            }
+                        }
+                        val results = deferred.map { it.await() }.toMap()
+                        val updated = cached.map { remote ->
+                            val ids = results[remote.id]
+                            FriendUi(
+                                name = remote.name,
+                                score = remote.points.toString(),
+                                avatarRes = R.drawable.avatar,
+                                carRes = R.drawable.car,
+                                avatarProductId = ids?.first,
+                                carProductId = ids?.second
+                            )
+                        }
+                        _uiState.update { it.copy(friends = updated, remoteFriends = cached) }
+                    }
+                } catch (_: Exception) { }
             } else {
                 _uiState.update { it.copy(friends = emptyList()) }
             }
@@ -147,7 +245,6 @@ class ProfileViewModel : ViewModel() {
                         )
                     }
                 }
-                //refreshAll()
             } catch (e: Exception) {
                 Log.d("friend", "catch")
 
@@ -234,7 +331,9 @@ class ProfileViewModel : ViewModel() {
                 name = remote.name,
                 score = remote.points.toString(),
                 avatarRes = R.drawable.avatar,
-                carRes = R.drawable.car
+                carRes = R.drawable.car,
+                avatarProductId = null,
+                carProductId = null
             )
         }
         _uiState.update { it.copy(friends = updatedUi, remoteFriends = updatedRemote) }

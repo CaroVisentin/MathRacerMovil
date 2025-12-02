@@ -45,6 +45,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.draw.clip
 import com.app.mathracer.data.model.Player
 import com.app.mathracer.ui.components.StarryBackground
+import com.app.mathracer.ui.components.ProductImage
 import com.app.mathracer.ui.screens.profile.components.Friends
 import com.app.mathracer.ui.screens.profile.components.Profile
 import com.app.mathracer.ui.screens.profile.components.Settings
@@ -111,6 +112,8 @@ fun ProfileScreen(
                                         .padding(8.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
+                                    ProductImage(productId = req.character?.id, fallbackRes = com.app.mathracer.R.drawable.avatar, modifier = Modifier.size(40.dp).clip(RoundedCornerShape(20.dp)))
+                                    Spacer(modifier = Modifier.width(8.dp))
                                     Text(
                                         text = req.name,
                                         color = Color.White,
