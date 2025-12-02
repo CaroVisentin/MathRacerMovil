@@ -37,7 +37,8 @@ class RankingViewModel @Inject constructor() : ViewModel() {
                     PlayerRanking(
                         username = p.name,
                         score = p.points,
-                        position = p.position
+                        position = p.position,
+                        playerId = p.playerId
                     )
                 }
                 _uiState.value = _uiState.value.copy(
@@ -45,6 +46,23 @@ class RankingViewModel @Inject constructor() : ViewModel() {
                     userPosition = dto.currentPlayerPosition,
                     isLoading = false
                 )
+                viewModelScope.launch {
+                    try {
+                        val repo = com.app.mathracer.data.repository.GarageRepository()
+                        val updated = players.map { pl ->
+                            if (pl.playerId != null && pl.playerId > 0) {
+                                try {
+                                    val chars = repo.getCharacters(pl.playerId)
+                                    val avatarId = chars.getOrNull()?.activeItem?.productId
+                                    pl.copy(avatarProductId = avatarId)
+                                } catch (e: Exception) {
+                                    pl
+                                }
+                            } else pl
+                        }
+                        _uiState.value = _uiState.value.copy(topPlayers = updated)
+                    } catch (_: Exception) { }
+                }
             } else {
                 val ex = result.exceptionOrNull()
                 _uiState.value = _uiState.value.copy(

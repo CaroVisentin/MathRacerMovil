@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import com.app.mathracer.ui.components.ProductImage
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -140,12 +141,13 @@ fun PodiumItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Bottom
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.avatar),
-            contentDescription = null,
+        ProductImage(
+            productId = player.avatarProductId ?: 0,
+            fallbackRes = R.drawable.avatar,
             modifier = Modifier
                 .size(60.dp)
-                .offset(y = (-8).dp)
+                .offset(y = (-8).dp),
+            contentScale = androidx.compose.ui.layout.ContentScale.Crop
         )
 
         Box(
@@ -205,15 +207,16 @@ fun RankingItem(player: PlayerRanking) {
                     )
                 }
 
-                Image(
-                    painter = painterResource(id = R.drawable.avatar), // reemplazar con la imagen real o URL
-                    contentDescription = "Avatar de ${player.username}",
+                ProductImage(
+                    productId = player.avatarProductId ?: 0,
+                    fallbackRes = R.drawable.avatar,
                     modifier = Modifier
                         .size(28.dp)
                         .border(width = 1.5.dp, color = borderColor, shape = CircleShape)
                         .background(Color.Transparent, shape = CircleShape)
                         .padding(2.dp)
-                        .clip(CircleShape)
+                        .clip(CircleShape),
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
                 )
 
                 Text(
