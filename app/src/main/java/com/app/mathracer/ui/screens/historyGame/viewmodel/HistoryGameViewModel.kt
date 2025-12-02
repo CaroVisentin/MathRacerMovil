@@ -249,13 +249,23 @@ class HistoryGameViewModel @Inject constructor(
         val correctAnswer = currentState.correctAnswer
         if (correctAnswer == null) return
 
-        val filteredOptions = currentState.options.filter { it == correctAnswer }.take(1) +
-                            currentState.options.filter { it != correctAnswer }.shuffled().take(1)
+        val opts = currentState.options
+        val n = opts.size
+        val incorrect = opts.filter { it != correctAnswer }.shuffled()
 
-        val shuffledOptions = filteredOptions.shuffled()
+        val removeCount = when (n) {
+            2 -> 1
+            3 -> 1
+            else -> if (n >= 4) 2 else 1
+        }
+
+        val remainingIncorrectCount = (incorrect.size - removeCount).coerceAtLeast(0)
+        val remainingIncorrect = incorrect.take(remainingIncorrectCount)
+
+        val filteredOptions = (listOf(correctAnswer) + remainingIncorrect).shuffled()
 
         _uiState.value = currentState.copy(
-            options = shuffledOptions,
+            options = filteredOptions,
             fireExtinguisherActive = true,
             fireExtinguisherCount = 0
         )

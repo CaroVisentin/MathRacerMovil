@@ -83,8 +83,10 @@ fun InfiniteGameScreen(
             InfiniteTrackCard(
                 title = uiState.playerName.ifEmpty { "Jugador" },
                 titleColor = Color(0xFF51B7FF),
-                trackRes = youTrackRes,
+                trackRes = uiState.playerTrackProductId ?: youTrackRes,
                 carRes = youCarRes,
+                carProductId = uiState.playerCarProductId,
+                trackProductId = uiState.playerTrackProductId,
                 underlineColor = Color(0xFF51B7FF),
                 progress = uiState.yourProgress,
                 totalAnswered = uiState.totalAnswered

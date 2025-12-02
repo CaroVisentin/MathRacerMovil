@@ -760,6 +760,8 @@ fun GameScreen(
             isWinner = uiState.winner?.contains("Ganaste") == true,
             userName = uiState.playerName,
             userNameRival = uiState.opponentName,
+            userCarProductId = uiState.playerCarRes.takeIf { it > 0 },
+            rivalCarProductId = uiState.opponentCarRes.takeIf { it > 0 },
             onDismiss = {
             },
             onPlayAgain = {
