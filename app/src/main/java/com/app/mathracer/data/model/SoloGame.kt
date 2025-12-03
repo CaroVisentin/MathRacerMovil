@@ -147,6 +147,9 @@ data class SoloAnswerResponse(
     ,
     @SerializedName("coinsEarned")
     val coinsEarned: Int? = 0
+    ,
+    @SerializedName("remainingCoins")
+    val remainingCoins: Int? = null
 )
 
 data class WildCard(

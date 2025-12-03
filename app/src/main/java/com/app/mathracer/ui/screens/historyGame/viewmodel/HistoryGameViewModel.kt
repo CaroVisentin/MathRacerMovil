@@ -7,6 +7,9 @@ import com.app.mathracer.data.model.SoloGameUpdateResponse
 import com.app.mathracer.domain.usecases.ObserveSoloGameUpdatesUseCase
 import com.app.mathracer.domain.usecases.StartSoloGameUseCase
 import com.app.mathracer.domain.usecases.SubmitSoloAnswerUseCase
+import com.app.mathracer.data.CurrentUser
+import com.app.mathracer.data.UserState
+import com.app.mathracer.data.repository.UserRemoteRepository
 import com.app.mathracer.domain.usecases.SubmitSoloWildcardUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -326,6 +329,35 @@ class HistoryGameViewModel @Inject constructor(
                         coinsAwarded = answerResult.coinsEarned ?: before.coinsAwarded,
                         isPenalized = !actuallyCorrect
                     )
+
+                    try {
+                        answerResult.remainingCoins?.let { rc ->
+                            val earned = answerResult.coinsEarned ?: 0
+                            val displayCoins = rc + earned
+                            android.util.Log.d("HistoryGameViewModel", "Applying remainingCoins from backend: rc=$rc, coinsEarned=$earned, display=$displayCoins")
+                            CurrentUser.user?.coins = displayCoins
+                            UserState.setCoins(displayCoins)
+                            val pid = before.playerId ?: 0
+                            if (pid > 0) {
+                                viewModelScope.launch {
+                                    try {
+                                        val userResp = UserRemoteRepository.getUserByPlayerId(pid)
+                                        if (userResp.isSuccessful) {
+                                            val u = userResp.body()
+                                            u?.let {
+                                                CurrentUser.user = it
+                                                UserState.setCoins(it.coins ?: 0)
+                                            }
+                                        }
+                                    } catch (e: Exception) {
+                                        android.util.Log.e("HistoryGameViewModel", "Error refreshing user after solo finish: ${e.message}")
+                                    }
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("HistoryGameViewModel", "Error applying remainingCoins from answerResult: ${e.message}")
+                    }
 
                     if (!actuallyCorrect) {
                         android.util.Log.d("HistoryGameViewModel", "❌ Wrong answer. Applying penalty visual...")
