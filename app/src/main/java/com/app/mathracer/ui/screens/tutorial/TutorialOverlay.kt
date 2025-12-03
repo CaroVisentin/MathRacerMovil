@@ -136,7 +136,8 @@ fun TutorialOverlay(
                        
                     }
                 }
-            }
+            },
+            totalQuestions = 10
         )
 
          

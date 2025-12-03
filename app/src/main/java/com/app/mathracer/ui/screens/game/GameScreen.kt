@@ -94,6 +94,7 @@ fun GamePlayScreen(
     onPowerUpClick: (index: Int) -> Unit,
     onOptionClick: (index: Int, value: Int?) -> Unit,
     showShuffleMessage: Boolean = false,
+    totalQuestions: Int
 ) {
     Scaffold(
         containerColor = BgDark,
@@ -115,7 +116,8 @@ fun GamePlayScreen(
                 trackRes = rivalTrackRes,
                 carRes = rivalCarRes,
                 underlineColor = Color(0xFF4BC3FF),
-                progress = rivalProgress
+                progress = rivalProgress,
+                totalQuestions = totalQuestions
             )
             Spacer(Modifier.height(10.dp))
 
@@ -125,7 +127,8 @@ fun GamePlayScreen(
                 trackRes = youTrackRes,
                 carRes = youCarRes,
                 underlineColor = LabelBlue,
-                progress = yourProgress
+                progress = yourProgress,
+                totalQuestions = totalQuestions
             )
 
             Spacer(Modifier.height(30.dp))
@@ -278,7 +281,8 @@ public fun TrackCard(
     trackRes: Int,
     carRes: Int,
     underlineColor: Color,
-    progress: Int = 0
+    progress: Int = 0,
+    totalQuestions: Int
 ) {
     Column(
         modifier = Modifier
@@ -304,7 +308,7 @@ public fun TrackCard(
                     .align(Alignment.TopStart)
             ) {
                 Text(
-                    text = "$title ($progress/10)",
+                    text = "$title ($progress/$totalQuestions)",
                     color = titleColor,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -312,7 +316,7 @@ public fun TrackCard(
                 )
             }
 
-            val progress01 = (progress / 10f).coerceIn(0f, 1f)
+            val progress01 = (progress.toFloat() / totalQuestions.toFloat()).coerceIn(0f, 1f)
             val animated by animateFloatAsState(progress01, label = "carProgress")
 
             val startMargin = 12.dp
@@ -362,7 +366,9 @@ public fun TrackCard(
         ) {
             Box(
                 modifier = Modifier
-                    .fillMaxWidth(fraction = (progress / 10f).coerceIn(0f, 1f))
+                    .fillMaxWidth(
+                        fraction = (progress.toFloat() / totalQuestions.toFloat()).coerceIn(0f, 1f)
+                    )
                     .height(6.dp)
                     .background(underlineColor)
             )
@@ -752,7 +758,8 @@ fun GameScreen(
             if (uiState.currentQuestion.isNotEmpty() && !uiState.isPenalized && !uiState.showFeedback) {
                 viewModel.submitAnswer(value)
             }
-        }
+        },
+        totalQuestions = uiState.totalQuestions
     )
 
     if (uiState.gameEnded) {

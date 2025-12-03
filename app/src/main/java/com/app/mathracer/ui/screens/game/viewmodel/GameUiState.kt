@@ -32,5 +32,6 @@ data class GameUiState(
     val playerCarRes: Int = 0,
     val playerTrackRes: Int = 0,
     val opponentCarRes: Int = 0,
-    val opponentTrackRes: Int = 0
+    val opponentTrackRes: Int = 0,
+    val totalQuestions: Int = 10
 )

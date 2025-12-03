@@ -246,7 +246,8 @@ fun GamePlayScreen(
                 trackRes = rivalTrackRes,
                 carRes = rivalCarRes,
                 underlineColor = Color(0xFF4BC3FF),
-                progress = rivalProgress
+                progress = rivalProgress,
+                totalQuestions = uiState.totalQuestions
             )
             Spacer(Modifier.height(10.dp))
 
@@ -256,7 +257,8 @@ fun GamePlayScreen(
                 trackRes = youTrackRes,
                 carRes = youCarRes,
                 underlineColor = LabelBlue,
-                progress = yourProgress
+                progress = yourProgress,
+                totalQuestions = uiState.totalQuestions
             )
 
             Spacer(Modifier.height(30.dp))
