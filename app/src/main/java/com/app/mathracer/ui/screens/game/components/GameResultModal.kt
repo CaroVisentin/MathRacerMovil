@@ -2,6 +2,7 @@ package com.app.mathracer.ui.screens.game.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import com.app.mathracer.ui.components.ProductImage
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -23,6 +24,8 @@ fun GameResultModal(
     isWinner: Boolean,
     userName: String,
     userNameRival: String,
+    userCarProductId: Int?,
+    rivalCarProductId: Int?,
     onDismiss: () -> Unit,
     onPlayAgain: () -> Unit,
     onBackToHome: () -> Unit
@@ -58,14 +61,16 @@ fun GameResultModal(
                 // Primer puesto
                 ResultRow(
                     user = if(isWinner) userName else userNameRival,
-                    carImageRes = R.drawable.car,
+                    carProductId = if (isWinner) userCarProductId else rivalCarProductId,
+                    carFallbackRes = R.drawable.car,
                     medalRes = R.drawable.medal_gold
                 )
                 Spacer(Modifier.height(12.dp))
                 // Segundo puesto
                 ResultRow(
                     user = if(isWinner) userNameRival else userName,
-                    carImageRes = R.drawable.car,
+                    carProductId = if(isWinner) rivalCarProductId else userCarProductId,
+                    carFallbackRes = R.drawable.car,
                     medalRes = R.drawable.medal_silver
                 )
 
@@ -114,7 +119,8 @@ fun GameResultModal(
 @Composable
 private fun ResultRow(
     user: String,
-    carImageRes: Int,
+    carProductId: Int?,
+    carFallbackRes: Int,
     medalRes: Int
 ) {
     Row(
@@ -139,9 +145,9 @@ private fun ResultRow(
            // Text("Puntos:  ${result.points}", color = Color.White.copy(alpha = 0.85f), fontSize = 14.sp)
         }
 
-        Image(
-            painter = painterResource(carImageRes),
-            contentDescription = null,
+        ProductImage(
+            productId = carProductId,
+            fallbackRes = carFallbackRes,
             modifier = Modifier.size(72.dp),
             contentScale = ContentScale.Fit
         )

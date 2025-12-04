@@ -2,11 +2,15 @@ package com.app.mathracer.ui.screens.infinite.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.app.mathracer.data.CurrentUser
 import com.app.mathracer.data.network.ApiService
 import com.app.mathracer.data.network.InfiniteQuestionDto
 import com.app.mathracer.data.network.InfiniteAnswerRequest
 import com.app.mathracer.data.network.RetrofitClient
+import com.app.mathracer.data.repository.GarageRepository
 import com.app.mathracer.data.repository.UserRemoteRepository
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -17,6 +21,8 @@ import java.util.TimeZone
 data class InfiniteUiState(
     val gameId: Int? = null,
     val playerName: String = "",
+    val playerCarProductId: Int? = null,
+    val playerTrackProductId: Int? = null,
     val expression: String = "",
     val options: List<Int?> = listOf(null, null, null, null),
     val expectedResult: String = "",
@@ -86,6 +92,23 @@ class InfiniteGameViewModel : ViewModel() {
                         currentQuestionIndex = 0,
                         totalAnswered = (body.currentBatch * 9) + 0
                     )
+                    try {
+                        val repo = GarageRepository()
+                        val playerId = CurrentUser.user?.id
+                        if (playerId != null) {
+                            coroutineScope {
+                                val carDeferred = async { repo.getCars(playerId) }
+                                val bgDeferred = async { repo.getBackgrounds(playerId) }
+                                val carId = carDeferred.await().getOrNull()?.activeItem?.productId
+                                val bgId = bgDeferred.await().getOrNull()?.activeItem?.productId
+                                _state.value = _state.value.copy(playerCarProductId = carId, playerTrackProductId = bgId)
+                            }
+                        } else {
+
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.w("InfiniteVM", "Could not fetch player products: ${e.message}")
+                    }
                 }
             }
         } catch (e: Exception) {
@@ -109,6 +132,23 @@ class InfiniteGameViewModel : ViewModel() {
                         totalAnswered = (body.currentBatch * 9) + body.currentQuestionIndex + 1
                     )
                     loadBatch(gid)
+                    try {
+                        val repo = GarageRepository()
+                        val playerId = CurrentUser.user?.id
+                        if (playerId != null) {
+                            coroutineScope {
+                                val carDeferred = async { repo.getCars(playerId) }
+                                val bgDeferred = async { repo.getBackgrounds(playerId) }
+                                val carId = carDeferred.await().getOrNull()?.activeItem?.productId
+                                val bgId = bgDeferred.await().getOrNull()?.activeItem?.productId
+                                _state.value = _state.value.copy(playerCarProductId = carId, playerTrackProductId = bgId)
+                            }
+                        } else {
+
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.w("InfiniteVM", "Could not fetch player products: ${e.message}")
+                    }
                 }
             }
         } catch (e: Exception) {

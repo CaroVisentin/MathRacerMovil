@@ -7,6 +7,9 @@ import com.app.mathracer.data.model.SoloGameUpdateResponse
 import com.app.mathracer.domain.usecases.ObserveSoloGameUpdatesUseCase
 import com.app.mathracer.domain.usecases.StartSoloGameUseCase
 import com.app.mathracer.domain.usecases.SubmitSoloAnswerUseCase
+import com.app.mathracer.data.CurrentUser
+import com.app.mathracer.data.UserState
+import com.app.mathracer.data.repository.UserRemoteRepository
 import com.app.mathracer.domain.usecases.SubmitSoloWildcardUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -249,13 +252,23 @@ class HistoryGameViewModel @Inject constructor(
         val correctAnswer = currentState.correctAnswer
         if (correctAnswer == null) return
 
-        val filteredOptions = currentState.options.filter { it == correctAnswer }.take(1) +
-                            currentState.options.filter { it != correctAnswer }.shuffled().take(1)
+        val opts = currentState.options
+        val n = opts.size
+        val incorrect = opts.filter { it != correctAnswer }.shuffled()
 
-        val shuffledOptions = filteredOptions.shuffled()
+        val removeCount = when (n) {
+            2 -> 1
+            3 -> 1
+            else -> if (n >= 4) 2 else 1
+        }
+
+        val remainingIncorrectCount = (incorrect.size - removeCount).coerceAtLeast(0)
+        val remainingIncorrect = incorrect.take(remainingIncorrectCount)
+
+        val filteredOptions = (listOf(correctAnswer) + remainingIncorrect).shuffled()
 
         _uiState.value = currentState.copy(
-            options = shuffledOptions,
+            options = filteredOptions,
             fireExtinguisherActive = true,
             fireExtinguisherCount = 0
         )
@@ -316,6 +329,35 @@ class HistoryGameViewModel @Inject constructor(
                         coinsAwarded = answerResult.coinsEarned ?: before.coinsAwarded,
                         isPenalized = !actuallyCorrect
                     )
+
+                    try {
+                        answerResult.remainingCoins?.let { rc ->
+                            val earned = answerResult.coinsEarned ?: 0
+                            val displayCoins = rc + earned
+                            android.util.Log.d("HistoryGameViewModel", "Applying remainingCoins from backend: rc=$rc, coinsEarned=$earned, display=$displayCoins")
+                            CurrentUser.user?.coins = displayCoins
+                            UserState.setCoins(displayCoins)
+                            val pid = before.playerId ?: 0
+                            if (pid > 0) {
+                                viewModelScope.launch {
+                                    try {
+                                        val userResp = UserRemoteRepository.getUserByPlayerId(pid)
+                                        if (userResp.isSuccessful) {
+                                            val u = userResp.body()
+                                            u?.let {
+                                                CurrentUser.user = it
+                                                UserState.setCoins(it.coins ?: 0)
+                                            }
+                                        }
+                                    } catch (e: Exception) {
+                                        android.util.Log.e("HistoryGameViewModel", "Error refreshing user after solo finish: ${e.message}")
+                                    }
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("HistoryGameViewModel", "Error applying remainingCoins from answerResult: ${e.message}")
+                    }
 
                     if (!actuallyCorrect) {
                         android.util.Log.d("HistoryGameViewModel", "❌ Wrong answer. Applying penalty visual...")

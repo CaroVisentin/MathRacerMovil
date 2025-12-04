@@ -10,5 +10,7 @@ data class RankingUiState(
 data class PlayerRanking(
     val username: String,
     val score: Int,
-    val position: Int
+    val position: Int,
+    val playerId: Int? = null,
+    val avatarProductId: Int? = null
 )
