@@ -230,18 +230,18 @@ fun ProfileScreen(
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(10.dp)),
                         textStyle = LocalTextStyle.current.copy(
-                            color = Color.White,              // texto que escribís
+                            color = Color.White,
                             fontSize = 16.sp
                         ),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedTextColor = Color.White,
                             unfocusedTextColor = Color.White,
-                            focusedBorderColor = Color.Cyan,         // borde activo
+                            focusedBorderColor = Color.Cyan,
                             unfocusedBorderColor = Color.Cyan.copy(alpha = 0.6f),
-                            focusedLabelColor = Color.Cyan,          // “Email del jugador” cuando focus
-                            unfocusedLabelColor = Color(0xFFB0BEC5), // label gris clarito
+                            focusedLabelColor = Color.Cyan,
+                            unfocusedLabelColor = Color(0xFFB0BEC5),
                             cursorColor = Color.Cyan,
-                            focusedContainerColor = Color(0xFF0C1735),   // fondo dentro del input
+                            focusedContainerColor = Color(0xFF0C1735),
                             unfocusedContainerColor = Color(0xFF0C1735),
                             focusedPlaceholderColor = Color(0xFFB0BEC5),
                             unfocusedPlaceholderColor = Color(0xFF78909C)

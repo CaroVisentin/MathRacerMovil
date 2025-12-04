@@ -267,7 +267,7 @@ class ProfileViewModel : ViewModel() {
                     onComplete(true, null)
                 } else {
                     val err = resp.errorBody()?.string()
-                    onComplete(false, "Error backend: code=${resp.code()} ${err ?: ""}")
+                    onComplete(false, "Usuario actual no identificado")
                 }
                 refreshAll()
             } catch (e: Exception) {
@@ -290,7 +290,7 @@ class ProfileViewModel : ViewModel() {
                     onComplete(true, null)
                 } else {
                     val err = resp.errorBody()?.string()
-                    onComplete(false, "Error backend: code=${resp.code()} ${err ?: ""}")
+                    onComplete(false, "El usuario ya es un amigo.")
                 }
                 refreshAll()
             } catch (e: Exception) {
@@ -313,7 +313,7 @@ class ProfileViewModel : ViewModel() {
                     onComplete(true, null)
                 } else {
                     val err = resp.errorBody()?.string()
-                    onComplete(false, "Error backend: code=${resp.code()} ${err ?: ""}")
+                    onComplete(false, "El usuario ya es un amigo.")
                 }
                 refreshAll()
             } catch (e: Exception) {
