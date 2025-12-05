@@ -9,9 +9,13 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
+import android.content.Context
+import com.app.mathracer.ui.theme.CyanMR
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,19 +25,31 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.mathracer.data.model.LevelDto
+import java.net.URLDecoder
+import android.util.Base64
+import com.app.mathracer.ui.components.StarryBackground
 import com.app.mathracer.ui.screens.levels.viewmodel.LevelsViewModel
+import com.app.mathracer.ui.theme.DarkPurpleMR
 
 @Composable
 fun LevelsScreen(
     viewModel: LevelsViewModel,
-    onLevelClick: (Int, String) -> Unit = { _, _ -> }
+    worldId: Int = 0,
+    worldOperationsEncoded: String = "",
+    onLevelClick: (Int, String) -> Unit = { _, _ -> },
+    onObtenerRecompensaClick: (Int) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    val context = LocalContext.current
+    val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+    val claimedKey = "world_reward_claimed_$worldId"
+    val claimed = prefs.getBoolean(claimedKey, false)
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0B032D))
+            .background(DarkPurpleMR)
     ) {
         StarryBackground()
 
@@ -75,7 +91,6 @@ fun LevelsScreen(
                                 level = level,
                                 lastCompletedLevelId = uiState.lastCompletedLevelId,
                                 onClick = {
-                                    // Solo permitir navegar si el nivel está desbloqueado
                                     if (level.id <= uiState.lastCompletedLevelId + 1) {
                                         onLevelClick(level.id, level.resultType)
                                     }
@@ -87,6 +102,39 @@ fun LevelsScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+               
+                val levelsList = uiState.levels.orEmpty()
+                val completedCount = levelsList.count { it.id <= uiState.lastCompletedLevelId }
+                val allCompleted = levelsList.isNotEmpty() && completedCount >= levelsList.size
+
+                val buttonEnabled = allCompleted && !claimed
+                val buttonBorderColor = if (buttonEnabled) CyanMR else Color.Gray
+                val buttonBgColor = if (buttonEnabled) Color.Black.copy(alpha = 0.6f) else Color.DarkGray
+                val buttonTextColor = if (buttonEnabled) CyanMR else Color.LightGray
+
+                TextButton(
+                    onClick = { onObtenerRecompensaClick(worldId) },
+                    enabled = buttonEnabled,
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .border(
+                            width = 2.dp,
+                            color = buttonBorderColor,
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        .background(
+                            buttonBgColor,
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                ) {
+                    Text(
+                        text = if (claimed) "Recompensa obtenida" else "Obtener recompensa",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = buttonTextColor,
+                    )
+                }
+                Spacer(modifier = Modifier.height(24.dp))
                 Box(
                     modifier = Modifier
                         .fillMaxWidth(0.9f)
@@ -95,7 +143,7 @@ fun LevelsScreen(
                         .padding(horizontal = 16.dp, vertical = 12.dp)
                 ) {
                     Text(
-                        text = "Sumas y restas",// uiState.worldDescription,
+                        text = operationsEncodedToText(worldOperationsEncoded),
                         color = Color.Cyan,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Medium
@@ -117,7 +165,7 @@ fun LevelCard(
     val gold = Color(0xFFFFC107)
     val darkTransparent = Color(0xAA0A031F)
     val isUnlocked = level.id <= lastCompletedLevelId + 1
-    
+
     val colorCard = when {
         level.id == lastCompletedLevelId + 1 -> Color.Magenta
         level.id <= lastCompletedLevelId -> gold
@@ -191,20 +239,37 @@ fun LevelCard(
     }
 }
 
-
-@Composable
-fun StarryBackground() {
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        val stars = 120
-        repeat(stars) {
-            drawCircle(
-                color = Color.White.copy(alpha = 0.8f),
-                radius = 1.5f,
-                center = Offset(
-                    x = (0..size.width.toInt()).random().toFloat(),
-                    y = (0..size.height.toInt()).random().toFloat()
-                )
-            )
+fun operationsEncodedToText(encoded: String): String {
+    if (encoded.isBlank()) return ""
+    val decoded = try {
+        val bytes = Base64.decode(encoded, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
+        String(bytes, Charsets.UTF_8)
+    } catch (e: Exception) {
+        try {
+            URLDecoder.decode(encoded, "UTF-8")
+        } catch (e2: Exception) {
+            ""
         }
     }
+
+    if (decoded.isBlank()) return ""
+
+    val opsList = decoded.split(Regex("[,\\s]+"))
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+
+    if (opsList.isEmpty()) return ""
+
+    val seen = linkedSetOf<String>()
+    opsList.forEach { op ->
+        when (op) {
+            "+" -> seen.add("Suma")
+            "-" -> seen.add("Resta")
+            "*", "x", "X" -> seen.add("Multiplicación")
+            "/" -> seen.add("División")
+            else -> if (op.isNotBlank()) seen.add(op)
+        }
+    }
+
+    return seen.joinToString(" - ")
 }

@@ -1,4 +1,4 @@
-package com.app.mathracer.ui.rules
+package com.app.mathracer.ui.screens.rules
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background

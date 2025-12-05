@@ -10,11 +10,15 @@ import android.util.Log
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.GoogleAuthProvider
 import com.app.mathracer.data.repository.UserRemoteRepository
 import com.app.mathracer.data.CurrentUser
+import com.app.mathracer.data.UserState
 import com.app.mathracer.data.model.User
 import androidx.lifecycle.viewModelScope
+import com.app.mathracer.data.model.UserGoogle
+import com.app.mathracer.data.repository.GarageRepository
 import com.app.mathracer.data.model.UserLogin
 import kotlinx.coroutines.launch
 
@@ -56,7 +60,35 @@ class LoginViewModel : ViewModel() {
                                     Log.d("Login response", "getUser response: $response")
                                     if (response.isSuccessful) {
                                         CurrentUser.user = response.body()
+                                        com.app.mathracer.data.UserState.setCoins(CurrentUser.user?.coins ?: 0)
                                         Log.d("Login", "Usuario obtenido del backend: ${CurrentUser.user}")
+                                         
+                                        try {
+                                            val playerId = CurrentUser.user?.id ?: 0
+                                            if (playerId > 0) {
+                                                try {
+                                                    val repo = GarageRepository()
+                                                    val charsRes = repo.getCharacters(playerId)
+                                                    val bgsRes = repo.getBackgrounds(playerId)
+                                                    val carsRes = repo.getCars(playerId)
+                                                    val activeChar = charsRes.getOrNull()?.activeItem
+                                                    val activeBg = bgsRes.getOrNull()?.activeItem
+                                                    val activeCar = carsRes.getOrNull()?.activeItem
+                                                    com.app.mathracer.data.CurrentUser.activeCharacterProductId = activeChar?.productId
+                                                    com.app.mathracer.data.CurrentUser.activeBackgroundProductId = activeBg?.productId
+                                                    com.app.mathracer.data.CurrentUser.activeVehicleProductId = activeCar?.productId
+                                                    com.app.mathracer.data.UserState.setActiveCharacter(activeChar?.productId)
+                                                    com.app.mathracer.data.UserState.setActiveBackground(activeBg?.productId)
+                                                    com.app.mathracer.data.UserState.setActiveVehicle(activeCar?.productId)
+                                                    val charsList = charsRes.getOrNull()?.items ?: emptyList()
+                                                    val bgsList = bgsRes.getOrNull()?.items ?: emptyList()
+                                                    val carsList = carsRes.getOrNull()?.items ?: emptyList()
+                                                    val hasProducts = activeChar != null || activeBg != null || activeCar != null
+
+                                                    _uiState.update { it.copy(hasProductsAssigned = hasProducts) }
+                                                } catch (_: Exception) { }
+                                            }
+                                        } catch (_: Exception) { }
                                     } else {
                                         android.util.Log.e("Login", "getUser failed: ${response.code()}")
                                     }
@@ -75,9 +107,10 @@ class LoginViewModel : ViewModel() {
                             )
                         }
                     } else {
+                        val friendlyMessage = mapLoginError(task.exception)
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
-                            errorMessage = task.exception?.localizedMessage ?: "Error desconocido"
+                            errorMessage = friendlyMessage
                         )
                     }
                 }
@@ -106,16 +139,49 @@ class LoginViewModel : ViewModel() {
                             val createdUser = User(
                                 uid = firebaseUser.uid,
                                 email = firebaseUser.email,
-                                username = firebaseUser.displayName //_uiState.value.use
+                                username = firebaseUser.displayName
+                            )
+                            val createdUserGoogle = UserGoogle(
+                                idToken = firebaseUser.uid,
+                                email = firebaseUser.email,
+                                username = firebaseUser.displayName
                             )
                             viewModelScope.launch {
                                 try {
-                                    val resp = UserRemoteRepository.createUser(createdUser)
+                                    val resp = UserRemoteRepository.google(createdUserGoogle)
+                                    Log.d("Firebase",  "Usuario Firebase:${firebaseUser} ${authResult}")
                                     if (resp.isSuccessful) CurrentUser.user = resp.body() else CurrentUser.user = createdUser
+                                    com.app.mathracer.data.UserState.setCoins(CurrentUser.user?.coins ?: 0)
                                 } catch (e: Exception) {
                                     android.util.Log.e("Register", "Error creando usuario en backend", e)
                                     CurrentUser.user = createdUser
                                 }
+                                
+                                try {
+                                    val playerId = CurrentUser.user?.id ?: 0
+                                    if (playerId > 0) {
+                                        try {
+                                            val repo = GarageRepository()
+                                            val charsRes = repo.getCharacters(playerId)
+                                            val bgsRes = repo.getBackgrounds(playerId)
+                                            val carsRes = repo.getCars(playerId)
+                                            val activeChar = charsRes.getOrNull()?.activeItem
+                                            val activeBg = bgsRes.getOrNull()?.activeItem
+                                            val activeCar = carsRes.getOrNull()?.activeItem
+                                            com.app.mathracer.data.CurrentUser.activeCharacterProductId = activeChar?.productId
+                                            com.app.mathracer.data.CurrentUser.activeBackgroundProductId = activeBg?.productId
+                                            com.app.mathracer.data.CurrentUser.activeVehicleProductId = activeCar?.productId
+                                            com.app.mathracer.data.UserState.setActiveCharacter(activeChar?.productId)
+                                            com.app.mathracer.data.UserState.setActiveBackground(activeBg?.productId)
+                                            com.app.mathracer.data.UserState.setActiveVehicle(activeCar?.productId)
+                                            val charsList = charsRes.getOrNull()?.items ?: emptyList()
+                                            val bgsList = bgsRes.getOrNull()?.items ?: emptyList()
+                                            val carsList = carsRes.getOrNull()?.items ?: emptyList()
+                                            val hasProducts = activeChar != null || activeBg != null || activeCar != null
+                                            _uiState.update { it.copy(hasProductsAssigned = hasProducts) }
+                                        } catch (_: Exception) { }
+                                    }
+                                } catch (_: Exception) { }
                                 _uiState.value = _uiState.value.copy(
                                     isLoading = false,
                                     isSuccess = true
@@ -152,5 +218,26 @@ class LoginViewModel : ViewModel() {
 
     fun resetSuccess() {
         _uiState.value = _uiState.value.copy(isSuccess = false)
+    }
+    private fun mapLoginError(ex: Exception?): String {
+        val defaultMessage = "Error al iniciar sesión. Verificá tus datos e intentá nuevamente."
+
+        val fb = ex as? FirebaseAuthException ?: return ex?.localizedMessage ?: defaultMessage
+        return when (fb.errorCode) {
+            "ERROR_INVALID_EMAIL" ->
+                "El correo no tiene un formato válido."
+            "ERROR_USER_NOT_FOUND" ->
+                "No existe un usuario registrado con ese correo."
+            "ERROR_WRONG_PASSWORD" ->
+                "La contraseña es incorrecta."
+            "ERROR_USER_DISABLED" ->
+                "La cuenta de usuario fue deshabilitada."
+            "ERROR_TOO_MANY_REQUESTS" ->
+                "Demasiados intentos fallidos. Espera unos minutos e intenta de nuevo."
+            "ERROR_OPERATION_NOT_ALLOWED" ->
+                "El inicio de sesión con email y contraseña está deshabilitado."
+            else ->
+                defaultMessage
+        }
     }
 }

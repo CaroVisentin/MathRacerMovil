@@ -38,40 +38,12 @@ fun Settings(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            //.background(Color(0xFF101010))
             .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
 
         Column {
-            Text(
-                text = "Sonido",
-                color = Color.White,
-                fontSize = 20.sp,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.VolumeDown,
-                    contentDescription = "Volumen sonido",
-                    tint = Color.White,
-                    modifier = Modifier.size(28.dp)
-                )
-                Slider(
-                    value = soundVolume,
-                    onValueChange = onSoundVolumeChange,
-                    colors = SliderDefaults.colors(
-                        thumbColor = Color.Cyan,
-                        activeTrackColor = Color.Cyan
-                    ),
-                    modifier = Modifier.weight(1f)
-                )
-            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -106,20 +78,11 @@ fun Settings(
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            Text(
-                text = "Cuenta",
-                color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             Button(
                 onClick = onLogout,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Black,
+                    containerColor = Color.Red,
                     contentColor = Color.White
                 ),
                 border = BorderStroke(2.dp, Color.White),
@@ -133,22 +96,21 @@ fun Settings(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Button(
-                onClick = onDeleteAccount,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Transparent,
-                    contentColor = Color.Red
-                ),
-                border = BorderStroke(2.dp, Color.Red),
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
-            ) {
-                Text("Eliminar cuenta", fontWeight = FontWeight.Bold, fontSize = 20.sp)
-            }
+//            Button(
+//                onClick = onDeleteAccount,
+//                colors = ButtonDefaults.buttonColors(
+//                    containerColor = Color.Transparent,
+//                    contentColor = Color.Red
+//                ),
+//                border = BorderStroke(2.dp, Color.Red),
+//                shape = RoundedCornerShape(8.dp),
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .height(50.dp)
+//            ) {
+//                Text("Eliminar cuenta", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+//            }
         }
 
-        // Help button removed from Settings — it's provided globally by ProfileScreen
     }
 }

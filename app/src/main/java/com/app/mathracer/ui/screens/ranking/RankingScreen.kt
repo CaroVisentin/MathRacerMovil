@@ -1,6 +1,5 @@
 package com.app.mathracer.ui.screens.ranking
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -17,14 +16,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import com.app.mathracer.ui.components.ProductImage
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.mathracer.R
+import com.app.mathracer.ui.components.StarryBackground
 import com.app.mathracer.ui.screens.ranking.viewmodel.PlayerRanking
 import com.app.mathracer.ui.screens.ranking.viewmodel.RankingViewModel
+import com.app.mathracer.ui.theme.DarkPurpleMR
+import androidx.compose.ui.text.style.TextAlign
+
 
 @Composable
 fun RankingScreen(viewModel: RankingViewModel) {
@@ -33,9 +36,10 @@ fun RankingScreen(viewModel: RankingViewModel) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0B032D))
+            .background(DarkPurpleMR)
             .padding(16.dp)
     ) {
+        StarryBackground()
         if (uiState.isLoading) {
             CircularProgressIndicator(
                 color = Color.Magenta,
@@ -60,7 +64,22 @@ fun RankingScreen(viewModel: RankingViewModel) {
                     modifier = Modifier.padding(top = 24.dp)
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+
+                val positionText = uiState.userPosition?.toString() ?: "–"
+                Text(
+                    text = "Tu posición: #$positionText",
+                    color = Color.Cyan,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    textAlign = TextAlign.Center,
+                    maxLines = 1
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
 
                 TopThreeSection(players = uiState.topPlayers.take(3))
 
@@ -76,19 +95,6 @@ fun RankingScreen(viewModel: RankingViewModel) {
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
-
-
-                val positionText = uiState.userPosition?.toString() ?: "–"
-                Text(
-                    text = "Tu posición actual: $positionText",
-                    color = Color.White,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    maxLines = 1
-                )
             }
         }
     }
@@ -137,12 +143,13 @@ fun PodiumItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Bottom
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.avatar),
-            contentDescription = null,
+        ProductImage(
+            productId = player.avatarProductId ?: 0,
+            fallbackRes = R.drawable.avatar,
             modifier = Modifier
                 .size(60.dp)
-                .offset(y = (-8).dp)
+                .offset(y = (-8).dp),
+            contentScale = androidx.compose.ui.layout.ContentScale.Crop
         )
 
         Box(
@@ -202,15 +209,16 @@ fun RankingItem(player: PlayerRanking) {
                     )
                 }
 
-                Image(
-                    painter = painterResource(id = R.drawable.avatar), // reemplazar con la imagen real o URL
-                    contentDescription = "Avatar de ${player.username}",
+                ProductImage(
+                    productId = player.avatarProductId ?: 0,
+                    fallbackRes = R.drawable.avatar,
                     modifier = Modifier
                         .size(28.dp)
                         .border(width = 1.5.dp, color = borderColor, shape = CircleShape)
                         .background(Color.Transparent, shape = CircleShape)
                         .padding(2.dp)
-                        .clip(CircleShape)
+                        .clip(CircleShape),
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
                 )
 
                 Text(

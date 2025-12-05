@@ -1,6 +1,5 @@
 package com.app.mathracer.ui.screens.historyGame
 
-import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -33,14 +32,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -52,11 +49,13 @@ import com.app.mathracer.ui.screens.game.OptionButton
 import com.app.mathracer.ui.screens.game.OptionButtonState
 import com.app.mathracer.ui.screens.game.PowerUpChip
 import com.app.mathracer.ui.screens.game.TrackCard
-import com.app.mathracer.ui.screens.game.components.GameResultModal
 import com.app.mathracer.ui.screens.historyGame.viewmodel.HistoryGameViewModel
 import kotlinx.coroutines.delay
 import androidx.compose.runtime.*
+import com.app.mathracer.ui.screens.historyGame.components.HistoryGameResultModal
 import com.app.mathracer.ui.screens.historyGame.viewmodel.HistoryGameUiState
+import com.app.mathracer.data.repository.UserRemoteRepository
+import kotlinx.coroutines.launch
 
 private val BgDark        = Color(0xFF222224)
 private val CardDark      = Color(0xFF2C2C2C)
@@ -64,7 +63,7 @@ private val LabelBlue     = Color(0xFF51B7FF)
 private val OptionTeal    = Color(0xFF2EB7A7)
 
 data class PlayerResult(val rank: Int, val name: String, val points: Int)
-data class PowerUp(val iconRes: Int, val count: Int, val tint: Color)
+data class PowerUp(val iconRes: Int, val count: Int, val tint: Color, val enabled: Boolean = true)
 
 @Composable
 fun HistoryGameScreen(
@@ -72,16 +71,16 @@ fun HistoryGameScreen(
     playerName: String = "Jugador",
     resultType: String,
     onNavigateBack: () -> Unit = {},
-    onPlayAgain: () -> Unit = {},
+    onPlayAgain: (Int) -> Unit = {},
+    onNoEnergy: () -> Unit = {},
     viewModel: HistoryGameViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    // Inicializar el juego
+    val coroutineScope = rememberCoroutineScope()
     LaunchedEffect(levelId, playerName) {
         viewModel.initializeGame(levelId, playerName)
     }
 
-    // Limpiar feedback automáticamente después de mostrar resultado
     LaunchedEffect(uiState.showFeedback) {
         if (uiState.showFeedback) {
             if (uiState.isLastAnswerCorrect == true) {
@@ -99,18 +98,33 @@ fun HistoryGameScreen(
         timeLabel = "10 seg",
         coins = 123_000,
         rivalTrackRes = R.drawable.track_city,
-        youTrackRes = R.drawable.track_cake,
-        rivalCarRes = R.drawable.car_game,
+        youTrackRes = uiState.playerTrackRes,//R.drawable.track_cake,
+        rivalCarRes = 1, //R.drawable.car_game,
         opponentName = uiState.machineName,
         playerName = uiState.playerName,
-        youCarRes = R.drawable.car_game,
+        youCarRes = uiState.playerCarRes,
         livesRemaining = uiState.livesRemaining,
         timePerEquation = uiState.timePerEquation,
-        powerUps = listOf(
-            PowerUp(R.drawable.ic_shield, uiState.fireExtinguisherCount, Color(0xFFFF6B6B)),
-            PowerUp(R.drawable.ic_shuffle, 0, Color.White),
-            PowerUp(R.drawable.ic_bolt, 0, Color(0xFF76E4FF))
-        ),
+            powerUps = listOf(
+                PowerUp(
+                    R.drawable.ic_shield,
+                    uiState.wildcard1Quantity,
+                    Color(0xFFFF6B6B),
+                    enabled = uiState.wildcard1Available && !uiState.wildcardsLocked && !uiState.wildcard1Used
+                ),
+                PowerUp(
+                    R.drawable.ic_shuffle,
+                    uiState.wildcard2Quantity,
+                    Color.White,
+                    enabled = uiState.wildcard2Available && !uiState.wildcardsLocked && !uiState.wildcard2Used
+                ),
+                PowerUp(
+                    R.drawable.ic_bolt,
+                    uiState.wildcard3Quantity,
+                    Color(0xFF76E4FF),
+                    enabled = uiState.wildcard3Available && !uiState.wildcardsLocked && !uiState.wildcard3Used
+                )
+            ),
         expression = uiState.currentQuestion.ifEmpty { 
             when {
                 uiState.isLoading -> "Conectando al juego..."
@@ -133,7 +147,9 @@ fun HistoryGameScreen(
         onBack = onNavigateBack,
         onPowerUpClick = { index -> 
             when (index) {
-                0 -> viewModel.useFireExtinguisher()
+                0 -> viewModel.useWildcard(1)
+                1 -> viewModel.useWildcard(2)
+                2 -> viewModel.useWildcard(3)
             }
         },
         onOptionClick = { index, value ->
@@ -144,20 +160,35 @@ fun HistoryGameScreen(
         uiState = uiState
     )
 
-    // Modal de resultado del juego
     if (uiState.gameEnded) {
-        GameResultModal(
+        HistoryGameResultModal(
             isWinner = uiState.winner?.contains("Ganaste") == true,
-            userName = uiState.playerName,
-            userNameRival = uiState.machineName,
-            onDismiss = { 
-                // No necesitamos método específico, el estado ya está manejado
-            },
-            onPlayAgain = {
-                onPlayAgain()
-            },
-            onBackToHome = {
+            reward = uiState.coinsAwarded,
+            levelNumber = levelId,
+            onBack = {
                 onNavigateBack()
+            },
+            onDismiss = {
+            },
+            onNext = {
+                    if (uiState.winner?.contains("Ganaste") == true) {
+                        onPlayAgain(levelId + 1)
+                    } else {
+                        coroutineScope.launch {
+                            try {
+                                val resp = UserRemoteRepository.getEnergy()
+                                if (resp.isSuccessful) {
+                                    val dto = resp.body()
+                                    val energy = dto?.currentAmount ?: 0
+                                    if (energy > 0) onPlayAgain(levelId) else onNoEnergy()
+                                } else {
+                                    onNoEnergy()
+                                }
+                            } catch (e: Exception) {
+                                onNoEnergy()
+                            }
+                        }
+                    }
             }
         )
     }
@@ -185,7 +216,6 @@ fun GamePlayScreen(
     lastAnswerWasCorrect: Boolean? = null,
     showAnswerFeedback: Boolean = false,
     isPenalized: Boolean = false,
-    // controla si los botones de opción muestran sombra/relieve
     optionsHaveShadows: Boolean = true,
     expectedResult: String = "",
     onBack: () -> Unit,
@@ -210,30 +240,29 @@ fun GamePlayScreen(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.Top
         ) {
-            // ====== TRACK RIVAL ======
             TrackCard(
                 title = opponentName,
                 titleColor = Color.White.copy(alpha = 0.65f),
                 trackRes = rivalTrackRes,
                 carRes = rivalCarRes,
                 underlineColor = Color(0xFF4BC3FF),
-                progress = rivalProgress
+                progress = rivalProgress,
+                totalQuestions = uiState.totalQuestions
             )
             Spacer(Modifier.height(10.dp))
 
-            // ====== TRACK VOS ======
             TrackCard(
                 title = playerName,
                 titleColor = LabelBlue,
                 trackRes = youTrackRes,
                 carRes = youCarRes,
                 underlineColor = LabelBlue,
-                progress = yourProgress
+                progress = yourProgress,
+                totalQuestions = uiState.totalQuestions
             )
 
             Spacer(Modifier.height(30.dp))
 
-            // ====== POWER UPS ======
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -241,19 +270,19 @@ fun GamePlayScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 powerUps.forEachIndexed { i, p ->
-                    PowerUpChip(
-                        iconRes = p.iconRes,
-                        count = p.count,
-                        tint = p.tint,
-                        onClick = { onPowerUpClick(i) }
-                    )
+                        PowerUpChip(
+                            iconRes = p.iconRes,
+                            count = p.count,
+                            tint = p.tint,
+                            onClick = { onPowerUpClick(i) },
+                            enabled = p.enabled
+                        )
                     Spacer(Modifier.width(12.dp))
                 }
             }
 
             Spacer(Modifier.height(30.dp))
 
-            // ====== EXPRESIÓN ======
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -288,7 +317,6 @@ fun GamePlayScreen(
 
             Spacer(Modifier.height(60.dp))
 
-            // ====== OPCIONES (2 x 2) ======
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -524,7 +552,6 @@ fun OptionsColumn(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        // Un solo for para crear todos los botones
         for (i in options.indices) {
             val option = options[i]
             OptionButton(
@@ -556,16 +583,12 @@ private fun getOptionButtonState(
     correctAnswer: Int? = null
 ): OptionButtonState {
     return when {
-        // ✅ Correcta → verde
         !canAnswer && option == correctAnswer -> OptionButtonState.CORRECT
 
-        // ❌ Incorrecta elegida → roja
         !canAnswer && option == lastAnswerGiven && lastAnswerWasCorrect == false -> OptionButtonState.INCORRECT
 
-        // 🕐 Durante feedback, las demás → grises
         !canAnswer && (option != correctAnswer || option == lastAnswerGiven && lastAnswerWasCorrect == false) -> OptionButtonState.DISABLED
 
-        // 🔘 Normal
         else -> OptionButtonState.NORMAL
     }
 }
@@ -579,8 +602,8 @@ fun OptionButton(
     onClick: () -> Unit
 ) {
     val configuration = LocalConfiguration.current
-    val screenWidthPx = configuration.screenWidthDp.dp // ancho de pantalla en dp
-    val buttonWidth = screenWidthPx / 2 // mitad de la pantalla
+    val screenWidthPx = configuration.screenWidthDp.dp
+    val buttonWidth = screenWidthPx / 2
 
     val (backgroundColor, borderColor, symbol) = when (state) {
         OptionButtonState.NORMAL    -> Triple(OptionTeal, Color.White, "")

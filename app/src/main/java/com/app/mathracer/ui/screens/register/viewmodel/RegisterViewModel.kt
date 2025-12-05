@@ -1,16 +1,17 @@
 package com.app.mathracer.ui.screens.register.viewmodel
 
 import android.content.Intent
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
 import com.app.mathracer.data.model.User
 import com.app.mathracer.data.repository.UserRemoteRepository
 import com.app.mathracer.data.CurrentUser
+import com.app.mathracer.data.repository.GarageRepository
+import com.app.mathracer.data.UserState
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -67,9 +68,34 @@ class RegisterViewModel : ViewModel() {
                             try {
                                 val resp = UserRemoteRepository.createUser(createdUser)
                                 if (resp.isSuccessful) CurrentUser.user = resp.body() else CurrentUser.user = createdUser
+                                com.app.mathracer.data.UserState.setCoins(CurrentUser.user?.coins ?: 0)
+                                 
+                                try {
+                                    val playerId = CurrentUser.user?.id ?: 0
+                                    if (playerId > 0) {
+                                        viewModelScope.launch {
+                                            try {
+                                                val repo = GarageRepository()
+                                                val charsRes = repo.getCharacters(playerId)
+                                                val bgsRes = repo.getBackgrounds(playerId)
+                                                val carsRes = repo.getCars(playerId)
+                                                val activeChar = charsRes.getOrNull()?.activeItem
+                                                val activeBg = bgsRes.getOrNull()?.activeItem
+                                                val activeCar = carsRes.getOrNull()?.activeItem
+                                                com.app.mathracer.data.CurrentUser.activeCharacterProductId = activeChar?.productId
+                                                com.app.mathracer.data.CurrentUser.activeBackgroundProductId = activeBg?.productId
+                                                com.app.mathracer.data.CurrentUser.activeVehicleProductId = activeCar?.productId
+                                                com.app.mathracer.data.UserState.setActiveCharacter(activeChar?.productId)
+                                                com.app.mathracer.data.UserState.setActiveBackground(activeBg?.productId)
+                                                com.app.mathracer.data.UserState.setActiveVehicle(activeCar?.productId)
+                                            } catch (_: Exception) { }
+                                        }
+                                    }
+                                } catch (_: Exception) { }
                             } catch (e: Exception) {
                                 android.util.Log.e("Register", "Error creando usuario en backend", e)
                                 CurrentUser.user = createdUser
+                                com.app.mathracer.data.UserState.setCoins(CurrentUser.user?.coins ?: 0)
                             }
                             _uiState.value = _uiState.value.copy(
                                 isLoading = false,
@@ -77,9 +103,10 @@ class RegisterViewModel : ViewModel() {
                             )
                         }
                     } else {
+                        val friendlyMessage = mapRegisterError(task.exception)
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
-                            errorMessage = task.exception?.localizedMessage ?: "Error desconocido"
+                            errorMessage = friendlyMessage
                         )
                     }
                 }
@@ -111,13 +138,38 @@ class RegisterViewModel : ViewModel() {
                                 username = firebaseUser.displayName
                             )
                             viewModelScope.launch {
-                                try {
+                                    try {
                                     val resp = UserRemoteRepository.createUser(createdUser)
                                     if (resp.isSuccessful) CurrentUser.user = resp.body() else CurrentUser.user = createdUser
+                                    com.app.mathracer.data.UserState.setCoins(CurrentUser.user?.coins ?: 0)
                                 } catch (e: Exception) {
                                     android.util.Log.e("Register", "Error creando usuario en backend", e)
                                     CurrentUser.user = createdUser
+                                    com.app.mathracer.data.UserState.setCoins(CurrentUser.user?.coins ?: 0)
                                 }
+                                 
+                                try {
+                                    val playerId = CurrentUser.user?.id ?: 0
+                                    if (playerId > 0) {
+                                        viewModelScope.launch {
+                                            try {
+                                                    val repo = GarageRepository()
+                                                    val charsRes = repo.getCharacters(playerId)
+                                                    val bgsRes = repo.getBackgrounds(playerId)
+                                                    val carsRes = repo.getCars(playerId)
+                                                    val activeChar = charsRes.getOrNull()?.activeItem
+                                                    val activeBg = bgsRes.getOrNull()?.activeItem
+                                                    val activeCar = carsRes.getOrNull()?.activeItem
+                                                    com.app.mathracer.data.CurrentUser.activeCharacterProductId = activeChar?.productId
+                                                    com.app.mathracer.data.CurrentUser.activeBackgroundProductId = activeBg?.productId
+                                                    com.app.mathracer.data.CurrentUser.activeVehicleProductId = activeCar?.productId
+                                                    com.app.mathracer.data.UserState.setActiveCharacter(activeChar?.productId)
+                                                    com.app.mathracer.data.UserState.setActiveBackground(activeBg?.productId)
+                                                    com.app.mathracer.data.UserState.setActiveVehicle(activeCar?.productId)
+                                            } catch (_: Exception) { }
+                                        }
+                                    }
+                                } catch (_: Exception) { }
                                 _uiState.value = _uiState.value.copy(
                                     isLoading = false,
                                     isSuccess = true
@@ -154,5 +206,23 @@ class RegisterViewModel : ViewModel() {
 
     fun resetSuccess() {
         _uiState.value = _uiState.value.copy(isSuccess = false)
+    }
+
+    private fun mapRegisterError(ex: Exception?): String {
+        val defaultMessage = "No se pudo crear la cuenta. Intentalo nuevamente."
+
+        val fb = ex as? FirebaseAuthException ?: return ex?.localizedMessage ?: defaultMessage
+        return when (fb.errorCode) {
+            "ERROR_INVALID_EMAIL" ->
+                "El correo no tiene un formato válido."
+            "ERROR_EMAIL_ALREADY_IN_USE" ->
+                "Ya existe una cuenta registrada con este correo."
+            "ERROR_WEAK_PASSWORD" ->
+                "La contraseña es demasiado débil. Usa al menos 6 caracteres."
+            "ERROR_OPERATION_NOT_ALLOWED" ->
+                "El registro con email y contraseña está deshabilitado."
+            else ->
+                defaultMessage
+        }
     }
 }

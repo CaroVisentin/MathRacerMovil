@@ -16,6 +16,7 @@ data class Player(
     val score: Int = 0
 )
 
+
 data class Question(
     val id: String,
     val text: String,
@@ -33,4 +34,11 @@ data class AnswerResult(
     val isCorrect: Boolean,
     val correctAnswer: Int,
     val playerId: String
+)
+
+data class PowerUpUsed(
+    val gameId: Int,
+    val playerId: Int,
+    val powerUpType: Int,
+    val targetPlayerId: Int?
 )

@@ -82,136 +82,157 @@ fun RegisterScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            // 🔹 Contenedor que envuelve TODO el formulario
             Box(
                 modifier = Modifier
-                    .padding(bottom = 28.dp)
-                    .background(Color.Black.copy(alpha = 0.8f), RoundedCornerShape(12.dp))
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .widthIn(max = 520.dp) // opcional: limita ancho en tablets
+                    .background(Color.Black.copy(alpha = 0.8f), RoundedCornerShape(16.dp))
+                    .padding(horizontal = 24.dp, vertical = 28.dp)
             ) {
-                Image(
-                    painter = painterResource(R.drawable.logo),
-                    contentDescription = "Mathi Racer",
-                    modifier = Modifier.width(200.dp),
-                    contentScale = ContentScale.Fit
-                )
-            }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
-            OutlinedTextField(
-                value = uiState.email,
-                onValueChange = viewModel::onEmailChange,
-                placeholder = { Text("Email", color = Color.White.copy(alpha = 0.6f),fontSize = 20.sp,) },
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
-                    .background(Color(0xCC1F1F1F)),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color.White,
-                    unfocusedBorderColor = Color.White.copy(alpha = 0.6f),
-                    cursorColor = Color.White
-                ),
-                textStyle = LocalTextStyle.current.copy(color = Color.White)
-            )
-            Spacer(Modifier.height(10.dp))
-
-            OutlinedTextField(
-                value = uiState.user,
-                onValueChange = viewModel::onUserChange,
-                placeholder = { Text("Usuario", color = Color.White.copy(alpha = 0.6f), fontSize = 20.sp,) },
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
-                    .background(Color(0xCC1F1F1F)),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color.White,
-                    unfocusedBorderColor = Color.White.copy(alpha = 0.6f),
-                    cursorColor = Color.White
-                ),
-                textStyle = LocalTextStyle.current.copy(color = Color.White)
-            )
-            Spacer(Modifier.height(10.dp))
-
-            var showPass by remember { mutableStateOf(false) }
-            OutlinedTextField(
-                value = uiState.password,
-                onValueChange = viewModel::onPasswordChange,
-                placeholder = { Text("Contraseña", color = Color.White.copy(alpha = 0.6f), fontSize = 20.sp,) },
-                visualTransformation = if (showPass) VisualTransformation.None else PasswordVisualTransformation(),
-                trailingIcon = {
-                    IconButton(onClick = { showPass = !showPass }) {
-                        Icon(
-                            imageVector = if (showPass) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                            contentDescription = null,
-                            tint = Color.White
-                        )
-                    }
-                },
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
-                    .background(Color(0xCC1F1F1F)),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color.White,
-                    unfocusedBorderColor = Color.White.copy(alpha = 0.6f),
-                    cursorColor = Color.White
-                ),
-                textStyle = LocalTextStyle.current.copy(color = Color.White)
-            )
-            Spacer(Modifier.height(10.dp))
-
-            var showRePass by remember { mutableStateOf(false) }
-            OutlinedTextField(
-                value = uiState.repeatPassword,
-                onValueChange = viewModel::onRepeatPasswordChange,
-                placeholder = { Text("Repetir contraseña", color = Color.White.copy(alpha = 0.6f), fontSize = 20.sp,) },
-                visualTransformation = if (showRePass) VisualTransformation.None else PasswordVisualTransformation(),
-                trailingIcon = {
-                    IconButton(onClick = { showRePass = !showRePass }) {
-                        Icon(
-                            imageVector = if (showRePass) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                            contentDescription = null,
-                            tint = Color.White
-                        )
-                    }
-                },
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
-                    .background(Color(0xCC1F1F1F)),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color.White,
-                    unfocusedBorderColor = Color.White.copy(alpha = 0.6f),
-                    cursorColor = Color.White
-                ),
-                textStyle = LocalTextStyle.current.copy(color = Color.White)
-            )
-
-            Spacer(Modifier.height(16.dp))
-
-            Button(
-                onClick = { viewModel.registerUser() },
-                modifier = Modifier.fillMaxWidth().height(48.dp),
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF2EB7A7),
-                    contentColor = Color.White
-                ),
-                enabled = !uiState.isLoading
-            ) {
-                if (uiState.isLoading)
-                    CircularProgressIndicator(
-                        color = Color.White,
-                        strokeWidth = 2.dp,
-                        modifier = Modifier.size(22.dp)
+                    // Logo (ya no en un Box aparte)
+                    Image(
+                        painter = painterResource(R.drawable.logo),
+                        contentDescription = "Mathi Racer",
+                        modifier = Modifier
+                            .width(200.dp)
+                            .padding(bottom = 24.dp),
+                        contentScale = ContentScale.Fit
                     )
-                else
-                    Text("Registrarse", fontWeight = FontWeight.Bold, fontSize = 20.sp)
-            }
 
-            Spacer(Modifier.height(12.dp))
+                    // Email
+                    OutlinedTextField(
+                        value = uiState.email,
+                        onValueChange = viewModel::onEmailChange,
+                        placeholder = { Text("Email", color = Color.White.copy(alpha = 0.6f), fontSize = 20.sp) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Color(0xCC1F1F1F)),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color.White,
+                            unfocusedBorderColor = Color.White.copy(alpha = 0.6f),
+                            cursorColor = Color.White
+                        ),
+                        textStyle = LocalTextStyle.current.copy(color = Color.White)
+                    )
+                    Spacer(Modifier.height(10.dp))
 
+                    // Usuario
+                    OutlinedTextField(
+                        value = uiState.user,
+                        onValueChange = viewModel::onUserChange,
+                        placeholder = { Text("Usuario", color = Color.White.copy(alpha = 0.6f), fontSize = 20.sp) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Color(0xCC1F1F1F)),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color.White,
+                            unfocusedBorderColor = Color.White.copy(alpha = 0.6f),
+                            cursorColor = Color.White
+                        ),
+                        textStyle = LocalTextStyle.current.copy(color = Color.White)
+                    )
+                    Spacer(Modifier.height(10.dp))
 
-            Spacer(Modifier.height(16.dp))
-            Row {
-                Text("¿Ya tenés cuenta? ", color = Color.White, fontSize = 20.sp,)
-                Text(
-                    "Iniciá sesión acá",
-                    color = Color(0xFF7FD7FF),
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.clickable { onNavigateToLogin() }
-                )
+                    // Contraseña
+                    var showPass by remember { mutableStateOf(false) }
+                    OutlinedTextField(
+                        value = uiState.password,
+                        onValueChange = viewModel::onPasswordChange,
+                        placeholder = { Text("Contraseña", color = Color.White.copy(alpha = 0.6f), fontSize = 20.sp) },
+                        visualTransformation = if (showPass) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(onClick = { showPass = !showPass }) {
+                                Icon(
+                                    imageVector = if (showPass) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                    contentDescription = null,
+                                    tint = Color.White
+                                )
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Color(0xCC1F1F1F)),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color.White,
+                            unfocusedBorderColor = Color.White.copy(alpha = 0.6f),
+                            cursorColor = Color.White
+                        ),
+                        textStyle = LocalTextStyle.current.copy(color = Color.White)
+                    )
+                    Spacer(Modifier.height(10.dp))
+
+                    // Repetir contraseña
+                    var showRePass by remember { mutableStateOf(false) }
+                    OutlinedTextField(
+                        value = uiState.repeatPassword,
+                        onValueChange = viewModel::onRepeatPasswordChange,
+                        placeholder = { Text("Repetir contraseña", color = Color.White.copy(alpha = 0.6f), fontSize = 20.sp) },
+                        visualTransformation = if (showRePass) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(onClick = { showRePass = !showRePass }) {
+                                Icon(
+                                    imageVector = if (showRePass) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                    contentDescription = null,
+                                    tint = Color.White
+                                )
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Color(0xCC1F1F1F)),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color.White,
+                            unfocusedBorderColor = Color.White.copy(alpha = 0.6f),
+                            cursorColor = Color.White
+                        ),
+                        textStyle = LocalTextStyle.current.copy(color = Color.White)
+                    )
+
+                    Spacer(Modifier.height(16.dp))
+
+                    // Botón registrar
+                    Button(
+                        onClick = { viewModel.registerUser() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF2EB7A7),
+                            contentColor = Color.White
+                        ),
+                        enabled = !uiState.isLoading
+                    ) {
+                        if (uiState.isLoading)
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                strokeWidth = 2.dp,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        else
+                            Text("Registrarse", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    // Link a login
+                    Row {
+                        Text("¿Ya tenés cuenta? ", color = Color.White, fontSize = 20.sp)
+                        Text(
+                            "Iniciá sesión acá",
+                            color = Color(0xFF7FD7FF),
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.clickable { onNavigateToLogin() }
+                        )
+                    }
+                }
             }
         }
     }

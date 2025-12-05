@@ -2,6 +2,7 @@ package com.app.mathracer.ui.navigation
 
 object Routes {
     const val HOME = "home"
+    const val GARAGE = "garage"
     const val SPLASH = "splash"
     // Build a HOME route with optional userName and userEmail query params
     fun homeWithUser(userName: String?, userEmail: String?): String {
@@ -10,10 +11,14 @@ object Routes {
         return "home?userName=$name&userEmail=$email"
     }
     const val WAITING_OPPONENT = "waiting_opponent"
+    const val FREE_PRACTICE_OPTIONS = "free_practice_options"
+    const val INFINITE_GAME = "infinite_game"
+    fun waitingWithGame(gameId: String) = "waiting_opponent/$gameId"
     const val MULTIPLAYER_OPTIONS = "multiplayer_options"
     const val CREATE_MATCH = "create_match"
     const val JOIN_MATCHES = "join_matches"
     const val INVITE_FRIENDS = "invite_friends"
+    const val INVITATION_INBOX = "invitation_inbox"
     const val GAME = "game"
     const val SIGNALR_TEST = "signalr_test"
     const val LOGIN = "login"
@@ -23,10 +28,15 @@ object Routes {
     const val WORLDS = "worlds"
     const val LEVELS = "levels"
     const val RANKING = "ranking"
+    const val SHOP = "shop"
     const val HISTORY_GAME = "history_game"
     const val CHEST = "chest"
+    const val CHEST_WITH_PARAM = "chest/{type}"
+    const val INSUFFICIENT_ENERGY = "insufficient_energy"
 
     // Rutas con argumentos
     fun gameWithIdAndPlayer(gameId: String, playerName: String) = "game/$gameId/$playerName"
     fun historyGameWithLevelId(levelId: Int, resultType: String) = "history_game/$levelId/$resultType"
+    fun infiniteGameWithId(gameId: String) = "infinite_game/$gameId"
+    fun chestWithType(type: String) = "chest/$type"
 }

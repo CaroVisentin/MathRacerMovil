@@ -21,6 +21,16 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import com.app.mathracer.data.repository.GameInvitationRepository
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
@@ -42,11 +52,27 @@ fun MultiplayerOptionsScreen(
     onCreateGame: () -> Unit = {},
     onJoinGame: () -> Unit = {},
     onInviteFriend: () -> Unit = {},
+    onInvitationInbox: () -> Unit = {},
     onCompetitiveMatch: () -> Unit = {},
     onRanking: () -> Unit = {},
     onBack: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    var invitationsCount by remember { mutableStateOf<Int?>(null) }
+
+    // Load invitations count on enter
+    LaunchedEffect(Unit) {
+        try {
+            val resp = GameInvitationRepository.getInbox()
+            if (resp.isSuccessful) {
+                invitationsCount = resp.body()?.totalInvitations ?: 0
+            } else {
+                invitationsCount = 0
+            }
+        } catch (e: Exception) {
+            invitationsCount = 0
+        }
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -62,25 +88,7 @@ fun MultiplayerOptionsScreen(
             )
 
             
-            androidx.compose.foundation.layout.Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-                    .padding(start = 16.dp, end = 16.dp)
-                    .align(Alignment.TopCenter)
-            ) {
-                IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
-                    Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Volver", tint = CyanMR)
-                }
-                Text(
-                    text = "Multijugador",
-                    modifier = Modifier.align(Alignment.Center),
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = CyanMR
-                )
-            }
-
+         
              
             androidx.compose.foundation.layout.Box(
                 modifier = Modifier
@@ -141,6 +149,38 @@ fun MultiplayerOptionsScreen(
                                 fontWeight = FontWeight.Bold,
                                 color = CyanMR,
                             )
+                        }
+
+                        TextButton(
+                            onClick = onInvitationInbox,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(width = 2.dp, color = CyanMR, shape = RoundedCornerShape(8.dp))
+                                .background(Color.Black.copy(alpha = 0.6f), shape = RoundedCornerShape(8.dp))
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "Buzon de invitaciones",
+                                    fontSize = 24.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = CyanMR,
+                                )
+
+                                // show badge if there are invitations
+                                invitationsCount?.let { count ->
+                                    if (count > 0) {
+                                        Box(
+                                            modifier = Modifier
+                                                .padding(start = 12.dp)
+                                                .size(20.dp)
+                                                .background(color = Color.Red, shape = androidx.compose.foundation.shape.CircleShape),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(text = count.toString(), color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
+                            }
                         }
 
                         TextButton(

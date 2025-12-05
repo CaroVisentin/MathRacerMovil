@@ -29,6 +29,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import com.app.mathracer.ui.components.ProductImage
+import com.app.mathracer.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,8 +44,7 @@ fun Friends(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp)
-            .background(Color.Black),
+            .padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(16.dp))
@@ -100,7 +101,9 @@ data class Friend(
     val name: String,
     val score: String,
     val avatarRes: Int,
-    val carRes: Int
+    val carRes: Int,
+    val avatarProductId: Int? = null,
+    val carProductId: Int? = null
 )
 
 @Composable
@@ -115,12 +118,13 @@ fun FriendCard(friend: Friend, onDelete: () -> Unit) {
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Image(
-                painter = painterResource(friend.avatarRes),
-                contentDescription = "Avatar de ${friend.name}",
+            ProductImage(
+                productId = friend.avatarProductId,
+                fallbackRes = friend.avatarRes,
                 modifier = Modifier
                     .size(40.dp)
-                    .clip(CircleShape)
+                    .clip(CircleShape),
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
@@ -132,11 +136,14 @@ fun FriendCard(friend: Friend, onDelete: () -> Unit) {
         }
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Image(
-                painter = painterResource(friend.carRes),
-                contentDescription = "Auto de ${friend.name}",
-                modifier = Modifier.size(40.dp)
+            /*
+            ProductImage(
+                productId = friend.carProductId,
+                fallbackRes = friend.carRes,
+                modifier = Modifier.size(40.dp),
+                contentScale = androidx.compose.ui.layout.ContentScale.Fit
             )
+             */
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = friend.score,

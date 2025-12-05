@@ -1,3 +1,4 @@
+// This is a noop patch
 package com.app.mathracer.ui.screens.historyGame.viewmodel
 
 import androidx.lifecycle.ViewModel
@@ -6,6 +7,10 @@ import com.app.mathracer.data.model.SoloGameUpdateResponse
 import com.app.mathracer.domain.usecases.ObserveSoloGameUpdatesUseCase
 import com.app.mathracer.domain.usecases.StartSoloGameUseCase
 import com.app.mathracer.domain.usecases.SubmitSoloAnswerUseCase
+import com.app.mathracer.data.CurrentUser
+import com.app.mathracer.data.UserState
+import com.app.mathracer.data.repository.UserRemoteRepository
+import com.app.mathracer.domain.usecases.SubmitSoloWildcardUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -23,6 +28,8 @@ class HistoryGameViewModel @Inject constructor(
     private val startSoloGameUseCase: StartSoloGameUseCase,
     private val observeSoloGameUpdatesUseCase: ObserveSoloGameUpdatesUseCase,
     private val submitSoloAnswerUseCase: SubmitSoloAnswerUseCase
+    ,
+    private val submitSoloWildcardUseCase: SubmitSoloWildcardUseCase
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(HistoryGameUiState())
@@ -47,6 +54,18 @@ class HistoryGameViewModel @Inject constructor(
             result.fold(
                 onSuccess = { gameStart ->
                     android.util.Log.d("HistoryGameViewModel", "✅ Game started: gameId=${gameStart.gameId}, playerId=${gameStart.playerId}")
+                    val w1 = gameStart.availableWildcards.firstOrNull { it.wildcardId == 1 }?.quantity ?: 0
+                    val w2 = gameStart.availableWildcards.firstOrNull { it.wildcardId == 2 }?.quantity ?: 0
+                    val w3 = gameStart.availableWildcards.firstOrNull { it.wildcardId == 3 }?.quantity ?: 0
+
+                    val carProductId = gameStart.playerProducts
+                        ?.firstOrNull { it.productTypeId == 1 }
+                        ?.productId
+
+                    val trackProductId = gameStart.playerProducts
+                        ?.firstOrNull { it.productTypeId == 3 }
+                        ?.productId
+
                     _uiState.value = _uiState.value.copy(
                         gameId = gameStart.gameId,
                         playerId = gameStart.playerId,
@@ -59,6 +78,14 @@ class HistoryGameViewModel @Inject constructor(
                         options = gameStart.currentQuestion?.options ?: emptyList(),
                         correctAnswer = null,
                         timeLeft = gameStart.timePerEquation,
+                        wildcard1Available = w1 > 0,
+                        wildcard2Available = w2 > 0,
+                        wildcard3Available = w3 > 0,
+                        wildcard1Quantity = w1,
+                        wildcard2Quantity = w2,
+                        wildcard3Quantity = w3,
+                        playerCarRes = carProductId ?: 1,
+                        playerTrackRes = trackProductId ?: 1
                     )
                     startPolling(gameStart.gameId, gameStart.timePerEquation)
                     startQuestionTimer()
@@ -77,8 +104,70 @@ class HistoryGameViewModel @Inject constructor(
     private fun startPolling(gameId: Int, timePerEquation: Int) {
         pollingJob?.cancel()
         pollingJob = viewModelScope.launch {
-            observeSoloGameUpdatesUseCase(gameId, intervalMs = timePerEquation*1000L.toLong()).collect { update ->
+            observeSoloGameUpdatesUseCase(
+                gameId,
+                intervalMs = timePerEquation * 1000L.toLong()
+            ).collect { update ->
                 update?.let { processGameUpdate(it) }
+            }
+        }
+    }
+
+    fun useWildcard(wildcardId: Int) {
+        val gid = _uiState.value.gameId ?: return
+        val current = _uiState.value
+
+        val isAvailable = when (wildcardId) {
+            1 -> current.wildcard1Available
+            2 -> current.wildcard2Available
+            3 -> current.wildcard3Available
+            else -> false
+        }
+        if (!isAvailable || current.wildcardsLocked) {
+            _uiState.value = current.copy(error = "Comodín no disponible")
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                val result = submitSoloWildcardUseCase(gid, wildcardId)
+                result.fold(
+                    onSuccess = { wc ->
+                        val cur = _uiState.value
+                        val newOptions = when {
+                            !wc.modifiedOptions.isNullOrEmpty() -> wc.modifiedOptions
+                            wc.newQuestion != null -> wc.newQuestion.options
+                            else -> cur.options
+                        }
+
+                        val newQuestionText = wc.newQuestion?.equation ?: cur.currentQuestion
+
+                        val updated = cur.copy(
+                            options = newOptions,
+                            currentQuestion = newQuestionText,
+                            doubleProgressActive = wc.doubleProgressActive,
+                            wildcardsLocked = true,
+                            wildcard1Quantity = wc.remainingQuantity.takeIf { wildcardId == 1 } ?: cur.wildcard1Quantity,
+                            wildcard2Quantity = wc.remainingQuantity.takeIf { wildcardId == 2 } ?: cur.wildcard2Quantity,
+                            wildcard3Quantity = wc.remainingQuantity.takeIf { wildcardId == 3 } ?: cur.wildcard3Quantity,
+                            wildcard1Available = if (wildcardId == 1) false else cur.wildcard1Available,
+                            wildcard2Available = if (wildcardId == 2) false else cur.wildcard2Available,
+                            wildcard3Available = if (wildcardId == 3) false else cur.wildcard3Available,
+                            wildcard1Used = if (wildcardId == 1) true else cur.wildcard1Used,
+                            wildcard2Used = if (wildcardId == 2) true else cur.wildcard2Used,
+                            wildcard3Used = if (wildcardId == 3) true else cur.wildcard3Used
+                        )
+
+                        _uiState.value = updated
+                    },
+                    onFailure = { ex ->
+                        android.util.Log.e("HistoryGameViewModel", "Error usando wildcard: ${ex.message}")
+                        _uiState.value = _uiState.value.copy(error = "Error al usar comodín: ${ex.message}")
+                    }
+                )
+            } catch (e: Exception) {
+                android.util.Log.e("HistoryGameViewModel", "Exception usando wildcard: ${e.message}")
+                _uiState.value = _uiState.value.copy(error = "Error al usar comodín: ${e.message}")
             }
         }
     }
@@ -143,7 +232,11 @@ class HistoryGameViewModel @Inject constructor(
         )
 
         if (hasNewQuestion && !_uiState.value.gameEnded) {
-            startQuestionTimer() // <<< reinicia timer en pregunta nueva
+            _uiState.value = _uiState.value.copy(wildcardsLocked = false)
+        }
+
+        if (hasNewQuestion && !_uiState.value.gameEnded) {
+            startQuestionTimer()
         }
 
         if (gameFinished) {
@@ -159,13 +252,23 @@ class HistoryGameViewModel @Inject constructor(
         val correctAnswer = currentState.correctAnswer
         if (correctAnswer == null) return
 
-        val filteredOptions = currentState.options.filter { it == correctAnswer }.take(1) +
-                            currentState.options.filter { it != correctAnswer }.shuffled().take(1)
+        val opts = currentState.options
+        val n = opts.size
+        val incorrect = opts.filter { it != correctAnswer }.shuffled()
 
-        val shuffledOptions = filteredOptions.shuffled()
+        val removeCount = when (n) {
+            2 -> 1
+            3 -> 1
+            else -> if (n >= 4) 2 else 1
+        }
+
+        val remainingIncorrectCount = (incorrect.size - removeCount).coerceAtLeast(0)
+        val remainingIncorrect = incorrect.take(remainingIncorrectCount)
+
+        val filteredOptions = (listOf(correctAnswer) + remainingIncorrect).shuffled()
 
         _uiState.value = currentState.copy(
-            options = shuffledOptions,
+            options = filteredOptions,
             fireExtinguisherActive = true,
             fireExtinguisherCount = 0
         )
@@ -178,7 +281,6 @@ class HistoryGameViewModel @Inject constructor(
         viewModelScope.launch {
             android.util.Log.d("HistoryGameViewModel", "🎯 Submitting answer: selected=$selectedOption")
 
-            // Estado inicial al tocar una opción
             _uiState.value = currentState.copy(
                 selectedOption = selectedOption,
                 showFeedback = false,
@@ -201,7 +303,6 @@ class HistoryGameViewModel @Inject constructor(
                 onSuccess = { answerResult ->
                     android.util.Log.d("HistoryGameViewModel", "📤 Answer sent successfully to server")
 
-                    // Guardar la respuesta correcta provista por el server
                     _uiState.value = _uiState.value.copy(
                         correctAnswer = answerResult.correctAnswer
                     )
@@ -212,7 +313,6 @@ class HistoryGameViewModel @Inject constructor(
                     val newMachineScore = answerResult.machineScore
                     val reachedEnd = newPlayerScore >= before.totalQuestions
 
-                    // Actualizar feedback y progreso con la respuesta del server
                     val newPlayerProgress = maxOf(before.playerProgress, minOf(newPlayerScore, before.totalQuestions))
                     val newMachineProgress = maxOf(before.machineProgress, minOf(newMachineScore, before.totalQuestions))
 
@@ -221,33 +321,57 @@ class HistoryGameViewModel @Inject constructor(
                         showFeedback = true,
                         playerScore = newPlayerScore,
                         machineScore = newMachineScore,
-                        // Solo actualizar progreso si es mayor o igual al actual (nunca retroceder)
                         playerProgress = newPlayerProgress,
                         machineProgress = newMachineProgress,
                         gameEnded = reachedEnd || before.gameEnded,
                         winner = if (reachedEnd) "¡Ganaste!" else before.winner,
                         correctAnswer = answerResult.correctAnswer,
-                        // Penalización visual si fue incorrecta (se limpia más abajo)
+                        coinsAwarded = answerResult.coinsEarned ?: before.coinsAwarded,
                         isPenalized = !actuallyCorrect
                     )
 
-                    // Pequeña penalización visual si estuvo mal (opcional)
+                    try {
+                        answerResult.remainingCoins?.let { rc ->
+                            val earned = answerResult.coinsEarned ?: 0
+                            val displayCoins = rc + earned
+                            android.util.Log.d("HistoryGameViewModel", "Applying remainingCoins from backend: rc=$rc, coinsEarned=$earned, display=$displayCoins")
+                            CurrentUser.user?.coins = displayCoins
+                            UserState.setCoins(displayCoins)
+                            val pid = before.playerId ?: 0
+                            if (pid > 0) {
+                                viewModelScope.launch {
+                                    try {
+                                        val userResp = UserRemoteRepository.getUserByPlayerId(pid)
+                                        if (userResp.isSuccessful) {
+                                            val u = userResp.body()
+                                            u?.let {
+                                                CurrentUser.user = it
+                                                UserState.setCoins(it.coins ?: 0)
+                                            }
+                                        }
+                                    } catch (e: Exception) {
+                                        android.util.Log.e("HistoryGameViewModel", "Error refreshing user after solo finish: ${e.message}")
+                                    }
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("HistoryGameViewModel", "Error applying remainingCoins from answerResult: ${e.message}")
+                    }
+
                     if (!actuallyCorrect) {
                         android.util.Log.d("HistoryGameViewModel", "❌ Wrong answer. Applying penalty visual...")
                         delay(1000)
                         _uiState.value = _uiState.value.copy(isPenalized = false)
                     }
 
-                    // Si el juego terminó, no pedimos más preguntas
                     if (_uiState.value.gameEnded) return@fold
 
-                    // Mantener feedback visible 3s y luego refrescar 1 vez la siguiente pregunta
                     delay(3000)
 
                     val gid = _uiState.value.gameId
                     if (gid != null) {
                         try {
-                            // One-shot: usamos el observe con intervalMs=0L y tomamos la primera emisión
                             val update = observeSoloGameUpdatesUseCase(gid, intervalMs = 0L).firstOrNull()
                             update?.let { processGameUpdate(it) }
                         } catch (e: Exception) {
@@ -255,7 +379,6 @@ class HistoryGameViewModel @Inject constructor(
                         }
                     }
 
-                    // Limpiar feedback/selección para la nueva pregunta (si llegó)
                     _uiState.value = _uiState.value.copy(
                         selectedOption = null,
                         showFeedback = false,
@@ -316,7 +439,6 @@ class HistoryGameViewModel @Inject constructor(
                 _uiState.value = _uiState.value.copy(timeLeft = _uiState.value.timeLeft - 1)
             }
 
-            // Si se acabó el tiempo sin responder y no terminó el juego
             if (_uiState.value.timeLeft <= 0 && _uiState.value.canAnswer && !_uiState.value.gameEnded) {
                 onTimeExpired()
             }
@@ -333,34 +455,24 @@ class HistoryGameViewModel @Inject constructor(
         val gid = state.gameId ?: return
 
         viewModelScope.launch {
-            // Intento 1: avisar al backend como "respuesta incorrecta" usando un sentinela
             val result = runCatching { submitSoloAnswerUseCase(gid, TIMEOUT_SENTINEL_ANSWER) }
 
             result.fold(
                 onSuccess = { answerResult ->
-                    // Forzamos feedback de incorrecta con datos del server (si actualiza score/vidas)
                     _uiState.value = _uiState.value.copy(
                         isLastAnswerCorrect = false,
                         showFeedback = true,
-//                        correctAnswer = answerResult.correctAnswer, // por si vuelve
-//                        playerScore = answerResult.playerScore,
-//                        machineScore = answerResult.machineScore,
-//                        playerProgress = minOf(answerResult.playerScore, state.totalQuestions),
-//                        machineProgress = minOf(answerResult.machineScore, state.totalQuestions),
-                        livesRemaining = _uiState.value.livesRemaining, // (o tomar del server si viene)
+                        livesRemaining = _uiState.value.livesRemaining,
                         canAnswer = false,
                         isPenalized = true
                     )
 
-                    // Breve penalización visual opcional
                     delay(1000)
                     _uiState.value = _uiState.value.copy(isPenalized = false)
 
-                    // Mantener feedback total 3s
                     val remaining = 3000L - 1000L
                     if (remaining > 0) delay(remaining)
 
-                    // Traer la siguiente y limpiar
                     requestNextQuestionOnce()
                     _uiState.value = _uiState.value.copy(
                         selectedOption = null,
@@ -371,7 +483,6 @@ class HistoryGameViewModel @Inject constructor(
                     if (!_uiState.value.gameEnded) startQuestionTimer()
                 },
                 onFailure = {
-                    // Fallback local si la API no acepta el sentinela: tratamos como incorrecta local
                     _uiState.value = _uiState.value.copy(
                         isLastAnswerCorrect = false,
                         showFeedback = true,
@@ -380,7 +491,7 @@ class HistoryGameViewModel @Inject constructor(
                     )
                     delay(1000)
                     _uiState.value = _uiState.value.copy(isPenalized = false)
-                    delay(2000) // completa los ~3s de feedback
+                    delay(2000)
 
                     requestNextQuestionOnce()
                     _uiState.value = _uiState.value.copy(
@@ -398,11 +509,10 @@ class HistoryGameViewModel @Inject constructor(
     private fun showFeedbackAndLoadNext() {
         feedbackJob?.cancel()
         feedbackJob = viewModelScope.launch {
-            delay(3000) // <<< 3 segundos de feedback
+            delay(3000)
 
             requestNextQuestionOnce()
 
-            // Preparar UI para nueva pregunta
             _uiState.value = _uiState.value.copy(
                 selectedOption = null,
                 showFeedback = false,
@@ -419,7 +529,6 @@ class HistoryGameViewModel @Inject constructor(
     private suspend fun requestNextQuestionOnce() {
         val gid = _uiState.value.gameId ?: return
         try {
-            // Usamos el flujo del repository con intervalMs = 0 (one-shot)
             val update = observeSoloGameUpdatesUseCase(gid, intervalMs = 0L).firstOrNull()
             update?.let { processGameUpdate(it) }
         } catch (e: Exception) {

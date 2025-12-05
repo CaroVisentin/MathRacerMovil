@@ -75,142 +75,232 @@ fun InviteFriendsScreen(
                 modifier = Modifier.fillMaxSize()
             )
 
-        
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-                    .padding(start = 16.dp, end = 16.dp)
-            ) {
-                IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
-                    Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Volver", tint = CyanMR)
-                }
-                Text(
-                    text = "Invitar amigos",
-                    modifier = Modifier.align(Alignment.Center),
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = CyanMR
-                )
-            }
 
-            
+
+
+
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 40.dp)
-                        .background(Color(0xFF07112B).copy(alpha = 0.6f), shape = RoundedCornerShape(16.dp))
+                        .background(
+                            Color(0xFF07112B).copy(alpha = 0.6f),
+                            shape = RoundedCornerShape(16.dp)
+                        )
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    
-                    LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                        items(friends) { friend ->
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 6.dp)
-                                    .border(BorderStroke(2.dp, CyanMR), shape = RoundedCornerShape(8.dp))
-                                    .background(Color(0xFF07112B).copy(alpha = 0.3f), shape = RoundedCornerShape(8.dp))
-                                    .padding(12.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(text = friend.name, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                                        Text(text = "Puntos: ${friend.points}", color = Color(0xFFBFDFFF), fontSize = 14.sp)
-                                    }
 
-                                    Button(
-                                        onClick = {
-                                            selectedFriend = friend
-                                            // open dialog for difficulty/result selection
-                                            showInviteDialog = true
-                                        },
-                                        modifier = Modifier.widthIn(min = 88.dp),
-                                        colors = ButtonDefaults.buttonColors(containerColor = CyanMR)
-                                    ) { Text(text = "Invitar", color = Color.White) }
+                    LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                        if (friends.isEmpty()) {
+                            item {
+                                Box(
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "No se encontraron amigos.",
+                                        color = Color.LightGray
+                                    )
+                                }
+                            }
+                        } else {
+                            items(friends) { friend ->
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 6.dp)
+                                        .border(
+                                            BorderStroke(2.dp, CyanMR),
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                        .background(
+                                            Color(0xFF07112B).copy(alpha = 0.3f),
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                        .padding(12.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = friend.name,
+                                                color = Color.White,
+                                                fontSize = 20.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                            Text(
+                                                text = "Puntos: ${friend.points}",
+                                                color = Color(0xFFBFDFFF),
+                                                fontSize = 14.sp
+                                            )
+                                        }
+
+                                        Button(
+                                            onClick = {
+                                                selectedFriend = friend
+                                                showInviteDialog = true
+                                            },
+                                            modifier = Modifier.widthIn(min = 88.dp),
+                                            colors = ButtonDefaults.buttonColors(containerColor = CyanMR)
+                                        ) { Text(text = "Invitar", color = Color.White) }
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
 
-            if (showInviteDialog && selectedFriend != null) {
-                androidx.compose.ui.window.Dialog(onDismissRequest = { showInviteDialog = false; selectedFriend = null }) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 40.dp)
-                            .background(Color(0xFF07112B).copy(alpha = 0.95f), shape = RoundedCornerShape(12.dp))
-                            .padding(16.dp)
-                    ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-                            Text(text = "Invitar a ${selectedFriend?.name}", color = CyanMR, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                if (showInviteDialog && selectedFriend != null) {
+                    androidx.compose.ui.window.Dialog(onDismissRequest = {
+                        showInviteDialog = false; selectedFriend = null
+                    }) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 40.dp)
+                                .background(
+                                    Color(0xFF07112B).copy(alpha = 0.95f),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .padding(16.dp)
+                        ) {
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = "Invitar a ${selectedFriend?.name}",
+                                    color = CyanMR,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
 
-                            Text(text = "Dificultad", color = Color.White)
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                TextButton(
-                                    onClick = { difficulty = "Fácil" },
-                                    modifier = Modifier
-                                        .border(width = 2.dp, color = CyanMR, shape = RoundedCornerShape(8.dp))
-                                        .background(if (difficulty == "Fácil") Color(0xFF0B2A4A) else Color.Transparent, shape = RoundedCornerShape(8.dp))
-                                ) { Text(text = "Fácil", color = CyanMR) }
-                                TextButton(
-                                    onClick = { difficulty = "Medio" },
-                                    modifier = Modifier
-                                        .border(width = 2.dp, color = CyanMR, shape = RoundedCornerShape(8.dp))
-                                        .background(if (difficulty == "Medio") Color(0xFF0B2A4A) else Color.Transparent, shape = RoundedCornerShape(8.dp))
-                                ) { Text(text = "Medio", color = CyanMR) }
-                                TextButton(
-                                    onClick = { difficulty = "Difícil" },
-                                    modifier = Modifier
-                                        .border(width = 2.dp, color = CyanMR, shape = RoundedCornerShape(8.dp))
-                                        .background(if (difficulty == "Difícil") Color(0xFF0B2A4A) else Color.Transparent, shape = RoundedCornerShape(8.dp))
-                                ) { Text(text = "Difícil", color = CyanMR) }
-                            }
+                                Text(text = "Dificultad", color = Color.White)
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    TextButton(
+                                        onClick = { difficulty = "Fácil" },
+                                        modifier = Modifier
+                                            .border(
+                                                width = 2.dp,
+                                                color = CyanMR,
+                                                shape = RoundedCornerShape(8.dp)
+                                            )
+                                            .background(
+                                                if (difficulty == "Fácil") Color(0xFF0B2A4A) else Color.Transparent,
+                                                shape = RoundedCornerShape(8.dp)
+                                            )
+                                    ) { Text(text = "Fácil", color = CyanMR) }
+                                    TextButton(
+                                        onClick = { difficulty = "Medio" },
+                                        modifier = Modifier
+                                            .border(
+                                                width = 2.dp,
+                                                color = CyanMR,
+                                                shape = RoundedCornerShape(8.dp)
+                                            )
+                                            .background(
+                                                if (difficulty == "Medio") Color(0xFF0B2A4A) else Color.Transparent,
+                                                shape = RoundedCornerShape(8.dp)
+                                            )
+                                    ) { Text(text = "Medio", color = CyanMR) }
+                                    TextButton(
+                                        onClick = { difficulty = "Difícil" },
+                                        modifier = Modifier
+                                            .border(
+                                                width = 2.dp,
+                                                color = CyanMR,
+                                                shape = RoundedCornerShape(8.dp)
+                                            )
+                                            .background(
+                                                if (difficulty == "Difícil") Color(
+                                                    0xFF0B2A4A
+                                                ) else Color.Transparent,
+                                                shape = RoundedCornerShape(8.dp)
+                                            )
+                                    ) { Text(text = "Difícil", color = CyanMR) }
+                                }
 
-                            Text(text = "Tipo de resultado", color = Color.White)
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                TextButton(
-                                    onClick = { resultType = "Mayor" },
-                                    modifier = Modifier
-                                        .border(width = 2.dp, color = CyanMR, shape = RoundedCornerShape(8.dp))
-                                        .background(if (resultType == "Mayor") Color(0xFF0B2A4A) else Color.Transparent, shape = RoundedCornerShape(8.dp))
-                                ) { Text(text = "Mayor", color = CyanMR) }
-                                TextButton(
-                                    onClick = { resultType = "Menor" },
-                                    modifier = Modifier
-                                        .border(width = 2.dp, color = CyanMR, shape = RoundedCornerShape(8.dp))
-                                        .background(if (resultType == "Menor") Color(0xFF0B2A4A) else Color.Transparent, shape = RoundedCornerShape(8.dp))
-                                ) { Text(text = "Menor", color = CyanMR) }
-                            }
+                                Text(text = "Tipo de resultado", color = Color.White)
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    TextButton(
+                                        onClick = { resultType = "Mayor" },
+                                        modifier = Modifier
+                                            .border(
+                                                width = 2.dp,
+                                                color = CyanMR,
+                                                shape = RoundedCornerShape(8.dp)
+                                            )
+                                            .background(
+                                                if (resultType == "Mayor") Color(0xFF0B2A4A) else Color.Transparent,
+                                                shape = RoundedCornerShape(8.dp)
+                                            )
+                                    ) { Text(text = "Mayor", color = CyanMR) }
+                                    TextButton(
+                                        onClick = { resultType = "Menor" },
+                                        modifier = Modifier
+                                            .border(
+                                                width = 2.dp,
+                                                color = CyanMR,
+                                                shape = RoundedCornerShape(8.dp)
+                                            )
+                                            .background(
+                                                if (resultType == "Menor") Color(0xFF0B2A4A) else Color.Transparent,
+                                                shape = RoundedCornerShape(8.dp)
+                                            )
+                                    ) { Text(text = "Menor", color = CyanMR) }
+                                }
 
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                TextButton(
-                                    onClick = { showInviteDialog = false; selectedFriend = null },
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .border(width = 2.dp, color = CyanMR, shape = RoundedCornerShape(8.dp))
-                                        .background(Color(0xFF07112B).copy(alpha = 0.6f), shape = RoundedCornerShape(8.dp))
-                                ) { Text(text = "Cancelar", color = CyanMR) }
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    TextButton(
+                                        onClick = {
+                                            showInviteDialog = false; selectedFriend = null
+                                        },
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .border(
+                                                width = 2.dp,
+                                                color = CyanMR,
+                                                shape = RoundedCornerShape(8.dp)
+                                            )
+                                            .background(
+                                                Color(0xFF07112B).copy(alpha = 0.6f),
+                                                shape = RoundedCornerShape(8.dp)
+                                            )
+                                    ) { Text(text = "Cancelar", color = CyanMR) }
 
-                                TextButton(
-                                    onClick = {
-                                        selectedFriend?.let { onInvite(it.id, difficulty, resultType) }
-                                        showInviteDialog = false
-                                        selectedFriend = null
-                                    },
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .border(width = 2.dp, color = CyanMR, shape = RoundedCornerShape(8.dp))
-                                        .background(Color(0xFF07112B).copy(alpha = 0.6f), shape = RoundedCornerShape(8.dp))
-                                ) { Text(text = "Invitar", color = CyanMR) }
+                                    TextButton(
+                                        onClick = {
+                                            selectedFriend?.let {
+                                                onInvite(
+                                                    it.id,
+                                                    difficulty,
+                                                    resultType
+                                                )
+                                            }
+                                            showInviteDialog = false
+                                            selectedFriend = null
+                                        },
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .border(
+                                                width = 2.dp,
+                                                color = CyanMR,
+                                                shape = RoundedCornerShape(8.dp)
+                                            )
+                                            .background(
+                                                Color(0xFF07112B).copy(alpha = 0.6f),
+                                                shape = RoundedCornerShape(8.dp)
+                                            )
+                                    ) { Text(text = "Invitar", color = CyanMR) }
+                                }
                             }
                         }
                     }

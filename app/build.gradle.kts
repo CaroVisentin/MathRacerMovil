@@ -21,9 +21,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        // Base URL for local backend running on your machine.
-        // Use 10.0.2.2 for Android emulator -> maps to host localhost.
         buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:5153/api/\"")
+        buildConfigField("String", "HUB_URL", "\"http://10.0.2.2:5153\"")
     }
 
     buildTypes {
@@ -116,4 +115,7 @@ dependencies {
     implementation(libs.androidx.animation)
     
     implementation("androidx.datastore:datastore-preferences:1.0.0")
+
+    //mp
+    implementation (libs.androidx.browser)
 }

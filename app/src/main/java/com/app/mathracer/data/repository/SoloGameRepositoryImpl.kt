@@ -1,16 +1,19 @@
-package com.app.mathracer.data.repositories
+package com.app.mathracer.data.repository
 
+import android.util.Log
 import com.app.mathracer.data.model.SoloAnswerResponse
 import com.app.mathracer.data.model.SoloGameStartResponse
 import com.app.mathracer.data.model.SoloGameUpdateResponse
+import com.app.mathracer.data.model.WildCard
 import com.app.mathracer.data.network.RetrofitClient
-import com.app.mathracer.data.repository.UserRemoteRepository
 import com.app.mathracer.domain.repositories.SoloGameRepository
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.isActive
 import retrofit2.HttpException
 import java.io.IOException
+import kotlin.coroutines.coroutineContext
 
 class SoloGameRepositoryImpl : SoloGameRepository {
     
@@ -93,7 +96,7 @@ class SoloGameRepositoryImpl : SoloGameRepository {
                 once.fold(
                     onSuccess = { emit(it) },
                     onFailure = {
-                        android.util.Log.e("SoloGameRepository", "Error one-shot game update", it)
+                        Log.e("SoloGameRepository", "Error one-shot game update", it)
                         emit(null)
                     }
                 )
@@ -102,7 +105,7 @@ class SoloGameRepositoryImpl : SoloGameRepository {
 
             // polling continuo
             var backoffMs = intervalMs // podés ajustar backoff si falla
-            while (kotlin.coroutines.coroutineContext.isActive) {
+            while (coroutineContext.isActive) {
                 val result = getSoloGameUpdate(gameId)
                 result.fold(
                     onSuccess = { update ->
@@ -110,15 +113,39 @@ class SoloGameRepositoryImpl : SoloGameRepository {
                         backoffMs = intervalMs // reset backoff al éxito
                     },
                     onFailure = { exception ->
-                        android.util.Log.e("SoloGameRepository", "Error polling game update", exception)
+                        Log.e("SoloGameRepository", "Error polling game update", exception)
                         emit(null)
                         // backoff simple opcional: no lo hagas exponencial si no querés
                         backoffMs = (backoffMs.coerceAtMost(60_000L))
                     }
                 )
-                kotlinx.coroutines.delay(backoffMs)
+                delay(backoffMs)
             }
         }
     }
+
+    override suspend fun useWildcard(gameId: Int, wildcardId: Int): Result<WildCard> {
+        return try {
+            val token = UserRemoteRepository.getIdToken()
+            val header = token?.let { "Bearer $it" }
+
+            val response = api.useWildcard(header, gameId, wildcardId)
+
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(IOException("Error al usar wildcard: ${response.code()} - ${response.message()}"))
+            }
+        } catch (e: HttpException) {
+            Result.failure(IOException("Error HTTP: ${e.code()} - ${e.message()}"))
+        } catch (e: IOException) {
+            Result.failure(e)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+
+
 }
 
